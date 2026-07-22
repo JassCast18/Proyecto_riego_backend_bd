@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 
 export const generateToken=(usuario)=>{
+    const expiresIn = process.env.JWT_EXPIRES?.trim() || "1h";
 
     return jwt.sign(
 
@@ -13,7 +14,7 @@ export const generateToken=(usuario)=>{
         process.env.JWT_SECRET,
 
         {
-            expiresIn: process.env.JWT_EXPIRES
+            expiresIn
         }
 
     );

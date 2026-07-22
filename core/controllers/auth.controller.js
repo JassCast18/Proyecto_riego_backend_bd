@@ -8,36 +8,70 @@ export const login=async(req,res)=>{
     try{
         const {correo_electronico,password}=req.body;
 
-        console.log("Usuario recibido:", correo_electronico);
-        console.log("Password recibido:", password);
-
         const user=await provider.login(correo_electronico);
-            console.log("Resultado BD:", user);
-        if(!user || user.length === 0){
-              console.log("No existe usuario");
-        return res.status(401).json({
-        message:"Usuario no existe"
-        });
+        if(!user){
+            return res.status(401).json(ResponseModel.fail("Usuario no existe.", null, 401));
         }
-           console.log("Usuario encontrado:", user);
 
         const validPassword=await comparePassword(password,user.passwordHash);
-           console.log("Password valido:", validPassword);
         if(!validPassword){
             return res.status(401).json(ResponseModel.fail("Credenciales inválidas.", null, 401));
-             console.log("Password incorrecto");
         }
   
         const token=generateToken(user);
         delete user.passwordHash; // Eliminar el hash de la contraseña antes de enviar la respuesta
-        console.log(token);
 
         return res.status(200).json(ResponseModel.ok({ usuario: user.toResponse(), token }, "Inicio de sesión exitoso."));
     }catch(error){
-        console.log(error);
+        return res.status(500).json(ResponseModel.fail(error.message));
+    }
 
-        return res.status(500).json({message:error.message});
+}
 
+export const register = async (req, res) => {
+    try {
+        const {
+            nombres,
+            apellidos,
+            correo_electronico,
+            password,
+            tb_rol_id,
+            cod_usuario_registro
+        } = req.body;
+
+        if (!nombres || !apellidos || !correo_electronico || !password) {
+            return res.status(400).json(
+                ResponseModel.fail("Faltan campos obligatorios.", null, 400)
+            );
+        }
+
+        const user = await provider.register({
+            nombres,
+            apellidos,
+            correo_electronico,
+            password,
+            tb_rol_id,
+            cod_usuario_registro
+        });
+
+        if (!user) {
+            return res.status(500).json(
+                ResponseModel.fail("No fue posible crear el usuario.", null, 500)
+            );
+        }
+
+        const token = generateToken(user);
+
+        return res.status(201).json(
+            ResponseModel.ok(
+                { usuario: user.toResponse(), token },
+                "Registro exitoso.",
+                201
+            )
+        );
+
+    } catch (error) {
+        return res.status(500).json(ResponseModel.fail(error.message));
     }
 
 }
