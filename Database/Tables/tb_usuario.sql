@@ -29,3 +29,33 @@ BEGIN
         );
     END IF;
 END $$;
+--==================================Campo username agregado==========================
+ALTER TABLE tb_usuario
+ADD COLUMN IF NOT EXISTS username VARCHAR(50);
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'uq_tb_usuario_username'
+    ) THEN
+        ALTER TABLE tb_usuario
+        ADD CONSTRAINT uq_tb_usuario_username UNIQUE (username);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'tb_usuario'
+        AND column_name = 'username'
+        AND is_nullable = 'YES'
+    ) THEN
+        ALTER TABLE tb_usuario
+        ALTER COLUMN username SET NOT NULL;
+    END IF;
+END $$;
+-- END USERNAME

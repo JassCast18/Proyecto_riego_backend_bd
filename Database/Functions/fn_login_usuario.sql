@@ -1,5 +1,7 @@
+DROP FUNCTION IF EXISTS fn_login_usuario(VARCHAR);
+
 CREATE OR REPLACE FUNCTION fn_login_usuario(
-    p_correo_electronico VARCHAR
+    p_username_correo VARCHAR
 )
 RETURNS TABLE(
     id INTEGER,
@@ -13,8 +15,24 @@ RETURNS TABLE(
 LANGUAGE plpgsql
 AS
 $$
+DECLARE
+    v_correo VARCHAR;
 BEGIN
+    IF p_username_correo IS NOT NULL 
+       AND p_username_correo <> '' THEN
 
+        SELECT usu.correo_electronico
+        INTO v_correo
+        FROM tb_usuario usu
+        WHERE usu.username = p_username_correo
+        LIMIT 1;
+
+        -- Si encontró usuario, reemplaza por el correo real
+        IF v_correo IS NOT NULL THEN
+            p_username_correo := v_correo;
+        END IF;
+
+    END IF;
     RETURN QUERY
     SELECT
         usu.id,
@@ -29,7 +47,7 @@ BEGIN
             ON per.id = usu.tb_persona_id
         INNER JOIN tb_rol AS rol
             ON rol.id = usu.tb_rol_id
-    WHERE usu.correo_electronico = p_correo_electronico
+    WHERE usu.correo_electronico = p_username_correo
       AND usu.sn_activo = TRUE;
 
 END;

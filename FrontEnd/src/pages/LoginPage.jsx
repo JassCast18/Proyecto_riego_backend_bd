@@ -54,15 +54,15 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block">
-            <span className="mb-1 block text-sm font-semibold text-emerald-950">Correo electronico</span>
+            <span className="mb-1 block text-sm font-semibold text-emerald-950">usuario o correo electronico</span>
             <input
               name="correo_electronico"
-              type="email"
-              autoComplete="email"
+              type="text"
+              autoComplete="text"
               value={form.correo_electronico}
               onChange={updateField}
               className="w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm text-emerald-950 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
-              placeholder="usuario@correo.com"
+              placeholder="Escriba su usuario o correo electronico"
             />
           </label>
 
