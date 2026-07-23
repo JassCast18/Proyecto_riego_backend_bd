@@ -1,42 +1,69 @@
-import { Leaf } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Link } from "react-router-dom";
+import { Leaf } from "lucide-react";
 
-export function SiteHeader() {
+const SiteHeader = () => {
   return (
-    <header className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-6">
-        <a href="/" className="flex items-center gap-2">
-          <span className="flex size-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Leaf className="size-5" />
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md shadow-sm">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+        {/* Logo */}
+        <Link to="/" className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white">
+            <Leaf size={20} />
           </span>
-          <span className="flex flex-col leading-none">
-            <span className="font-heading text-base font-bold text-foreground">Frutas del Oasis</span>
-            <span className="text-xs text-muted-foreground">Monitoreo Adaptativo</span>
-          </span>
-        </a>
 
+          <span className="flex flex-col leading-none">
+            <span className="text-base font-bold text-gray-900">
+              Frutas del Oasis
+            </span>
+            <span className="text-xs text-gray-500">
+              Monitoreo Adaptativo
+            </span>
+          </span>
+        </Link>
+
+        {/* Menú */}
         <nav className="hidden items-center gap-8 md:flex">
-          <a href="#solucion" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <a
+            href="#solucion"
+            className="text-sm font-medium text-gray-600 transition hover:text-green-600"
+          >
             Solución
           </a>
-          <a href="#modulos" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+
+          <a
+            href="#modulos"
+            className="text-sm font-medium text-gray-600 transition hover:text-green-600"
+          >
             Módulos
           </a>
-          <a href="#tecnologia" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+
+          <a
+            href="#tecnologia"
+            className="text-sm font-medium text-gray-600 transition hover:text-green-600"
+          >
             Tecnología
           </a>
         </nav>
 
-        <div className="flex items-center gap-2">
-          {/* Si usas React Router, cambia estos href por la navegación de react-router-dom */}
-          <Button asChild variant="ghost" className="hidden sm:inline-flex">
-            <a href="/login">Iniciar sesión</a>
-          </Button>
-          <Button asChild>
-            <a href="/login">Acceder a la plataforma</a>
-          </Button>
+        {/* Botones */}
+        <div className="flex items-center gap-3">
+          <Link
+            to="/login"
+            className="hidden rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 sm:inline-flex"
+          >
+            Iniciar sesión
+          </Link>
+
+          <Link
+            to="/login"
+            className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white transition duration-300 hover:bg-green-700"
+          >
+            Acceder a la plataforma
+          </Link>
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
+
+export default SiteHeader;

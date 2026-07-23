@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+import { useAuth } from '../context/useAuth.js'
 
 export default function LoginPage() {
   const navigate = useNavigate()
+  const { login, isAuthenticated } = useAuth()
 
   const [form, setForm] = useState({
     correo_electronico: '',
@@ -12,6 +12,12 @@ export default function LoginPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [isAuthenticated, navigate])
 
   const updateField = (event) => {
     const { name, value } = event.target
@@ -30,30 +36,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(form),
-      })
-
-      const payload = await response.json()
-
-      if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.message || 'No fue posible iniciar sesion.')
-      }
-
-      const token = payload?.data?.token || payload?.token
-      const usuario = payload?.data?.usuario || payload?.usuario
-
-      if (!token) {
-        throw new Error('La API no devolvio token de acceso.')
-      }
-
-      localStorage.setItem('authToken', token)
-      localStorage.setItem('authUser', JSON.stringify(usuario || null))
-
+      await login(form)
       navigate('/dashboard')
     } catch (submitError) {
       setError(submitError.message)
