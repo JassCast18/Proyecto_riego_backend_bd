@@ -8,6 +8,7 @@ import {
 	updateStatus,
 	updateUser,
 } from "../controllers/users.controller.js";
+import { listMyPermissions as listMyRolePermissions } from "../controllers/permissions.controller.js";
 import { verifyToken } from "../middlewares/jwt.middleware.js";
 
 const router = Router();
@@ -16,6 +17,7 @@ router.post("/login",login);
 router.post("/register", verifyToken, register);
 router.get("/manage", verifyToken, listUsers);
 router.get("/manage/roles", verifyToken, listRoles);
+router.get("/manage/permissions", verifyToken, listMyRolePermissions);
 router.post("/manage", verifyToken, createUser);
 router.patch("/manage/:id", verifyToken, updateUser);
 router.patch("/manage/:id/password", verifyToken, updatePassword);

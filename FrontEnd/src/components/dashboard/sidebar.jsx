@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronDown, Leaf, LogOut, X } from "lucide-react";
 import { navGroups } from "./nav-items";
@@ -8,19 +8,56 @@ export function Sidebar({ open, onClose }) {
   const location = useLocation();
   const { user, logout } = useAuth();
   const [expanded, setExpanded] = useState({});
+  const permissions = useMemo(() => new Set(user?.permisos || []), [user?.permisos]);
 
   const displayName = user?.nombreCompleto || user?.correoElectronico || "Usuario";
 
-  useEffect(() => {
-    const shouldOpenUsers = location.pathname.startsWith("/dashboard/usuarios");
+  const visibleGroups = useMemo(() => {
+    if (permissions.size === 0) {
+      return navGroups;
+    }
 
-    if (shouldOpenUsers) {
+    return navGroups
+      .map((group) => {
+        const items = group.items
+          .map((item) => {
+            const children = item.children?.filter((child) => !child.permissionKey || permissions.has(child.permissionKey)) ?? [];
+            const itemAllowed = !item.permissionKey || permissions.has(item.permissionKey) || children.length > 0;
+
+            if (!itemAllowed) {
+              return null;
+            }
+
+            return {
+              ...item,
+              children: item.children ? children : undefined,
+            };
+          })
+          .filter(Boolean);
+
+        return items.length > 0 ? { ...group, items } : null;
+      })
+      .filter(Boolean);
+  }, [permissions]);
+
+  useEffect(() => {
+    const nextExpanded = {};
+
+    visibleGroups.forEach((group) => {
+      group.items.forEach((item) => {
+        if (item.children?.some((child) => location.pathname.startsWith(child.href))) {
+          nextExpanded[item.label] = true;
+        }
+      });
+    });
+
+    if (Object.keys(nextExpanded).length > 0) {
       setExpanded((current) => ({
         ...current,
-        "Gestión de usuarios": true,
+        ...nextExpanded,
       }));
     }
-  }, [location.pathname]);
+  }, [location.pathname, visibleGroups]);
 
   const toggleGroup = (label) => {
     setExpanded((current) => ({
@@ -85,7 +122,7 @@ export function Sidebar({ open, onClose }) {
 
         {/* Menú */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          {navGroups.map((group) => (
+          {visibleGroups.map((group) => (
             <div key={group.title} className="mb-6">
               <p className="px-3 pb-2 text-xs font-semibold uppercase tracking-widest text-gray-500">
                 {group.title}

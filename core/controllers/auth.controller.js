@@ -1,7 +1,15 @@
 import * as provider from "../providers/user.provider.js";
+import { listPermissionsByRole } from "../providers/permissions.provider.js";
 import {comparePassword} from "../utils/bcrypt.util.js";
 import {generateToken} from "../utils/jwt.util.js";
 import ResponseModel from "../models/response.model.js";
+
+async function attachPermissions(user) {
+    const permisos = await listPermissionsByRole(user.tbRolId);
+    user.permisos = permisos;
+
+    return user;
+}
 
 export const login=async(req,res)=>{
 
@@ -20,6 +28,7 @@ export const login=async(req,res)=>{
   
         const token=generateToken(user);
         delete user.passwordHash; // Eliminar el hash de la contraseña antes de enviar la respuesta
+        await attachPermissions(user);
 
         return res.status(200).json(ResponseModel.ok({ usuario: user.toResponse(), token }, "Inicio de sesión exitoso."));
     }catch(error){
@@ -60,6 +69,7 @@ export const register = async (req, res) => {
             );
         }
 
+        await attachPermissions(user);
         const token = generateToken(user);
 
         return res.status(201).json(

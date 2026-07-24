@@ -40,3 +40,13 @@ export async function registerRequest(payload) {
     throw new Error(getApiErrorMessage(error, 'No fue posible registrar el usuario.'))
   }
 }
+
+export async function listPermissionsRequest() {
+  try {
+    const response = await api.get('/users/manage/permissions')
+
+    return response.data?.data?.permisos || []
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible consultar los permisos.'))
+  }
+}

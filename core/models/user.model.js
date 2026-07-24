@@ -15,6 +15,7 @@ export default class Usuario {
         this.fechaRegistra = data.fecha_registra ?? data.fechaRegistra ?? null;
         this.codUsuarioModifica = data.cod_usuario_modifica ?? data.codUsuarioModifica ?? null;
         this.fechaModifica = data.fecha_modifica ?? data.fechaModifica ?? null;
+        this.permisos = data.permisos ?? data.permissions ?? [];
     }
 
     toResponse() {
@@ -23,7 +24,9 @@ export default class Usuario {
             nombreCompleto: this.nombreCompleto,
             correoElectronico: this.correoElectronico,
             username: this.username,
-            rol: this.rol
+            rol: this.rol,
+            tbRolId: this.tbRolId,
+            permisos: this.permisos
         };
     }
 

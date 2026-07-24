@@ -8,6 +8,7 @@ export const generateToken=(usuario)=>{
 
         {
             id:usuario.id,
+            tbRolId: usuario.tbRolId ?? usuario.tb_rol_id ?? null,
             usuario:usuarioToken,
             rol:usuario.rol
         },

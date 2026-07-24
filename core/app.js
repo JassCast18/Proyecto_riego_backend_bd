@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import userRoutes from "./routes/auth.routes.js";
 import telemetriaRoutes from "./routes/telemetria.route.js";
+import masterDataRoutes from "./routes/master-data.routes.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -12,6 +13,7 @@ app.use(express.json());
 
 app.use("/api/users", userRoutes);
 app.use("/api/telemetria", telemetriaRoutes);
+app.use("/api/masters", masterDataRoutes);
 app.get("/", (req,res)=>{
     res.json({
         message:"API funcionando"

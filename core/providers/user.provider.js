@@ -44,7 +44,7 @@ export const register = async ({
         ]
     );
 
-    return new Usuario(rows[0]);
+    return await login(correo_electronico);
 };
 
 export const listUsers = async (search = "") => {

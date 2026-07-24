@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { loginRequest, registerRequest } from '../auth/auth.service'
+import { listPermissionsRequest, loginRequest, registerRequest } from '../auth/auth.service'
 import { AuthContext } from './auth-context.js'
 
 const AUTH_TOKEN_KEY = 'authToken'
@@ -50,6 +50,40 @@ export function AuthProvider({ children }) {
       window.removeEventListener('storage', syncSession)
     }
   }, [])
+
+  useEffect(() => {
+    let active = true
+
+    const hydratePermissions = async () => {
+      if (!session.token || !session.user || (session.user.permisos?.length ?? 0) > 0) {
+        return
+      }
+
+      try {
+        const permisos = await listPermissionsRequest()
+
+        if (!active) {
+          return
+        }
+
+        const nextUser = {
+          ...session.user,
+          permisos,
+        }
+
+        persistSession({ token: session.token, user: nextUser })
+        setSession(readStoredSession())
+      } catch {
+        // Si no se pueden cargar los permisos, mantenemos la sesión actual.
+      }
+    }
+
+    hydratePermissions()
+
+    return () => {
+      active = false
+    }
+  }, [session.token, session.user])
 
   const value = useMemo(() => {
     const login = async (credentials) => {

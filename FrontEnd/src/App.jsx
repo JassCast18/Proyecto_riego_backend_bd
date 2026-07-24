@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import UserManagementPage from './pages/UserManagementPage.jsx'
+import DataMastersPage from './pages/DataMastersPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -23,6 +24,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <UserManagementPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/maestros/*"
+        element={
+          <ProtectedRoute>
+            <DataMastersPage />
           </ProtectedRoute>
         }
       />
