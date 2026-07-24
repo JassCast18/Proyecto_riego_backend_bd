@@ -13,7 +13,7 @@ import { verifyToken } from "../middlewares/jwt.middleware.js";
 const router = Router();
 
 router.post("/login",login);
-router.post("/register", register);
+router.post("/register", verifyToken, register);
 router.get("/manage", verifyToken, listUsers);
 router.get("/manage/roles", verifyToken, listRoles);
 router.post("/manage", verifyToken, createUser);
