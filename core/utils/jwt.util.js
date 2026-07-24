@@ -2,12 +2,13 @@ import jwt from "jsonwebtoken";
 
 export const generateToken=(usuario)=>{
     const expiresIn = process.env.JWT_EXPIRES?.trim() || "1h";
+    const usuarioToken = usuario.username || usuario.correoElectronico || usuario.usuario || "";
 
     return jwt.sign(
 
         {
-            id:usuario.id_usuario,
-            usuario:usuario.usuario,
+            id:usuario.id,
+            usuario:usuarioToken,
             rol:usuario.rol
         },
 

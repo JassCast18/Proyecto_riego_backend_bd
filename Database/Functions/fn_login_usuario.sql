@@ -8,6 +8,7 @@ RETURNS TABLE(
     tb_persona_id INTEGER,
     tb_rol_id INTEGER,
     correo_electronico VARCHAR,
+    username VARCHAR,
     password_hash VARCHAR,
     nombre_completo VARCHAR,
     rol VARCHAR
@@ -39,6 +40,7 @@ BEGIN
         usu.tb_persona_id,
         usu.tb_rol_id,
         usu.correo_electronico,
+        usu.username,
         usu.password_hash,
         (per.nombres || ' ' || per.apellidos)::VARCHAR AS nombre_completo,
         rol.nombre_rol AS rol

@@ -67,9 +67,19 @@ export const navGroups = [
         href: "#",
       },
       {
-        label: "Usuarios",
+        label: "Gestión de usuarios",
         icon: Users,
-        href: "#",
+        href: "/dashboard/usuarios",
+        children: [
+          {
+            label: "Listado de usuarios",
+            href: "/dashboard/usuarios/listado",
+          },
+          {
+            label: "Registrar usuario",
+            href: "/dashboard/usuarios/registrar",
+          },
+        ],
       },
       {
         label: "Soporte y FAQ",

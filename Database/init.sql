@@ -16,5 +16,10 @@
 \i Tables/tb_datos_fenologicos.sql
 \i Tables/tb_prueba_unitaria.sql
 \i Tables/tb_version_modelo_ia.sql
+\i Functions/fn_listar_usuarios.sql
+\i Functions/fn_listar_roles.sql
+\i Stored Procedure/sp_actualizar_usuario.sql
+\i Stored Procedure/sp_actualizar_password_usuario.sql
+\i Stored Procedure/sp_actualizar_estado_usuario.sql
 \i Stored Procedure/sp_registro_usuario.sql
 \i Functions/fn_login_usuario.sql
