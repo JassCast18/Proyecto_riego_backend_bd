@@ -23,11 +23,16 @@
 \i Tables/tb_version_modelo_ia.sql
 \i Functions/fn_listar_usuarios.sql
 \i Functions/fn_listar_roles.sql
+\i Functions/fn_listar_nodos_hardware.sql
+\i Functions/fn_listar_telemetria_hardware.sql
+\i Functions/fn_evaluar_estado_nodo.sql
 \i Functions/fn_listar_permisos_rol.sql
 \i Functions/fn_listar_catalogo_abm.sql
 \i Stored Procedure/sp_actualizar_usuario.sql
 \i Stored Procedure/sp_actualizar_password_usuario.sql
 \i Stored Procedure/sp_actualizar_estado_usuario.sql
+\i Stored Procedure/sp_actualizar_estado_energia_nodo.sql
+\i Stored Procedure/sp_evaluar_estado_nodo.sql
 \i Stored Procedure/sp_registro_usuario.sql
 \i Stored Procedure/sp_abm_catalogo.sql
 \i Functions/fn_login_usuario.sql

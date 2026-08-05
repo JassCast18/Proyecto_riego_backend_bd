@@ -170,10 +170,12 @@ export function DataMastersContent() {
   const [error, setError] = useState('')
   const [form, setForm] = useState(getDefaultForm(currentDefinition))
   const [editingId, setEditingId] = useState(null)
+  const [pendingDeleteRecord, setPendingDeleteRecord] = useState(null)
 
   useEffect(() => {
     setForm(getDefaultForm(currentDefinition))
     setEditingId(null)
+    setPendingDeleteRecord(null)
   }, [currentDefinition.key])
 
   useEffect(() => {
@@ -291,10 +293,22 @@ export function DataMastersContent() {
     setError('')
   }
 
-  const handleDelete = async (record) => {
-    const confirmed = window.confirm(`¿Eliminar ${buildDisplayValue(currentDefinition.key, record)}?`)
+  const openDeleteModal = (record) => {
+    setPendingDeleteRecord(record)
+    setError('')
+    setMessage('')
+  }
 
-    if (!confirmed) {
+  const closeDeleteModal = () => {
+    if (saving) {
+      return
+    }
+
+    setPendingDeleteRecord(null)
+  }
+
+  const confirmDelete = async () => {
+    if (!pendingDeleteRecord) {
       return
     }
 
@@ -302,9 +316,15 @@ export function DataMastersContent() {
     setError('')
 
     try {
-      await deleteMasterRecordRequest(currentDefinition.key, record.id)
+      await deleteMasterRecordRequest(currentDefinition.key, pendingDeleteRecord.id)
       await reloadAllData()
       setMessage('Registro eliminado correctamente.')
+      setPendingDeleteRecord(null)
+
+      if (editingId === pendingDeleteRecord.id) {
+        setForm(getDefaultForm(currentDefinition))
+        setEditingId(null)
+      }
     } catch (deleteError) {
       setError(deleteError.message)
     } finally {
@@ -320,7 +340,7 @@ export function DataMastersContent() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-8rem)] rounded-[2rem] border border-slate-200 bg-[radial-gradient(circle_at_top_left,#e0f2fe,transparent_24%),linear-gradient(180deg,#f8fbff,#edf6ff)] p-4 shadow-xl shadow-slate-900/5 md:p-6">
+    <section className="min-h-[calc(100vh-8rem)] rounded-4xl border border-slate-200 bg-[radial-gradient(circle_at_top_left,#e0f2fe,transparent_24%),linear-gradient(180deg,#f8fbff,#edf6ff)] p-4 shadow-xl shadow-slate-900/5 md:p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-600">Datos maestros</p>
@@ -419,7 +439,7 @@ export function DataMastersContent() {
                         <td className="px-4 py-4">
                           <div className="flex flex-wrap gap-2">
                             <ActionButton icon={PencilLine} label="Editar" onClick={() => handleEdit(record)} />
-                            <ActionButton icon={Trash2} label="Eliminar" onClick={() => handleDelete(record)} />
+                            <ActionButton icon={Trash2} label="Eliminar" onClick={() => openDeleteModal(record)} />
                           </div>
                         </td>
                       </tr>
@@ -480,6 +500,16 @@ export function DataMastersContent() {
           </div>
         </div>
       </div>
+
+      {pendingDeleteRecord ? (
+        <DeleteConfirmationModal
+          title={currentDefinition.label}
+          displayValue={buildDisplayValue(currentDefinition.key, pendingDeleteRecord)}
+          saving={saving}
+          onCancel={closeDeleteModal}
+          onConfirm={confirmDelete}
+        />
+      ) : null}
     </section>
   )
 }
@@ -526,5 +556,48 @@ function ActionButton({ icon: Icon, label, onClick }) {
       <Icon size={14} />
       {label}
     </button>
+  )
+}
+
+function DeleteConfirmationModal({ title, displayValue, saving, onCancel, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-[2px]">
+      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-950/25">
+        <div className="mb-4 flex items-start gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
+            <Trash2 size={20} />
+          </span>
+
+          <div>
+            <h3 className="text-lg font-bold text-slate-950">Eliminar registro</h3>
+            <p className="text-sm text-slate-600">¿Seguro que deseas eliminar este registro de {title}?</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          {displayValue}
+        </div>
+
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={saving}
+            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={saving}
+            className="rounded-full bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {saving ? 'Eliminando...' : 'Eliminar'}
+          </button>
+        </div>
+      </div>
+    </div>
   )
 }

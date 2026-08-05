@@ -24,7 +24,24 @@ export default class DatabaseExecutor {
 
         const sql = `CALL ${procedureName}(${placeholders})`;
 
-        await db.query(sql, params);
+        return await db.query(sql, params);
+    }
+
+    static async executeProcedureWithResult(procedureName, params = [], resultCast = (rows) => rows[0] ?? null) {
+
+        const placeholders = params
+            .map((_, i) => `$${i + 1}`)
+            .join(", ");
+
+        const sql = `CALL ${procedureName}(${placeholders})`;
+
+        const result = await db.query(sql, params);
+
+        return resultCast(result.rows);
+    }
+
+    static async executeProcedureWithOutParams(procedureName, params = [], resultCast = (rows) => rows[0] ?? null) {
+        return await this.executeProcedureWithResult(procedureName, params, resultCast);
     }
 
 }

@@ -11,6 +11,9 @@ DECLARE
     v_columnas TEXT;
     v_valores TEXT;
     v_asignaciones TEXT;
+    v_sequence_name TEXT;
+    v_max_id BIGINT;
+    v_rows_affected BIGINT;
 BEGIN
     IF p_tabla NOT IN (
         'tb_finca',
@@ -34,6 +37,20 @@ BEGIN
 
             IF v_columnas IS NULL OR v_valores IS NULL THEN
                 RAISE EXCEPTION 'No se recibieron datos para insertar en %.', p_tabla;
+            END IF;
+
+            -- Sincroniza la secuencia para evitar colisiones de PK cuando hubo cargas manuales con id.
+            SELECT pg_get_serial_sequence(p_tabla, 'id') INTO v_sequence_name;
+
+            IF v_sequence_name IS NOT NULL THEN
+                EXECUTE format('SELECT COALESCE(MAX(id), 0) FROM %I', p_tabla)
+                INTO v_max_id;
+
+                PERFORM setval(
+                    v_sequence_name,
+                    GREATEST(v_max_id, 1),
+                    v_max_id > 0
+                );
             END IF;
 
             EXECUTE format(
@@ -64,7 +81,9 @@ BEGIN
                 p_id
             );
 
-            IF NOT FOUND THEN
+            GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
+
+            IF v_rows_affected = 0 THEN
                 RAISE EXCEPTION 'El registro % no existe en %.', p_id, p_tabla;
             END IF;
 
@@ -78,7 +97,9 @@ BEGIN
                 p_tabla
             ) USING p_id;
 
-            IF NOT FOUND THEN
+            GET DIAGNOSTICS v_rows_affected = ROW_COUNT;
+
+            IF v_rows_affected = 0 THEN
                 RAISE EXCEPTION 'El registro % no existe en %.', p_id, p_tabla;
             END IF;
 

@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
 import UserManagementPage from './pages/UserManagementPage.jsx'
 import DataMastersPage from './pages/DataMastersPage.jsx'
+import HardwareStatusPage from './pages/HardwareStatusPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -32,6 +33,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DataMastersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/hardware"
+        element={
+          <ProtectedRoute>
+            <HardwareStatusPage />
           </ProtectedRoute>
         }
       />

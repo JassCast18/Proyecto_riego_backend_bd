@@ -16,3 +16,15 @@ export const insertarTelemetria = async ({
     );
     return  result;
 };
+
+export const listTelemetriaHardware = async ({
+    idNodo = null,
+    limit = 15,
+    offset = 0,
+}) => {
+    return await DatabaseExecutor.executeFunction("fn_listar_telemetria_hardware", [
+        idNodo,
+        limit,
+        offset,
+    ]);
+};

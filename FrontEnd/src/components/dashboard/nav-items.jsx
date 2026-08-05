@@ -43,7 +43,7 @@ export const navGroups = [
       {
         label: "Estado de hardware",
         icon: Cpu,
-        href: "#",
+        href: "/dashboard/hardware",
         permissionKey: "hardware.view",
       },
       {

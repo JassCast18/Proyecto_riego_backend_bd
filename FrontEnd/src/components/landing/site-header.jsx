@@ -20,9 +20,9 @@ const SiteHeader = () => {
             </span>
           </span>
         </Link>
-
+    
         {/* Menú */}
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-rigth gap-8 md:flex">
           <a
             href="#solucion"
             className="text-sm font-medium text-gray-600 transition hover:text-green-600"
@@ -47,12 +47,7 @@ const SiteHeader = () => {
 
         {/* Botones */}
         <div className="flex items-center gap-3">
-          <Link
-            to="/login"
-            className="hidden rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-100 sm:inline-flex"
-          >
-            Iniciar sesión
-          </Link>
+
 
           <Link
             to="/login"
