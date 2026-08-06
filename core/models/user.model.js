@@ -5,6 +5,8 @@ export default class Usuario {
         this.tbRolId = data.tb_rol_id ?? null;
         this.correoElectronico = data.correo_electronico ?? "";
         this.username = data.username ?? "";
+        this.codigoPais = data.codigo_pais ?? data.codigoPais ?? "";
+        this.telefono = data.telefono ?? "";
         this.passwordHash = data.password_hash ?? "";
         this.nombres = data.nombres ?? "";
         this.apellidos = data.apellidos ?? "";
@@ -24,6 +26,8 @@ export default class Usuario {
             nombreCompleto: this.nombreCompleto,
             correoElectronico: this.correoElectronico,
             username: this.username,
+            codigoPais: this.codigoPais,
+            telefono: this.telefono,
             rol: this.rol,
             tbRolId: this.tbRolId,
             permisos: this.permisos
@@ -40,6 +44,8 @@ export default class Usuario {
             nombreCompleto: this.nombreCompleto,
             correoElectronico: this.correoElectronico,
             username: this.username,
+            codigoPais: this.codigoPais,
+            telefono: this.telefono,
             rol: this.rol,
             snActivo: this.snActivo,
             codUsuarioRegistro: this.codUsuarioRegistro,

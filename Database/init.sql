@@ -17,6 +17,8 @@
 \i Tables/tb_ticket_soporte.sql
 \i Tables/tb_bitacora_auditoria.sql
 \i Tables/tb_alerta_hidrica.sql
+\i Tables/tb_notificacion.sql
+\i Tables/tb_recuperacion_password.sql
 \i Tables/tb_informe_supervision.sql
 \i Tables/tb_datos_fenologicos.sql
 \i Tables/tb_prueba_unitaria.sql
@@ -28,6 +30,11 @@
 \i Functions/fn_evaluar_estado_nodo.sql
 \i Functions/fn_listar_permisos_rol.sql
 \i Functions/fn_listar_catalogo_abm.sql
+\i Functions/fn_listar_notificaciones.sql
+\i Functions/fn_marcar_notificacion_revisada.sql
+\i Functions/fn_descartar_notificacion.sql
+\i Functions/fn_buscar_usuario_recuperacion.sql
+\i Functions/fn_validar_token_recuperacion.sql
 \i Stored Procedure/sp_actualizar_usuario.sql
 \i Stored Procedure/sp_actualizar_password_usuario.sql
 \i Stored Procedure/sp_actualizar_estado_usuario.sql
@@ -35,5 +42,8 @@
 \i Stored Procedure/sp_evaluar_estado_nodo.sql
 \i Stored Procedure/sp_registro_usuario.sql
 \i Stored Procedure/sp_abm_catalogo.sql
+\i Stored Procedure/sp_sincronizar_notificaciones_hardware.sql
+\i Stored Procedure/sp_crear_token_recuperacion.sql
+\i Stored Procedure/sp_restablecer_password.sql
 \i Functions/fn_login_usuario.sql
 \i Seeds/seed_permisos.sql

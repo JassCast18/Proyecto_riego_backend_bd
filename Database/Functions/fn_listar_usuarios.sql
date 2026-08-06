@@ -12,6 +12,8 @@ RETURNS TABLE(
     nombre_completo VARCHAR,
     correo_electronico VARCHAR,
     username VARCHAR,
+    codigo_pais VARCHAR,
+    telefono VARCHAR,
     rol VARCHAR,
     sn_activo BOOLEAN,
     cod_usuario_registro INTEGER,
@@ -33,6 +35,8 @@ BEGIN
         (per.nombres || ' ' || per.apellidos)::VARCHAR AS nombre_completo,
         usu.correo_electronico,
         usu.username,
+        usu.codigo_pais,
+        usu.telefono,
         rol.nombre_rol AS rol,
         usu.sn_activo,
         usu.cod_usuario_registro,
@@ -48,6 +52,7 @@ BEGIN
         OR lower(per.nombres || ' ' || per.apellidos) LIKE '%' || lower(p_busqueda) || '%'
         OR lower(usu.correo_electronico) LIKE '%' || lower(p_busqueda) || '%'
         OR lower(COALESCE(usu.username, '')) LIKE '%' || lower(p_busqueda) || '%'
+        OR COALESCE(usu.codigo_pais || usu.telefono, '') LIKE '%' || replace(p_busqueda, ' ', '') || '%'
         OR lower(rol.nombre_rol) LIKE '%' || lower(p_busqueda) || '%'
     )
     ORDER BY usu.fecha_registra DESC, usu.id DESC;

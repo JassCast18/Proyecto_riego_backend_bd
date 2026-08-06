@@ -9,6 +9,8 @@ RETURNS TABLE(
     tb_rol_id INTEGER,
     correo_electronico VARCHAR,
     username VARCHAR,
+    codigo_pais VARCHAR,
+    telefono VARCHAR,
     password_hash VARCHAR,
     nombre_completo VARCHAR,
     rol VARCHAR
@@ -25,7 +27,7 @@ BEGIN
         SELECT usu.correo_electronico
         INTO v_correo
         FROM tb_usuario usu
-        WHERE usu.username = p_username_correo
+        WHERE lower(usu.username) = lower(trim(p_username_correo))
         LIMIT 1;
 
         -- Si encontró usuario, reemplaza por el correo real
@@ -41,6 +43,8 @@ BEGIN
         usu.tb_rol_id,
         usu.correo_electronico,
         usu.username,
+        usu.codigo_pais,
+        usu.telefono,
         usu.password_hash,
         (per.nombres || ' ' || per.apellidos)::VARCHAR AS nombre_completo,
         rol.nombre_rol AS rol
@@ -49,7 +53,7 @@ BEGIN
             ON per.id = usu.tb_persona_id
         INNER JOIN tb_rol AS rol
             ON rol.id = usu.tb_rol_id
-    WHERE usu.correo_electronico = p_username_correo
+    WHERE lower(usu.correo_electronico) = lower(trim(p_username_correo))
       AND usu.sn_activo = TRUE;
 
 END;

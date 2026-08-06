@@ -6,13 +6,44 @@ const AUTH_TOKEN_KEY = 'authToken'
 const AUTH_USER_KEY = 'authUser'
 const AUTH_SESSION_EVENT = 'auth:session-changed'
 
+function getTokenExpiration(token) {
+  try {
+    const payload = token.split('.')[1]
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/')
+    const decoded = JSON.parse(atob(normalized))
+
+    return typeof decoded.exp === 'number' ? decoded.exp * 1000 : 0
+  } catch {
+    return 0
+  }
+}
+
+function isTokenValid(token) {
+  return Boolean(token) && getTokenExpiration(token) > Date.now()
+}
+
 function readStoredSession() {
   const token = localStorage.getItem(AUTH_TOKEN_KEY)
   const storedUser = localStorage.getItem(AUTH_USER_KEY)
 
+  if (!isTokenValid(token)) {
+    localStorage.removeItem(AUTH_TOKEN_KEY)
+    localStorage.removeItem(AUTH_USER_KEY)
+
+    return { token: null, user: null }
+  }
+
+  let user = null
+
+  try {
+    user = storedUser ? JSON.parse(storedUser) : null
+  } catch {
+    localStorage.removeItem(AUTH_USER_KEY)
+  }
+
   return {
     token,
-    user: storedUser ? JSON.parse(storedUser) : null,
+    user,
   }
 }
 
@@ -50,6 +81,27 @@ export function AuthProvider({ children }) {
       window.removeEventListener('storage', syncSession)
     }
   }, [])
+
+  useEffect(() => {
+    if (!session.token) {
+      return undefined
+    }
+
+    const remainingTime = getTokenExpiration(session.token) - Date.now()
+
+    if (remainingTime <= 0) {
+      clearSession()
+      setSession({ token: null, user: null })
+      return undefined
+    }
+
+    const expirationTimer = window.setTimeout(() => {
+      clearSession()
+      setSession({ token: null, user: null })
+    }, remainingTime)
+
+    return () => window.clearTimeout(expirationTimer)
+  }, [session.token])
 
   useEffect(() => {
     let active = true
@@ -112,7 +164,7 @@ export function AuthProvider({ children }) {
     return {
       token: session.token,
       user: session.user,
-      isAuthenticated: Boolean(session.token),
+      isAuthenticated: isTokenValid(session.token),
       login,
       register,
       logout,

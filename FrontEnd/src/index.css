@@ -87,3 +87,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes toast-enter {
+  from { opacity: 0; transform: translateX(20px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes toast-countdown {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: 69.12; }
+}
+
+.toast-enter {
+  animation: toast-enter 180ms ease-out;
+}
+
+.toast-timer {
+  animation-name: toast-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-enter,
+  .toast-timer {
+    animation: none;
+  }
+}

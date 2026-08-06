@@ -20,6 +20,8 @@ BEGIN
             tb_persona_id INT REFERENCES tb_persona(id),
             tb_rol_id INT REFERENCES tb_rol(id),
             correo_electronico VARCHAR(100) NOT NULL,
+            codigo_pais VARCHAR(5) NULL,
+            telefono VARCHAR(20) NULL,
             password_hash VARCHAR(255) NOT NULL,
             sn_activo BOOLEAN NOT NULL,
             cod_usuario_registro INT NOT NULL,
@@ -32,6 +34,12 @@ END $$;
 --==================================Campo username agregado==========================
 ALTER TABLE tb_usuario
 ADD COLUMN IF NOT EXISTS username VARCHAR(50);
+
+ALTER TABLE tb_usuario
+ADD COLUMN IF NOT EXISTS codigo_pais VARCHAR(5);
+
+ALTER TABLE tb_usuario
+ADD COLUMN IF NOT EXISTS telefono VARCHAR(20);
 
 DO $$
 BEGIN
@@ -58,4 +66,8 @@ BEGIN
         ALTER COLUMN username SET NOT NULL;
     END IF;
 END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_tb_usuario_telefono
+ON tb_usuario (codigo_pais, telefono)
+WHERE telefono IS NOT NULL;
 -- END USERNAME

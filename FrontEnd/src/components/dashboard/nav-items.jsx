@@ -25,8 +25,7 @@ export const navGroups = [
       {
         label: "Alertas y notificaciones",
         icon: Bell,
-        href: "#",
-        badge: 3,
+        href: "/dashboard/notificaciones",
         permissionKey: "alertas.view",
       },
       {

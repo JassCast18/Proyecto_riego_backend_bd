@@ -5,6 +5,9 @@ import DashboardPage from './pages/DashboardPage.jsx'
 import UserManagementPage from './pages/UserManagementPage.jsx'
 import DataMastersPage from './pages/DataMastersPage.jsx'
 import HardwareStatusPage from './pages/HardwareStatusPage.jsx'
+import NotificationsPage from './pages/NotificationsPage.jsx'
+import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
+import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -12,6 +15,8 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/olvide-password" element={<ForgotPasswordPage />} />
+      <Route path="/restablecer-password" element={<ResetPasswordPage />} />
       <Route
         path="/dashboard"
         element={
@@ -33,6 +38,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <DataMastersPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/dashboard/notificaciones"
+        element={
+          <ProtectedRoute>
+            <NotificationsPage />
           </ProtectedRoute>
         }
       />

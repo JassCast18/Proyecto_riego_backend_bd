@@ -1,32 +1,20 @@
-import { useEffect, useRef, useState } from "react";
-import { Bell, Menu, Search } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Bell, LogOut, Menu, Search } from "lucide-react";
 import { useAuth } from "@/context/useAuth.js";
+import { listNotificationsRequest, reviewNotificationRequest } from "@/auth/notifications.service.js";
 
-const notifications = [
-  {
-    title: "Estrés hídrico detectado",
-    detail: "Sector B-2 · humedad del suelo bajo el umbral",
-    time: "Hace 8 min",
-    urgent: true,
-  },
-  {
-    title: "Nodo ESP32 sin señal",
-    detail: "Nodo N-07 dejó de reportar telemetría",
-    time: "Hace 42 min",
-    urgent: true,
-  },
-  {
-    title: "Reentrenamiento completado",
-    detail: "El modelo predictivo se actualizó correctamente",
-    time: "Hace 2 h",
-    urgent: false,
-  },
-];
+function formatNotificationTime(value) {
+  if (!value) return "Ahora";
+  return new Date(value).toLocaleString("es-GT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+}
 
 export function Topbar({ onMenuClick }) {
   const [open, setOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const ref = useRef(null);
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
   const displayName = user?.nombreCompleto || user?.correoElectronico || "Rudy Castellanos";
   const displayRole = user?.rol || "Supervisor";
@@ -51,6 +39,32 @@ export function Topbar({ onMenuClick }) {
       document.removeEventListener("mousedown", handleClick);
     };
   }, []);
+
+  const loadNotifications = useCallback(async () => {
+    try {
+      setNotifications(await listNotificationsRequest({ status: "active", limit: 3 }));
+    } catch {
+      // El panel sigue disponible si la consulta de notificaciones falla temporalmente.
+    }
+  }, []);
+
+  useEffect(() => {
+    loadNotifications();
+    const pollingId = window.setInterval(loadNotifications, 30000);
+    return () => window.clearInterval(pollingId);
+  }, [loadNotifications]);
+
+  const openNotification = async (notification) => {
+    if (!notification.revisada) {
+      try {
+        await reviewNotificationRequest(notification.id);
+      } catch {
+        // La vista completa permitirá reintentar la acción.
+      }
+    }
+    setOpen(false);
+    navigate("/dashboard/notificaciones");
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-gray-200 bg-white px-4 shadow-sm md:px-6">
@@ -81,13 +95,18 @@ export function Topbar({ onMenuClick }) {
         {/* Notificaciones */}
         <div className="relative" ref={ref}>
           <button
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              setOpen(!open);
+              if (!open) loadNotifications();
+            }}
             aria-label="Notificaciones"
             className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 transition hover:bg-gray-100"
           >
             <Bell size={20} />
 
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span>
+            {notifications.some((notification) => !notification.revisada) ? (
+              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500"></span>
+            ) : null}
           </button>
 
           {open && (
@@ -98,44 +117,34 @@ export function Topbar({ onMenuClick }) {
                 </p>
 
                 <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
-                  {notifications.length} nuevas
+                  {notifications.length} activas
                 </span>
               </div>
 
               <ul className="max-h-80 overflow-y-auto">
-                {notifications.map((n) => (
+                {notifications.map((notification) => (
                   <li
-                    key={n.title}
-                    className="flex gap-3 border-b border-gray-200 px-4 py-3 last:border-0 hover:bg-gray-50"
+                    key={notification.id}
+                    className="border-b border-gray-200 last:border-0"
                   >
-                    <span
-                      className={`mt-2 h-2 w-2 rounded-full ${
-                        n.urgent
-                          ? "bg-red-500"
-                          : "bg-green-500"
-                      }`}
-                    ></span>
-
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {n.title}
-                      </p>
-
-                      <p className="text-xs text-gray-500">
-                        {n.detail}
-                      </p>
-
-                      <p className="mt-1 text-xs text-gray-400">
-                        {n.time}
-                      </p>
-                    </div>
+                    <button type="button" onClick={() => openNotification(notification)} className="flex w-full gap-3 px-4 py-3 text-left hover:bg-gray-50">
+                      <span className={`mt-2 h-2 w-2 shrink-0 rounded-full ${notification.severidad === "ERROR" ? "bg-red-500" : notification.severidad === "WARNING" ? "bg-amber-500" : "bg-sky-500"}`}></span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900">{notification.titulo}</p>
+                        <p className="line-clamp-2 text-xs text-gray-500">{notification.mensaje}</p>
+                        <p className="mt-1 text-xs text-gray-400">{formatNotificationTime(notification.fechaActualizacion || notification.fechaCreacion)}</p>
+                      </div>
+                    </button>
                   </li>
                 ))}
+                {notifications.length === 0 ? (
+                  <li className="px-4 py-6 text-center text-sm text-gray-500">No hay incidencias activas.</li>
+                ) : null}
               </ul>
 
               <div className="px-4 py-3 text-center">
-                <button className="text-xs font-medium text-green-600 hover:underline">
-                  Ver todas las alertas
+                <button type="button" onClick={() => { setOpen(false); navigate("/dashboard/notificaciones"); }} className="text-xs font-medium text-green-600 hover:underline">
+                  Ver historial de notificaciones
                 </button>
               </div>
             </div>
@@ -158,6 +167,17 @@ export function Topbar({ onMenuClick }) {
             </p>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={logout}
+          aria-label="Cerrar sesión"
+          title="Cerrar sesión"
+          className="flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+        >
+          <LogOut size={18} />
+          <span className="hidden md:inline">Cerrar sesión</span>
+        </button>
       </div>
     </header>
   );

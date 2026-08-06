@@ -36,7 +36,10 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await login(form)
+      await login({
+        ...form,
+        correo_electronico: form.correo_electronico.trim().toLowerCase(),
+      })
       navigate('/dashboard')
     } catch (submitError) {
       setError(submitError.message)
@@ -46,11 +49,10 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top_left,#daf7e8,transparent_35%),linear-gradient(180deg,#fcfffd,#edf6f1)] px-4">
-      <section className="w-full max-w-md rounded-3xl border border-emerald-100 bg-white/95 p-8 shadow-2xl shadow-emerald-950/10 backdrop-blur">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-700">Acceso seguro</p>
-        <h1 className="mt-2 text-3xl font-black text-emerald-950">Iniciar sesion</h1>
-        <p className="mt-2 text-sm text-emerald-900/70">Ingresa tus credenciales para entrar a la plataforma.</p>
+    <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
+      <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+        <h1 className="text-2xl font-bold text-slate-900">Iniciar sesión</h1>
+        <p className="mt-2 text-sm text-slate-600">Ingresa tus credenciales.</p>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <label className="block">
@@ -78,6 +80,10 @@ export default function LoginPage() {
               placeholder="********"
             />
           </label>
+
+          <div className="text-right">
+            <Link to="/olvide-password" className="text-sm font-medium text-emerald-700 hover:underline">Olvidé mi contraseña</Link>
+          </div>
 
           {error ? <p className="text-sm font-medium text-red-600">{error}</p> : null}
 

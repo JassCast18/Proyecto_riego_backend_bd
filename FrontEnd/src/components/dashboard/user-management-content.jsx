@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { CheckCircle2, Eye, KeyRound, PencilLine, PlusCircle, Search, Shield, Users } from 'lucide-react'
+import { Eye, KeyRound, PencilLine, Search, Shield } from 'lucide-react'
 import {
   createUserRequest,
   listRolesRequest,
@@ -9,12 +9,28 @@ import {
   updateStatusRequest,
   updateUserRequest,
 } from '../../auth/users.service'
+import { useAuth } from '@/context/useAuth.js'
+import { useToast } from '@/context/useToast.js'
+
+const MIN_PASSWORD_LENGTH = 8
+const COUNTRY_OPTIONS = [
+  { code: '+502', flag: '🇬🇹', name: 'Guatemala' },
+  { code: '+503', flag: '🇸🇻', name: 'El Salvador' },
+  { code: '+504', flag: '🇭🇳', name: 'Honduras' },
+  { code: '+505', flag: '🇳🇮', name: 'Nicaragua' },
+  { code: '+506', flag: '🇨🇷', name: 'Costa Rica' },
+  { code: '+507', flag: '🇵🇦', name: 'Panamá' },
+  { code: '+52', flag: '🇲🇽', name: 'México' },
+  { code: '+1', flag: '🇺🇸', name: 'Estados Unidos' },
+]
 
 const INITIAL_FORM = {
   nombres: '',
   apellidos: '',
   correo_electronico: '',
   username: '',
+  codigo_pais: '+502',
+  telefono: '',
   password: '',
   tb_rol_id: '2',
 }
@@ -25,6 +41,8 @@ const INITIAL_EDIT = {
   apellidos: '',
   correo_electronico: '',
   username: '',
+  codigo_pais: '',
+  telefono: '',
   tb_rol_id: '2',
   sn_activo: true,
 }
@@ -33,19 +51,20 @@ export function UserManagementContent() {
   const navigate = useNavigate()
   const location = useLocation()
   const currentSection = location.pathname.includes('/registrar') ? 'register' : 'list'
+  const { user: authenticatedUser } = useAuth()
+  const toast = useToast()
 
   const [users, setUsers] = useState([])
   const [roles, setRoles] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
-  const [error, setError] = useState('')
   const [form, setForm] = useState(INITIAL_FORM)
   const [editForm, setEditForm] = useState(INITIAL_EDIT)
   const [passwordForm, setPasswordForm] = useState({ id: null, password: '', confirmPassword: '' })
   const [editOpen, setEditOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
+  const [pendingStatusUser, setPendingStatusUser] = useState(null)
 
   const roleOptions = useMemo(() => {
     if (roles.length > 0) {
@@ -61,13 +80,11 @@ export function UserManagementContent() {
 
   const loadUsers = async (value = search) => {
     setLoading(true)
-    setError('')
-
     try {
       const response = await listUsersRequest(value)
       setUsers(response)
     } catch (requestError) {
-      setError(requestError.message)
+      toast.error(requestError.message)
     } finally {
       setLoading(false)
     }
@@ -129,11 +146,23 @@ export function UserManagementContent() {
 
   const handleRegister = async (event) => {
     event.preventDefault()
-    setError('')
-    setMessage('')
+    if (!form.nombres.trim() || !form.apellidos.trim() || !form.correo_electronico.trim() || !form.password) {
+      toast.warning('Completa nombre, apellido, correo y contraseña.')
+      return
+    }
 
-    if (!form.nombres || !form.apellidos || !form.correo_electronico || !form.password) {
-      setError('Completa nombre, apellido, correo y contraseña.')
+    if (!/^\S+@\S+\.\S+$/.test(form.correo_electronico.trim())) {
+      toast.warning('Ingresa un correo electrónico válido.')
+      return
+    }
+
+    if (form.password.length < MIN_PASSWORD_LENGTH) {
+      toast.warning(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`)
+      return
+    }
+
+    if (form.telefono && !/^\d{7,15}$/.test(form.telefono)) {
+      toast.warning('El teléfono debe contener entre 7 y 15 dígitos.')
       return
     }
 
@@ -142,15 +171,16 @@ export function UserManagementContent() {
     try {
       await createUserRequest({
         ...form,
+        codigo_pais: form.telefono ? form.codigo_pais : '',
         tb_rol_id: Number(form.tb_rol_id),
       })
 
-      setMessage('Usuario registrado correctamente.')
+      toast.success('Usuario registrado correctamente.')
       setForm(INITIAL_FORM)
       navigate('/dashboard/usuarios/listado')
       await loadUsers('')
     } catch (submitError) {
-      setError(submitError.message)
+      toast.error(submitError.message)
     } finally {
       setSaving(false)
     }
@@ -163,6 +193,8 @@ export function UserManagementContent() {
       apellidos: user.apellidos || '',
       correo_electronico: user.correoElectronico || '',
       username: user.username || '',
+      codigo_pais: user.codigoPais || '+502',
+      telefono: user.telefono || '',
       tb_rol_id: String(user.tbRolId || 2),
       sn_activo: Boolean(user.snActivo),
     })
@@ -176,10 +208,13 @@ export function UserManagementContent() {
 
   const saveEdit = async (event) => {
     event.preventDefault()
-    setError('')
-
     if (!editForm.nombres || !editForm.apellidos || !editForm.correo_electronico) {
-      setError('Completa los campos principales del usuario.')
+      toast.warning('Completa los campos principales del usuario.')
+      return
+    }
+
+    if (editForm.telefono && !/^\d{7,15}$/.test(editForm.telefono)) {
+      toast.warning('El teléfono debe contener entre 7 y 15 dígitos.')
       return
     }
 
@@ -187,14 +222,19 @@ export function UserManagementContent() {
 
     try {
       await updateUserRequest(editForm.id, {
-        ...editForm,
+        nombres: editForm.nombres,
+        apellidos: editForm.apellidos,
+        correo_electronico: editForm.correo_electronico,
+        codigo_pais: editForm.telefono ? editForm.codigo_pais : '',
+        telefono: editForm.telefono,
         tb_rol_id: Number(editForm.tb_rol_id),
+        sn_activo: editForm.sn_activo,
       })
       setEditOpen(false)
-      setMessage('Usuario actualizado correctamente.')
+      toast.success('Usuario actualizado correctamente.')
       await loadUsers(search)
     } catch (submitError) {
-      setError(submitError.message)
+      toast.error(submitError.message)
     } finally {
       setSaving(false)
     }
@@ -202,15 +242,18 @@ export function UserManagementContent() {
 
   const savePassword = async (event) => {
     event.preventDefault()
-    setError('')
+    if (!passwordForm.password || passwordForm.password.length < MIN_PASSWORD_LENGTH) {
+      toast.warning(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`)
+      return
+    }
 
-    if (!passwordForm.password || passwordForm.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.')
+    if (passwordForm.password.length > 72) {
+      toast.warning('La contraseña no puede superar los 72 caracteres.')
       return
     }
 
     if (passwordForm.password !== passwordForm.confirmPassword) {
-      setError('Las contraseñas no coinciden.')
+      toast.warning('Las contraseñas no coinciden.')
       return
     }
 
@@ -219,24 +262,40 @@ export function UserManagementContent() {
     try {
       await updatePasswordRequest(passwordForm.id, { password: passwordForm.password })
       setPasswordOpen(false)
-      setMessage('Contraseña actualizada correctamente.')
+      toast.success('Contraseña actualizada correctamente.')
     } catch (submitError) {
-      setError(submitError.message)
+      toast.error(submitError.message)
     } finally {
       setSaving(false)
     }
   }
 
   const toggleStatus = async (user) => {
-    setError('')
-    setMessage('')
+    if (Number(user.id) === Number(authenticatedUser?.id)) {
+      toast.warning('No puedes desactivar el usuario con el que iniciaste sesión.')
+      return
+    }
 
+    setSaving(true)
     try {
       await updateStatusRequest(user.id, { sn_activo: !user.snActivo })
       await loadUsers(search)
+      toast.success(user.snActivo ? 'Usuario desactivado correctamente.' : 'Usuario activado correctamente.')
+      setPendingStatusUser(null)
     } catch (submitError) {
-      setError(submitError.message)
+      toast.error(submitError.message)
+    } finally {
+      setSaving(false)
     }
+  }
+
+  const requestStatusChange = (user) => {
+    if (user.snActivo) {
+      setPendingStatusUser(user)
+      return
+    }
+
+    toggleStatus(user)
   }
 
   const activeUsers = users.filter((user) => user.snActivo).length
@@ -248,16 +307,13 @@ export function UserManagementContent() {
         <div className="flex flex-col gap-2">
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-emerald-700">Gestión de usuarios</p>
           <h1 className="text-3xl font-black text-emerald-950">Usuarios del sistema</h1>
-          <p className="max-w-3xl text-sm text-emerald-900/70">
-            Registra nuevos usuarios, revisa el listado general y administra contraseña, estado y perfil desde una sola vista.
-          </p>
         </div>
 
         <div className="grid gap-4 lg:grid-cols-4">
-          <MetricCard label="Total usuarios" value={users.length} icon={Users} />
-          <MetricCard label="Activos" value={activeUsers} icon={CheckCircle2} />
-          <MetricCard label="Inactivos" value={inactiveUsers} icon={Shield} />
-          <MetricCard label="Roles disponibles" value={roleOptions.length} icon={Eye} />
+          <MetricCard label="Total usuarios" value={users.length} />
+          <MetricCard label="Activos" value={activeUsers} />
+          <MetricCard label="Inactivos" value={inactiveUsers} />
+          <MetricCard label="Roles disponibles" value={roleOptions.length} />
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -277,24 +333,9 @@ export function UserManagementContent() {
           </button>
         </div>
 
-        {message ? (
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-            {message}
-          </div>
-        ) : null}
-
-        {error ? (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-            {error}
-          </div>
-        ) : null}
-
         {currentSection === 'register' ? (
           <section className="rounded-3xl border border-emerald-100 bg-white p-6 shadow-xl shadow-emerald-950/5">
-            <div className="mb-5 flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-                <PlusCircle size={22} />
-              </span>
+            <div className="mb-5">
               <div>
                 <h2 className="text-xl font-bold text-emerald-950">Registrar usuario</h2>
                 <p className="text-sm text-emerald-900/65">Crea un nuevo acceso para el sistema.</p>
@@ -302,11 +343,12 @@ export function UserManagementContent() {
             </div>
 
             <form onSubmit={handleRegister} className="grid gap-4 md:grid-cols-2">
-              <Field label="Nombres" name="nombres" value={form.nombres} onChange={handleFormChange} placeholder="Juan Carlos" />
-              <Field label="Apellidos" name="apellidos" value={form.apellidos} onChange={handleFormChange} placeholder="Pérez Gómez" />
-              <Field label="Correo electrónico" name="correo_electronico" type="email" value={form.correo_electronico} onChange={handleFormChange} placeholder="usuario@correo.com" />
-              <Field label="Usuario" name="username" value={form.username} onChange={handleFormChange} placeholder="usuario.apellido" />
-              <Field label="Contraseña" name="password" type="password" value={form.password} onChange={handleFormChange} placeholder="********" />
+              <Field label="Nombres" name="nombres" value={form.nombres} onChange={handleFormChange} required minLength={2} maxLength={100} />
+              <Field label="Apellidos" name="apellidos" value={form.apellidos} onChange={handleFormChange} required minLength={2} maxLength={100} />
+              <Field label="Correo electrónico" name="correo_electronico" type="email" value={form.correo_electronico} onChange={handleFormChange} required maxLength={100} />
+              <Field label="Usuario" name="username" value={form.username} onChange={handleFormChange} maxLength={50} />
+              <Field label="Contraseña" name="password" type="password" value={form.password} onChange={handleFormChange} required minLength={MIN_PASSWORD_LENGTH} maxLength={72} />
+              <PhoneField codigoPais={form.codigo_pais} telefono={form.telefono} onChange={handleFormChange} />
               <SelectField label="Rol" name="tb_rol_id" value={form.tb_rol_id} onChange={handleFormChange} options={roleOptions} />
 
               <div className="md:col-span-2 flex justify-end gap-3">
@@ -340,7 +382,7 @@ export function UserManagementContent() {
                 <input
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Buscar por nombre, correo, usuario o rol"
+                  placeholder="Buscar por nombre, correo, teléfono, usuario o rol"
                   className="w-full rounded-2xl border border-emerald-200 bg-white py-3 pl-10 pr-4 text-sm text-emerald-950 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
                 />
               </div>
@@ -372,13 +414,22 @@ export function UserManagementContent() {
                         </td>
                       </tr>
                     ) : (
-                      users.map((user) => (
-                        <tr key={user.id} className="hover:bg-emerald-50/70">
+                      users.map((user) => {
+                        const isCurrentUser = Number(user.id) === Number(authenticatedUser?.id)
+
+                        return (
+                        <tr key={user.id} className={isCurrentUser ? 'bg-emerald-50' : 'hover:bg-slate-50'}>
                           <td className="px-4 py-4">
-                            <div className="font-semibold text-emerald-950">{user.nombreCompleto}</div>
+                            <div className="flex flex-wrap items-center gap-2 font-semibold text-emerald-950">
+                              {user.nombreCompleto}
+                              {isCurrentUser ? <span className="rounded bg-emerald-700 px-2 py-0.5 text-[11px] font-semibold text-white">Sesión actual</span> : null}
+                            </div>
                             <div className="text-xs text-emerald-900/55">{user.username || 'Sin usuario'}</div>
                           </td>
-                          <td className="px-4 py-4 text-emerald-900/80">{user.correoElectronico}</td>
+                          <td className="px-4 py-4 text-emerald-900/80">
+                            <div>{user.correoElectronico}</div>
+                            {user.telefono ? <div className="mt-1 text-xs text-emerald-900/55">{user.codigoPais} {user.telefono}</div> : null}
+                          </td>
                           <td className="px-4 py-4 text-emerald-900/80">{user.rol}</td>
                           <td className="px-4 py-4">
                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${user.snActivo ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
@@ -392,12 +443,14 @@ export function UserManagementContent() {
                               <ActionButton
                                 icon={user.snActivo ? Shield : Eye}
                                 label={user.snActivo ? 'Desactivar' : 'Activar'}
-                                onClick={() => toggleStatus(user)}
+                                onClick={() => requestStatusChange(user)}
+                                disabled={isCurrentUser}
                               />
                             </div>
                           </td>
                         </tr>
-                      ))
+                        )
+                      })
                     )}
                   </tbody>
                 </table>
@@ -413,12 +466,9 @@ export function UserManagementContent() {
             <Field label="Nombres" name="nombres" value={editForm.nombres} onChange={handleEditChange} />
             <Field label="Apellidos" name="apellidos" value={editForm.apellidos} onChange={handleEditChange} />
             <Field label="Correo electrónico" name="correo_electronico" type="email" value={editForm.correo_electronico} onChange={handleEditChange} />
-            <Field label="Usuario" name="username" value={editForm.username} onChange={handleEditChange} />
+            <Field label="Usuario" name="username" value={editForm.username} disabled title="El nombre de usuario no se puede modificar." />
+            <PhoneField codigoPais={editForm.codigo_pais} telefono={editForm.telefono} onChange={handleEditChange} />
             <SelectField label="Rol" name="tb_rol_id" value={editForm.tb_rol_id} onChange={handleEditChange} options={roleOptions} />
-            <label className="flex items-center gap-3 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
-              <input type="checkbox" name="sn_activo" checked={editForm.sn_activo} onChange={handleEditChange} />
-              Usuario activo
-            </label>
 
             <div className="md:col-span-2 flex justify-end gap-3">
               <button type="button" onClick={() => setEditOpen(false)} className="rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-800">
@@ -439,6 +489,8 @@ export function UserManagementContent() {
               label="Nueva contraseña"
               name="password"
               type="password"
+              minLength={MIN_PASSWORD_LENGTH}
+              maxLength={72}
               value={passwordForm.password}
               onChange={(event) => setPasswordForm((current) => ({ ...current, password: event.target.value }))}
             />
@@ -446,6 +498,8 @@ export function UserManagementContent() {
               label="Confirmar contraseña"
               name="confirmPassword"
               type="password"
+              minLength={MIN_PASSWORD_LENGTH}
+              maxLength={72}
               value={passwordForm.confirmPassword}
               onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
             />
@@ -461,26 +515,32 @@ export function UserManagementContent() {
           </form>
         </Modal>
       ) : null}
+
+      {pendingStatusUser ? (
+        <StatusConfirmationModal
+          user={pendingStatusUser}
+          saving={saving}
+          onCancel={() => setPendingStatusUser(null)}
+          onConfirm={() => toggleStatus(pendingStatusUser)}
+        />
+      ) : null}
     </DashboardFrame>
   )
 }
 
 function DashboardFrame({ children }) {
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,#dcfce7,transparent_28%),linear-gradient(180deg,#f9fffc,#edf7f1)]">
+    <div className="min-h-screen bg-slate-100">
       {children}
     </div>
   )
 }
 
-function MetricCard({ label, value, icon: Icon }) {
+function MetricCard({ label, value }) {
   return (
     <div className="rounded-3xl border border-emerald-100 bg-white p-5 shadow-lg shadow-emerald-950/5">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="mb-4">
         <p className="text-sm font-medium text-emerald-900/70">{label}</p>
-        <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
-          <Icon size={18} />
-        </span>
       </div>
       <p className="text-3xl font-black text-emerald-950">{value}</p>
     </div>
@@ -517,12 +577,57 @@ function SelectField({ label, options, ...props }) {
   )
 }
 
-function ActionButton({ icon: Icon, label, onClick }) {
+function PhoneField({ codigoPais, telefono, onChange }) {
+  return (
+    <fieldset className="flex flex-col gap-2 text-sm font-medium text-emerald-950">
+      <legend className="mb-2">Teléfono</legend>
+      <div className="grid grid-cols-[minmax(145px,0.8fr)_1fr] gap-2">
+        <select name="codigo_pais" value={codigoPais} onChange={onChange} aria-label="País" className="min-w-0 rounded-2xl border border-emerald-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200">
+          {COUNTRY_OPTIONS.map((country) => (
+            <option key={country.code} value={country.code}>{country.flag} {country.name} ({country.code})</option>
+          ))}
+        </select>
+        <input
+          name="telefono"
+          type="tel"
+          inputMode="numeric"
+          value={telefono}
+          onChange={(event) => {
+            event.target.value = event.target.value.replace(/\D/g, '').slice(0, 15)
+            onChange(event)
+          }}
+          maxLength={15}
+          aria-label="Número de teléfono"
+          className="min-w-0 rounded-2xl border border-emerald-200 bg-white px-4 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
+        />
+      </div>
+    </fieldset>
+  )
+}
+
+function StatusConfirmationModal({ user, saving, onCancel, onConfirm }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="status-confirmation-title" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
+        <h3 id="status-confirmation-title" className="text-lg font-bold text-slate-950">¿Estás seguro de desactivar el usuario?</h3>
+        <p className="mt-2 text-sm text-slate-600">{user.nombreCompleto} no podrá iniciar sesión hasta que vuelvas a activarlo.</p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" onClick={onCancel} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">Cancelar</button>
+          <button type="button" onClick={onConfirm} disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">{saving ? 'Desactivando...' : 'Desactivar'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ActionButton({ icon: Icon, label, onClick, disabled = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-50"
+      disabled={disabled}
+      title={disabled ? 'No puedes desactivar tu sesión actual' : undefined}
+      className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-400"
     >
       <Icon size={14} />
       {label}
@@ -533,11 +638,10 @@ function ActionButton({ icon: Icon, label, onClick }) {
 function Modal({ title, children, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
-      <div className="w-full max-w-3xl rounded-3xl border border-emerald-100 bg-white p-6 shadow-2xl shadow-emerald-950/20">
+      <div className="w-full max-w-3xl rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-bold text-emerald-950">{title}</h3>
-            <p className="text-sm text-emerald-900/65">Actualiza la información del usuario seleccionado.</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-full border border-emerald-200 px-3 py-1 text-sm font-semibold text-emerald-800">
             Cerrar

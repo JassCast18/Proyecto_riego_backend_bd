@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, register } from "../controllers/auth.controller.js";
+import { login, register, requestPasswordReset, resetPassword, validatePasswordReset } from "../controllers/auth.controller.js";
 import {
 	createUser,
 	listRoles,
@@ -14,6 +14,9 @@ import { verifyToken } from "../middlewares/jwt.middleware.js";
 const router = Router();
 
 router.post("/login",login);
+router.post("/forgot-password", requestPasswordReset);
+router.get("/reset-password/validate", validatePasswordReset);
+router.post("/reset-password", resetPassword);
 router.post("/register", verifyToken, register);
 router.get("/manage", verifyToken, listUsers);
 router.get("/manage/roles", verifyToken, listRoles);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { ArrowLeftRight, Database, PlusCircle, PencilLine, RefreshCcw, Trash2 } from 'lucide-react'
+import { ArrowLeftRight, PlusCircle, PencilLine, RefreshCcw, Trash2 } from 'lucide-react'
 import {
   createMasterRecordRequest,
   deleteMasterRecordRequest,
@@ -8,6 +8,7 @@ import {
   updateMasterRecordRequest,
 } from '../../auth/masters.service'
 import { useAuth } from '@/context/useAuth.js'
+import { useToast } from '@/context/useToast.js'
 
 const MASTER_DEFINITIONS = [
   {
@@ -88,7 +89,7 @@ const MASTER_DEFINITIONS = [
       { name: 'tb_sector_id', label: 'Sector', type: 'select', source: 'sector', placeholder: 'Selecciona un sector' },
       { name: 'tipo_nodo', label: 'Tipo de nodo', type: 'text', placeholder: 'Ej. ESP32 maestro' },
       { name: 'direccion_mac', label: 'Dirección MAC', type: 'text', placeholder: 'AA:BB:CC:DD:EE:FF' },
-      { name: 'estado_energia', label: 'Estado de energía', type: 'text', placeholder: 'Encendido / Apagado' },
+      { name: 'estado_energia', label: 'Estado de energía', type: 'toggle', defaultValue: 'ENCENDIDO' },
     ],
   },
   {
@@ -133,7 +134,7 @@ function buildDisplayValue(masterKey, record) {
 
 function getDefaultForm(definition) {
   return definition.fields.reduce((accumulator, field) => {
-    accumulator[field.name] = ''
+    accumulator[field.name] = field.defaultValue ?? ''
     return accumulator
   }, { id: null })
 }
@@ -150,6 +151,7 @@ export function DataMastersContent() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const toast = useToast()
   const permissions = useMemo(() => new Set(user?.permisos || []), [user?.permisos])
 
   const visibleMasters = useMemo(
@@ -171,6 +173,20 @@ export function DataMastersContent() {
   const [form, setForm] = useState(getDefaultForm(currentDefinition))
   const [editingId, setEditingId] = useState(null)
   const [pendingDeleteRecord, setPendingDeleteRecord] = useState(null)
+
+  useEffect(() => {
+    if (message) {
+      toast.success(message)
+      setMessage('')
+    }
+  }, [message, toast])
+
+  useEffect(() => {
+    if (error) {
+      toast.error(error)
+      setError('')
+    }
+  }, [error, toast])
 
   useEffect(() => {
     setForm(getDefaultForm(currentDefinition))
@@ -340,7 +356,7 @@ export function DataMastersContent() {
   }
 
   return (
-    <section className="min-h-[calc(100vh-8rem)] rounded-4xl border border-slate-200 bg-[radial-gradient(circle_at_top_left,#e0f2fe,transparent_24%),linear-gradient(180deg,#f8fbff,#edf6ff)] p-4 shadow-xl shadow-slate-900/5 md:p-6">
+    <section className="min-h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm md:p-6">
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-600">Datos maestros</p>
@@ -368,20 +384,8 @@ export function DataMastersContent() {
         </div>
       </div>
 
-      {message ? (
-        <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
-          {message}
-        </div>
-      ) : null}
-
-      {error ? (
-        <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {error}
-        </div>
-      ) : null}
-
       <div className="grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[1.75rem] border border-white/70 bg-white/90 p-5 shadow-lg shadow-slate-900/5 backdrop-blur">
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-xl font-bold text-slate-950">{currentDefinition.label}</h2>
@@ -451,7 +455,7 @@ export function DataMastersContent() {
           </div>
         </div>
 
-        <div className="rounded-[1.75rem] border border-slate-200 bg-slate-950 p-5 text-white shadow-lg shadow-slate-900/10">
+        <div className="rounded-xl border border-slate-200 bg-slate-900 p-5 text-white shadow-sm">
           <div className="mb-5 flex items-center gap-3">
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-cyan-300">
               {editingId ? <ArrowLeftRight size={22} /> : <PlusCircle size={22} />}
@@ -515,6 +519,8 @@ export function DataMastersContent() {
 }
 
 function Field({ field, value, onChange, options }) {
+  const isEnabled = String(value).toUpperCase() === 'ENCENDIDO'
+
   return (
     <label className="flex flex-col gap-2 text-sm font-medium text-white">
       <span>{field.label}</span>
@@ -532,6 +538,31 @@ function Field({ field, value, onChange, options }) {
             </option>
           ))}
         </select>
+      ) : field.type === 'toggle' ? (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isEnabled}
+          onClick={() => onChange({
+            target: {
+              name: field.name,
+              value: isEnabled ? 'APAGADO' : 'ENCENDIDO',
+            },
+          })}
+          className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 transition hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
+        >
+          <span className={isEnabled ? 'text-emerald-300' : 'text-slate-300'}>
+            {isEnabled ? 'Encendido' : 'Apagado'}
+          </span>
+          <span
+            aria-hidden="true"
+            className={`relative h-7 w-12 rounded-full transition-colors ${isEnabled ? 'bg-emerald-500' : 'bg-slate-600'}`}
+          >
+            <span
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`}
+            />
+          </span>
+        </button>
       ) : (
         <input
           name={field.name}
@@ -561,8 +592,8 @@ function ActionButton({ icon: Icon, label, onClick }) {
 
 function DeleteConfirmationModal({ title, displayValue, saving, onCancel, onConfirm }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 backdrop-blur-[2px]">
-      <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl shadow-slate-950/25">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4">
+      <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-lg">
         <div className="mb-4 flex items-start gap-3">
           <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-rose-100 text-rose-700">
             <Trash2 size={20} />

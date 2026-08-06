@@ -1,16 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Leaf, LogOut, X } from "lucide-react";
+import { ChevronDown, Leaf, X } from "lucide-react";
 import { navGroups } from "./nav-items";
 import { useAuth } from "@/context/useAuth.js";
 
 export function Sidebar({ open, onClose }) {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [expanded, setExpanded] = useState({});
   const permissions = useMemo(() => new Set(user?.permisos || []), [user?.permisos]);
-
-  const displayName = user?.nombreCompleto || user?.correoElectronico || "Usuario";
 
   const visibleGroups = useMemo(() => {
     if (permissions.size === 0) {
@@ -210,21 +208,6 @@ export function Sidebar({ open, onClose }) {
             </div>
           ))}
         </nav>
-
-        {/* Footer */}
-        <div className="border-t border-gray-800 p-3">
-          <button
-            type="button"
-            onClick={logout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-gray-300 transition hover:bg-gray-800 hover:text-white"
-          >
-            <LogOut size={18} />
-            <span className="flex flex-col leading-tight">
-              <span>Cerrar sesión</span>
-              <span className="text-xs text-gray-500">{displayName}</span>
-            </span>
-          </button>
-        </div>
       </aside>
     </>
   );

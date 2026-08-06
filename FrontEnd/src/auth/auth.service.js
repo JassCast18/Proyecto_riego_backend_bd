@@ -50,3 +50,30 @@ export async function listPermissionsRequest() {
     throw new Error(getApiErrorMessage(error, 'No fue posible consultar los permisos.'))
   }
 }
+
+export async function forgotPasswordRequest(correoElectronico) {
+  try {
+    const response = await api.post('/users/forgot-password', { correo_electronico: correoElectronico })
+    return response.data?.message
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible solicitar la recuperación.'))
+  }
+}
+
+export async function validateResetTokenRequest(token) {
+  try {
+    const response = await api.get('/users/reset-password/validate', { params: { token } })
+    return Boolean(response.data?.data?.valido)
+  } catch {
+    return false
+  }
+}
+
+export async function resetPasswordRequest({ token, password }) {
+  try {
+    const response = await api.post('/users/reset-password', { token, password })
+    return response.data?.message
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible restablecer la contraseña.'))
+  }
+}
