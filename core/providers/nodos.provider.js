@@ -11,8 +11,8 @@ function normalizeEvaluation(row = {}) {
     };
 }
 
-export const listHardwareNodes = async () => {
-    const rows = await DatabaseExecutor.executeFunction("fn_listar_nodos_hardware", []);
+export const listHardwareNodes = async (projectId = null) => {
+    const rows = await DatabaseExecutor.executeFunction("fn_listar_nodos_hardware", [projectId]);
 
     const evaluations = await Promise.all(
         rows.map(async (node) => {
@@ -37,6 +37,6 @@ export const listHardwareNodes = async () => {
     return evaluations;
 };
 
-export const updateNodeEnergyState = async ({ id, estadoEnergia }) => {
-    await DatabaseExecutor.executeProcedure("sp_actualizar_estado_energia_nodo", [id, estadoEnergia]);
+export const updateNodeEnergyState = async ({ id, estadoEnergia, projectId }) => {
+    await DatabaseExecutor.executeProcedure("sp_actualizar_estado_energia_nodo", [id, estadoEnergia, projectId]);
 };

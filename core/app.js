@@ -5,6 +5,7 @@ import telemetriaRoutes from "./routes/telemetria.route.js";
 import masterDataRoutes from "./routes/master-data.routes.js";
 import nodosRoutes from "./routes/nodos.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
+import projectsRoutes from "./routes/projects.routes.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -18,6 +19,7 @@ app.use("/api/telemetria", telemetriaRoutes);
 app.use("/api/masters", masterDataRoutes);
 app.use("/api/nodos", nodosRoutes);
 app.use("/api/notificaciones", notificationsRoutes);
+app.use("/api/proyectos", projectsRoutes);
 app.get("/", (req,res)=>{
     res.json({
         message:"API funcionando"

@@ -31,7 +31,9 @@ export const register = async ({
     telefono,
     password,
     tb_rol_id = 2,
-    cod_usuario_registro = 1
+    cod_usuario_registro = 1,
+    projectId = null,
+    projectAdministratorId = null
 }) => {
     const passwordHash = await encryptPassword(password);
 
@@ -46,17 +48,19 @@ export const register = async ({
             telefono || null,
             passwordHash,
             tb_rol_id,
-            cod_usuario_registro
+            cod_usuario_registro,
+            projectId,
+            projectAdministratorId
         ]
     );
 
     return await login(correo_electronico);
 };
 
-export const listUsers = async (search = "") => {
+export const listUsers = async (search = "", projectId, scope = "project") => {
     const rows = await DatabaseExecutor.executeFunction(
         "fn_listar_usuarios",
-        [search]
+        [search, projectId, scope]
     );
 
     return rows.map((row) => new Usuario(row).toAdminResponse());
@@ -66,8 +70,14 @@ export const listRoles = async () => {
     return await DatabaseExecutor.executeFunction("fn_listar_roles", []);
 };
 
-export const createUser = async (payload) => {
-    return await register(payload);
+export const createUser = async ({ projectId, projectAdministratorId, ...payload }) => {
+    return await register({ ...payload, projectId, projectAdministratorId });
+};
+
+export const changeProjectMembership = async ({ projectId, userId, active, roleId, administratorId }) => {
+    await DatabaseExecutor.executeProcedure("sp_cambiar_estado_usuario_proyecto", [
+        projectId, userId, active, roleId || null, administratorId,
+    ]);
 };
 
 export const updateUser = async ({
@@ -77,6 +87,7 @@ export const updateUser = async ({
     correo_electronico,
     codigo_pais,
     telefono,
+    projectId,
     tb_rol_id,
     sn_activo,
     cod_usuario_modifica = 1
@@ -90,6 +101,7 @@ export const updateUser = async ({
             correo_electronico.trim().toLowerCase(),
             codigo_pais || null,
             telefono || null,
+            projectId,
             tb_rol_id,
             sn_activo,
             cod_usuario_modifica

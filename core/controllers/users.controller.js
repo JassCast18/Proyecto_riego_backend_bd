@@ -28,7 +28,8 @@ function handleUserError(res, error) {
 export const listUsers = async (req, res) => {
     try {
         const search = req.query.search || "";
-        const users = await provider.listUsers(search);
+        const scope = req.query.scope === "global" ? "global" : "project";
+        const users = await provider.listUsers(search, req.projectId, scope);
 
         return res.status(200).json(
             ResponseModel.ok({ usuarios: users }, "Usuarios consultados correctamente.")
@@ -85,6 +86,8 @@ export const createUser = async (req, res) => {
             password,
             tb_rol_id,
             cod_usuario_registro: getCurrentUserId(req),
+            projectId: req.projectId,
+            projectAdministratorId: getCurrentUserId(req),
         });
 
         return res.status(201).json(
@@ -127,6 +130,7 @@ export const updateUser = async (req, res) => {
             correo_electronico,
             codigo_pais,
             telefono,
+            projectId: req.projectId,
             tb_rol_id: Number(tb_rol_id),
             sn_activo: Boolean(sn_activo),
             cod_usuario_modifica: getCurrentUserId(req),
@@ -186,5 +190,30 @@ export const updateStatus = async (req, res) => {
         return res.status(200).json(ResponseModel.ok(null, "Estado de usuario actualizado correctamente."));
     } catch (error) {
         return res.status(500).json(ResponseModel.fail(error.message));
+    }
+};
+
+export const changeProjectMembership = async (req, res) => {
+    try {
+        const userId = Number(req.params.id);
+        const active = req.body?.activo;
+        const roleId = Number(req.body?.rolId || 2);
+        if (!userId || typeof active !== "boolean") {
+            return res.status(400).json(ResponseModel.fail("Usuario y estado de asignación son obligatorios.", null, 400));
+        }
+        if (userId === Number(req.user.id) && !active) {
+            return res.status(400).json(ResponseModel.fail("No puedes retirarte del proyecto desde esta opción.", null, 400));
+        }
+
+        await provider.changeProjectMembership({
+            projectId: req.projectId,
+            userId,
+            active,
+            roleId,
+            administratorId: getCurrentUserId(req),
+        });
+        return res.status(200).json(ResponseModel.ok(null, active ? "Usuario agregado al proyecto." : "Usuario retirado del proyecto."));
+    } catch (error) {
+        return handleUserError(res, error);
     }
 };

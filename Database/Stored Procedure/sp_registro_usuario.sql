@@ -1,4 +1,6 @@
 DROP PROCEDURE IF EXISTS sp_registro_usuario(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, INTEGER, INTEGER);
+DROP PROCEDURE IF EXISTS sp_registro_usuario(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, INTEGER, INTEGER);
+DROP PROCEDURE IF EXISTS sp_registro_usuario(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR, INTEGER, INTEGER, INTEGER, INTEGER);
 
 CREATE OR REPLACE PROCEDURE sp_registro_usuario(
     IN p_nombres VARCHAR,
@@ -9,7 +11,9 @@ CREATE OR REPLACE PROCEDURE sp_registro_usuario(
     IN p_telefono VARCHAR,
     IN p_password_hash VARCHAR,
     IN p_tb_rol_id INTEGER DEFAULT 2,
-    IN p_cod_usuario_registro INTEGER DEFAULT 1
+    IN p_cod_usuario_registro INTEGER DEFAULT 1,
+    IN p_proyecto_id INTEGER DEFAULT NULL,
+    IN p_usuario_admin_proyecto_id INTEGER DEFAULT NULL
 )
 LANGUAGE plpgsql
 AS
@@ -19,6 +23,7 @@ DECLARE
     v_username VARCHAR;
     v_codigo_pais VARCHAR;
     v_telefono VARCHAR;
+    v_usuario_id INTEGER;
 BEGIN
     v_username := lower(COALESCE(NULLIF(trim(p_username), ''), split_part(p_correo_electronico, '@', 1)));
     v_codigo_pais := NULLIF(trim(p_codigo_pais), '');
@@ -43,7 +48,7 @@ BEGIN
         RAISE EXCEPTION 'El número de teléfono ya está registrado.';
     END IF;
 
-    IF NOT EXISTS (SELECT 1 FROM tb_rol WHERE id = p_tb_rol_id) THEN
+    IF p_proyecto_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM tb_rol WHERE id = p_tb_rol_id) THEN
         RAISE EXCEPTION 'El rol seleccionado no existe.';
     END IF;
 
@@ -63,7 +68,6 @@ BEGIN
 
     INSERT INTO tb_usuario (
         tb_persona_id,
-        tb_rol_id,
         correo_electronico,
         username,
         codigo_pais,
@@ -75,7 +79,6 @@ BEGIN
     )
     VALUES (
         v_persona_id,
-        p_tb_rol_id,
         lower(trim(p_correo_electronico)),
         v_username,
         v_codigo_pais,
@@ -84,6 +87,25 @@ BEGIN
         TRUE,
         p_cod_usuario_registro,
         NOW()
-    );
+    ) RETURNING id INTO v_usuario_id;
+
+    IF p_proyecto_id IS NOT NULL THEN
+        IF NOT EXISTS (
+            SELECT 1 FROM tb_usuario_rol
+            WHERE tb_proyecto_id=p_proyecto_id
+              AND tb_usuario_id=p_usuario_admin_proyecto_id
+              AND sn_activo=TRUE
+              AND tb_rol_id=1
+        ) THEN
+            RAISE EXCEPTION 'No tienes permiso para crear usuarios en este proyecto.';
+        END IF;
+
+        INSERT INTO tb_usuario_rol (
+            tb_usuario_id,tb_proyecto_id,tb_rol_id,sn_activo,
+            cod_usuario_registro
+        ) VALUES (
+            v_usuario_id,p_proyecto_id,p_tb_rol_id,TRUE,p_usuario_admin_proyecto_id
+        );
+    END IF;
 END;
 $$;

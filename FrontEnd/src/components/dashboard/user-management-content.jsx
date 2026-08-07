@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Eye, KeyRound, PencilLine, Search, Shield } from 'lucide-react'
+import { Eye, KeyRound, PencilLine, Search, Shield, UserMinus, UserPlus } from 'lucide-react'
 import {
   createUserRequest,
+  changeProjectMembershipRequest,
   listRolesRequest,
   listUsersRequest,
   updatePasswordRequest,
@@ -57,6 +58,7 @@ export function UserManagementContent() {
   const [users, setUsers] = useState([])
   const [roles, setRoles] = useState([])
   const [search, setSearch] = useState('')
+  const [scope, setScope] = useState('project')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState(INITIAL_FORM)
@@ -65,6 +67,8 @@ export function UserManagementContent() {
   const [editOpen, setEditOpen] = useState(false)
   const [passwordOpen, setPasswordOpen] = useState(false)
   const [pendingStatusUser, setPendingStatusUser] = useState(null)
+  const [pendingMembershipUser, setPendingMembershipUser] = useState(null)
+  const [membershipRoleId, setMembershipRoleId] = useState('2')
 
   const roleOptions = useMemo(() => {
     if (roles.length > 0) {
@@ -81,7 +85,7 @@ export function UserManagementContent() {
   const loadUsers = async (value = search) => {
     setLoading(true)
     try {
-      const response = await listUsersRequest(value)
+      const response = await listUsersRequest(value, scope)
       setUsers(response)
     } catch (requestError) {
       toast.error(requestError.message)
@@ -124,7 +128,7 @@ export function UserManagementContent() {
     }, 250)
 
     return () => clearTimeout(delay)
-  }, [search, currentSection])
+  }, [search, currentSection, scope])
 
   const handleFormChange = (event) => {
     const { name, value } = event.target
@@ -298,6 +302,29 @@ export function UserManagementContent() {
     toggleStatus(user)
   }
 
+  const requestMembershipChange = (user) => {
+    setMembershipRoleId(String(user.tbRolProyectoId || user.tbRolId || 2))
+    setPendingMembershipUser(user)
+  }
+
+  const changeMembership = async () => {
+    if (!pendingMembershipUser) return
+    setSaving(true)
+    try {
+      await changeProjectMembershipRequest(pendingMembershipUser.id, {
+        activo: !pendingMembershipUser.asignadoProyecto,
+        rolId: Number(membershipRoleId),
+      })
+      toast.success(pendingMembershipUser.asignadoProyecto ? 'Usuario retirado del proyecto.' : 'Usuario agregado al proyecto.')
+      setPendingMembershipUser(null)
+      await loadUsers(search)
+    } catch (submitError) {
+      toast.error(submitError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const activeUsers = users.filter((user) => user.snActivo).length
   const inactiveUsers = users.length - activeUsers
 
@@ -374,7 +401,11 @@ export function UserManagementContent() {
             <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <h2 className="text-xl font-bold text-emerald-950">Listado de usuarios</h2>
-                <p className="text-sm text-emerald-900/65">Busca, edita y cambia contraseñas desde aquí.</p>
+                <p className="text-sm text-emerald-900/65">Consulta miembros del proyecto o usuarios globales.</p>
+                <div className="mt-3 inline-flex rounded-xl border border-emerald-200 bg-emerald-50 p-1">
+                  <button type="button" onClick={() => setScope('project')} className={`rounded-lg px-3 py-2 text-xs font-bold ${scope === 'project' ? 'bg-emerald-700 text-white' : 'text-emerald-800'}`}>Usuarios del proyecto</button>
+                  <button type="button" onClick={() => setScope('global')} className={`rounded-lg px-3 py-2 text-xs font-bold ${scope === 'global' ? 'bg-emerald-700 text-white' : 'text-emerald-800'}`}>Usuarios globales</button>
+                </div>
               </div>
 
               <div className="relative w-full lg:max-w-md">
@@ -430,7 +461,11 @@ export function UserManagementContent() {
                             <div>{user.correoElectronico}</div>
                             {user.telefono ? <div className="mt-1 text-xs text-emerald-900/55">{user.codigoPais} {user.telefono}</div> : null}
                           </td>
-                          <td className="px-4 py-4 text-emerald-900/80">{user.rol}</td>
+                          <td className="px-4 py-4 text-emerald-900/80">
+                            <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${user.asignadoProyecto ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
+                              {user.asignadoProyecto ? (user.rolProyecto || user.rol || 'Asignado') : 'No existe rol'}
+                            </span>
+                          </td>
                           <td className="px-4 py-4">
                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${user.snActivo ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
                               {user.snActivo ? 'Activo' : 'Inactivo'}
@@ -445,6 +480,12 @@ export function UserManagementContent() {
                                 label={user.snActivo ? 'Desactivar' : 'Activar'}
                                 onClick={() => requestStatusChange(user)}
                                 disabled={isCurrentUser}
+                              />
+                              <ActionButton
+                                icon={user.asignadoProyecto ? UserMinus : UserPlus}
+                                label={user.asignadoProyecto ? 'Quitar del proyecto' : 'Agregar al proyecto'}
+                                onClick={() => requestMembershipChange(user)}
+                                disabled={isCurrentUser && user.asignadoProyecto}
                               />
                             </div>
                           </td>
@@ -522,6 +563,18 @@ export function UserManagementContent() {
           saving={saving}
           onCancel={() => setPendingStatusUser(null)}
           onConfirm={() => toggleStatus(pendingStatusUser)}
+        />
+      ) : null}
+
+      {pendingMembershipUser ? (
+        <MembershipConfirmationModal
+          user={pendingMembershipUser}
+          roles={roleOptions}
+          roleId={membershipRoleId}
+          onRoleChange={setMembershipRoleId}
+          saving={saving}
+          onCancel={() => setPendingMembershipUser(null)}
+          onConfirm={changeMembership}
         />
       ) : null}
     </DashboardFrame>
@@ -602,6 +655,23 @@ function PhoneField({ codigoPais, telefono, onChange }) {
         />
       </div>
     </fieldset>
+  )
+}
+
+function MembershipConfirmationModal({ user, roles, roleId, onRoleChange, saving, onCancel, onConfirm }) {
+  const adding = !user.asignadoProyecto
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+      <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
+        <h3 className="text-lg font-bold text-slate-950">¿Estás seguro de {adding ? 'agregar' : 'quitar'} este usuario {adding ? 'al' : 'del'} proyecto?</h3>
+        <p className="mt-2 text-sm text-slate-600">{user.nombreCompleto} {adding ? 'podrá trabajar con la información del proyecto activo.' : 'perderá el acceso al proyecto, pero su cuenta global seguirá activa.'}</p>
+        {adding ? <label className="mt-4 block text-sm font-semibold text-slate-700">Rol dentro del proyecto<select value={roleId} onChange={(event) => onRoleChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5">{roles.map((role) => <option key={role.id} value={role.id}>{role.nombre_rol}</option>)}</select></label> : null}
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" onClick={onCancel} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cancelar</button>
+          <button type="button" onClick={onConfirm} disabled={saving} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${adding ? 'bg-emerald-700' : 'bg-red-600'}`}>{saving ? 'Guardando...' : adding ? 'Agregar' : 'Quitar'}</button>
+        </div>
+      </div>
+    </div>
   )
 }
 

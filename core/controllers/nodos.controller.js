@@ -1,9 +1,9 @@
 import ResponseModel from "../models/response.model.js";
 import { listHardwareNodes, updateNodeEnergyState } from "../providers/nodos.provider.js";
 
-export const listHardwareState = async (_req, res) => {
+export const listHardwareState = async (req, res) => {
     try {
-        const nodos = await listHardwareNodes();
+        const nodos = await listHardwareNodes(req.projectId);
 
         return res.status(200).json(
             ResponseModel.ok({ nodos }, "Estado de hardware consultado correctamente.")
@@ -25,6 +25,7 @@ export const switchNodeEnergy = async (req, res) => {
         await updateNodeEnergyState({
             id: Number(id),
             estadoEnergia: String(estado_energia).toUpperCase(),
+            projectId: req.projectId,
         });
 
         return res.status(200).json(

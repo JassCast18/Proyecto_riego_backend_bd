@@ -8,6 +8,8 @@ import HardwareStatusPage from './pages/HardwareStatusPage.jsx'
 import NotificationsPage from './pages/NotificationsPage.jsx'
 import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
+import ProjectsPage from './pages/ProjectsPage.jsx'
+import CropParametersPage from './pages/CropParametersPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -17,10 +19,15 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/olvide-password" element={<ForgotPasswordPage />} />
       <Route path="/restablecer-password" element={<ResetPasswordPage />} />
+      <Route path="/proyectos" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+      <Route
+        path="/dashboard/parametrizacion-cultivo"
+        element={<ProtectedRoute requireProject requiredPermission="cultivo.view"><CropParametersPage /></ProtectedRoute>}
+      />
       <Route
         path="/dashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireProject>
             <DashboardPage />
           </ProtectedRoute>
         }
@@ -28,7 +35,7 @@ export default function App() {
       <Route
         path="/dashboard/usuarios/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireProject requiredPermission="usuarios.view">
             <UserManagementPage />
           </ProtectedRoute>
         }
@@ -36,7 +43,7 @@ export default function App() {
       <Route
         path="/dashboard/maestros/*"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireProject requiredPermission="datos_maestros.view">
             <DataMastersPage />
           </ProtectedRoute>
         }
@@ -44,7 +51,7 @@ export default function App() {
       <Route
         path="/dashboard/notificaciones"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireProject>
             <NotificationsPage />
           </ProtectedRoute>
         }
@@ -52,7 +59,7 @@ export default function App() {
       <Route
         path="/dashboard/hardware"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireProject>
             <HardwareStatusPage />
           </ProtectedRoute>
         }

@@ -19,7 +19,7 @@ export const listMasters = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Debe indicar el módulo maestro.", null, 400));
         }
 
-        const registros = await listMasterRecords(masterKey);
+        const registros = await listMasterRecords(masterKey, req.projectId);
 
         return res.status(200).json(
             ResponseModel.ok({ registros, masters: listMasterDefinitions() }, "Datos maestros consultados correctamente.")
@@ -38,7 +38,7 @@ export const createMaster = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Debe indicar el módulo maestro.", null, 400));
         }
 
-        await createMasterRecord(masterKey, payload);
+        await createMasterRecord(masterKey, payload, req.projectId);
 
         return res.status(201).json(ResponseModel.ok(null, "Registro creado correctamente.", 201));
     } catch (error) {
@@ -56,7 +56,7 @@ export const updateMaster = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Debe indicar el módulo maestro y el id del registro.", null, 400));
         }
 
-        await updateMasterRecord(masterKey, id, payload);
+        await updateMasterRecord(masterKey, id, payload, req.projectId);
 
         return res.status(200).json(ResponseModel.ok(null, "Registro actualizado correctamente."));
     } catch (error) {
@@ -73,7 +73,7 @@ export const removeMaster = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Debe indicar el módulo maestro y el id del registro.", null, 400));
         }
 
-        await deleteMasterRecord(masterKey, id);
+        await deleteMasterRecord(masterKey, id, req.projectId);
 
         return res.status(200).json(ResponseModel.ok(null, "Registro eliminado correctamente."));
     } catch (error) {

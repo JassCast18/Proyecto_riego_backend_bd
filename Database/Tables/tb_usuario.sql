@@ -18,12 +18,12 @@ BEGIN
         CREATE TABLE tb_usuario (
             id SERIAL PRIMARY KEY,
             tb_persona_id INT REFERENCES tb_persona(id),
-            tb_rol_id INT REFERENCES tb_rol(id),
             correo_electronico VARCHAR(100) NOT NULL,
             codigo_pais VARCHAR(5) NULL,
             telefono VARCHAR(20) NULL,
             password_hash VARCHAR(255) NOT NULL,
             sn_activo BOOLEAN NOT NULL,
+            sn_propietario SMALLINT NOT NULL DEFAULT 0,
             cod_usuario_registro INT NOT NULL,
             fecha_registra TIMESTAMP NOT NULL,
             cod_usuario_modifica INT NULL,
@@ -40,6 +40,16 @@ ADD COLUMN IF NOT EXISTS codigo_pais VARCHAR(5);
 
 ALTER TABLE tb_usuario
 ADD COLUMN IF NOT EXISTS telefono VARCHAR(20);
+
+ALTER TABLE tb_usuario
+ADD COLUMN IF NOT EXISTS sn_propietario SMALLINT NOT NULL DEFAULT 0;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname='ck_tb_usuario_propietario') THEN
+        ALTER TABLE tb_usuario ADD CONSTRAINT ck_tb_usuario_propietario
+        CHECK (sn_propietario IN (-1,0));
+    END IF;
+END $$;
 
 DO $$
 BEGIN

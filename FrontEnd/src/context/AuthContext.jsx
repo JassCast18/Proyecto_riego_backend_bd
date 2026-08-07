@@ -62,6 +62,7 @@ function persistSession({ token, user }) {
 function clearSession() {
   localStorage.removeItem(AUTH_TOKEN_KEY)
   localStorage.removeItem(AUTH_USER_KEY)
+  localStorage.removeItem('activeProject')
   window.dispatchEvent(new Event(AUTH_SESSION_EVENT))
 }
 

@@ -36,7 +36,7 @@ const modules = [
   },
   {
     icon: Sprout,
-    title: "Configuración de cultivo",
+    title: "Parametrización de cultivo",
     description:
       "Parametriza las etapas fenológicas y deja que el sistema se calibre de forma autónoma.",
   },

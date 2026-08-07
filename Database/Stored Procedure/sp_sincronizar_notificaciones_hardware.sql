@@ -1,4 +1,8 @@
+DROP PROCEDURE IF EXISTS sp_sincronizar_notificaciones_hardware(JSONB);
+DROP PROCEDURE IF EXISTS sp_sincronizar_notificaciones_hardware(INT, JSONB);
+
 CREATE OR REPLACE PROCEDURE sp_sincronizar_notificaciones_hardware(
+    IN p_proyecto_id INT,
     IN p_incidentes JSONB
 )
 LANGUAGE plpgsql
@@ -14,6 +18,7 @@ BEGIN
 
         INSERT INTO tb_notificacion (
             clave_evento,
+            tb_proyecto_id,
             tb_nodo_id,
             categoria,
             tipo,
@@ -24,6 +29,7 @@ BEGIN
         )
         VALUES (
             v_incidente->>'key',
+            p_proyecto_id,
             (v_incidente->>'nodeId')::INT,
             'HARDWARE',
             v_incidente->>'type',
@@ -46,6 +52,7 @@ BEGIN
         fecha_resolucion = NOW(),
         fecha_actualizacion = NOW()
     WHERE categoria = 'HARDWARE'
+      AND tb_proyecto_id = p_proyecto_id
       AND estado = 'ACTIVA'
       AND NOT (clave_evento = ANY(v_claves_activas));
 END;

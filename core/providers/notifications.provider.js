@@ -67,37 +67,37 @@ function buildHardwareIncidents(nodes) {
     return incidents;
 }
 
-export async function syncHardwareNotifications() {
-    const incidents = buildHardwareIncidents(await listHardwareNodes());
+export async function syncHardwareNotifications(projectId) {
+    const incidents = buildHardwareIncidents(await listHardwareNodes(projectId));
 
     await DatabaseExecutor.executeProcedure(
         "sp_sincronizar_notificaciones_hardware",
-        [JSON.stringify(incidents)],
+        [projectId, JSON.stringify(incidents)],
     );
 }
 
-export async function listNotifications({ userId, roleId, status = "all", limit = 50 }) {
+export async function listNotifications({ userId, roleId, projectId, status = "all", limit = 50 }) {
     const rows = await DatabaseExecutor.executeFunction(
         "fn_listar_notificaciones",
-        [userId, roleId, status, Math.min(Math.max(Number(limit) || 50, 1), 100)],
+        [userId, roleId, projectId, status, Math.min(Math.max(Number(limit) || 50, 1), 100)],
     );
 
     return rows.map((row) => new Notification(row).toResponse());
 }
 
-export async function markNotificationReviewed({ notificationId, userId, roleId }) {
+export async function markNotificationReviewed({ notificationId, userId, roleId, projectId }) {
     const rows = await DatabaseExecutor.executeFunction(
         "fn_marcar_notificacion_revisada",
-        [notificationId, userId, roleId],
+        [notificationId, userId, roleId, projectId],
     );
 
     return Boolean(rows[0]?.fn_marcar_notificacion_revisada);
 }
 
-export async function dismissNotification({ notificationId, userId, roleId }) {
+export async function dismissNotification({ notificationId, userId, roleId, projectId }) {
     const rows = await DatabaseExecutor.executeFunction(
         "fn_descartar_notificacion",
-        [notificationId, userId, roleId],
+        [notificationId, userId, roleId, projectId],
     );
 
     return Boolean(rows[0]?.fn_descartar_notificacion);

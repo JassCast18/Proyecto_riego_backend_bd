@@ -15,7 +15,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true })
+      navigate('/proyectos', { replace: true })
     }
   }, [isAuthenticated, navigate])
 
@@ -40,7 +40,7 @@ export default function LoginPage() {
         ...form,
         correo_electronico: form.correo_electronico.trim().toLowerCase(),
       })
-      navigate('/dashboard')
+      navigate('/proyectos')
     } catch (submitError) {
       setError(submitError.message)
     } finally {

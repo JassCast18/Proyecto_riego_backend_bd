@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, LogOut, Menu, Search } from "lucide-react";
+import { Bell, FolderKanban, LogOut, Menu, Search } from "lucide-react";
 import { useAuth } from "@/context/useAuth.js";
 import { listNotificationsRequest, reviewNotificationRequest } from "@/auth/notifications.service.js";
+import { getActiveProject } from "@/auth/projects.service.js";
 
 function formatNotificationTime(value) {
   if (!value) return "Ahora";
@@ -15,6 +16,7 @@ export function Topbar({ onMenuClick }) {
   const ref = useRef(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const activeProject = getActiveProject();
 
   const displayName = user?.nombreCompleto || user?.correoElectronico || "Rudy Castellanos";
   const displayRole = user?.rol || "Supervisor";
@@ -92,6 +94,10 @@ export function Topbar({ onMenuClick }) {
       </div>
 
       <div className="ml-auto flex items-center gap-3">
+        <button type="button" onClick={() => navigate('/proyectos')} title="Cambiar proyecto" className="hidden items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 md:flex">
+          <FolderKanban size={17} className="text-green-700" />
+          <span className="max-w-36 truncate">{activeProject?.nombre || 'Proyecto'}</span>
+        </button>
         {/* Notificaciones */}
         <div className="relative" ref={ref}>
           <button

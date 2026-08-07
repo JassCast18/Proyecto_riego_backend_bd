@@ -18,6 +18,12 @@ CREATE TABLE IF NOT EXISTS tb_notificacion (
     CONSTRAINT ck_notificacion_estado CHECK (estado IN ('ACTIVA', 'RESUELTA'))
 );
 
+ALTER TABLE tb_notificacion
+ADD COLUMN IF NOT EXISTS tb_proyecto_id INT REFERENCES tb_proyecto(id);
+
+CREATE INDEX IF NOT EXISTS ix_notificacion_proyecto_fecha
+ON tb_notificacion (tb_proyecto_id, fecha_actualizacion DESC);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_notificacion_evento_activo
 ON tb_notificacion (clave_evento)
 WHERE estado = 'ACTIVA';

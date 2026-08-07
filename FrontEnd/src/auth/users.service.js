@@ -9,10 +9,11 @@ function getApiErrorMessage(error, fallbackMessage) {
   )
 }
 
-export async function listUsersRequest(search = '') {
+export async function listUsersRequest(search = '', scope = 'project', projectId = null) {
   try {
     const response = await api.get('/users/manage', {
-      params: { search },
+      params: { search, scope },
+      headers: projectId ? { 'X-Project-Id': projectId } : undefined,
     })
 
     return response.data?.data?.usuarios || []
@@ -21,9 +22,9 @@ export async function listUsersRequest(search = '') {
   }
 }
 
-export async function listRolesRequest() {
+export async function listRolesRequest(projectId = null) {
   try {
-    const response = await api.get('/users/manage/roles')
+    const response = await api.get('/users/manage/roles', { headers: projectId ? { 'X-Project-Id': projectId } : undefined })
 
     return response.data?.data?.roles || []
   } catch (error) {
@@ -68,5 +69,16 @@ export async function updateStatusRequest(id, payload) {
     return response.data?.message || 'Estado actualizado correctamente.'
   } catch (error) {
     throw new Error(getApiErrorMessage(error, 'No fue posible actualizar el estado del usuario.'))
+  }
+}
+
+export async function changeProjectMembershipRequest(id, payload, projectId = null) {
+  try {
+    const response = await api.patch(`/users/manage/${id}/project`, payload, {
+      headers: projectId ? { 'X-Project-Id': projectId } : undefined,
+    })
+    return response.data?.message
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible cambiar la asignación al proyecto.'))
   }
 }

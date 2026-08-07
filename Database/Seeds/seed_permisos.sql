@@ -39,7 +39,7 @@ INSERT INTO tb_permiso (codigo_permiso, nombre_permiso, descripcion, tipo_permis
 VALUES
     ('dashboard.view', 'Ver resumen', 'Acceso al dashboard principal', 'modulo'),
     ('alertas.view', 'Ver alertas', 'Acceso a alertas y notificaciones', 'modulo'),
-    ('cultivo.view', 'Ver cultivo', 'Acceso a la configuración de cultivo', 'modulo'),
+    ('cultivo.view', 'Ver cultivo', 'Acceso a la parametrización de cultivo', 'modulo'),
     ('hardware.view', 'Ver hardware', 'Acceso al estado de hardware', 'modulo'),
     ('control_manual.view', 'Ver control manual', 'Acceso al control manual', 'modulo'),
     ('ia.view', 'Ver IA', 'Acceso al módulo de IA', 'modulo'),
@@ -91,7 +91,7 @@ INSERT INTO tb_permiso_modulo (tb_rol_id, tb_modulo_id, tb_permiso_id)
 SELECT 2, m.id, p.id
 FROM tb_modulo m
 INNER JOIN tb_permiso p ON p.codigo_permiso = m.codigo_modulo || '.view'
-WHERE m.codigo_modulo IN ('dashboard', 'alertas', 'cultivo', 'reportes', 'auditoria', 'usuarios', 'datos_maestros', 'soporte')
+WHERE m.codigo_modulo IN ('dashboard', 'alertas', 'cultivo', 'hardware', 'reportes', 'auditoria', 'soporte')
 ON CONFLICT DO NOTHING;
 
 INSERT INTO tb_permiso_submodulo (tb_rol_id, tb_submodulo_id, tb_permiso_id)
@@ -107,3 +107,12 @@ FROM tb_modulo m
 INNER JOIN tb_permiso p ON p.codigo_permiso = m.codigo_modulo || '.view'
 WHERE m.codigo_modulo IN ('dashboard', 'alertas', 'hardware', 'control_manual', 'soporte')
 ON CONFLICT DO NOTHING;
+
+-- Supervisor no administra usuarios ni catálogos maestros.
+DELETE FROM tb_permiso_submodulo WHERE tb_rol_id = 2;
+
+DELETE FROM tb_permiso_modulo pm
+USING tb_modulo m
+WHERE pm.tb_modulo_id = m.id
+  AND pm.tb_rol_id = 2
+  AND m.codigo_modulo IN ('usuarios', 'datos_maestros');

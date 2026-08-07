@@ -1,6 +1,10 @@
+DROP FUNCTION IF EXISTS fn_listar_notificaciones(INT, INT, VARCHAR, INT);
+DROP FUNCTION IF EXISTS fn_listar_notificaciones(INT, INT, INT, VARCHAR, INT);
+
 CREATE OR REPLACE FUNCTION fn_listar_notificaciones(
     p_usuario_id INT,
     p_rol_id INT,
+    p_proyecto_id INT,
     p_estado VARCHAR DEFAULT 'all',
     p_limite INT DEFAULT 50
 )
@@ -40,6 +44,7 @@ AS $$
       ON nu.tb_notificacion_id = n.id
      AND nu.tb_usuario_id = p_usuario_id
     WHERE (n.tb_rol_id IS NULL OR n.tb_rol_id = p_rol_id)
+      AND n.tb_proyecto_id = p_proyecto_id
       AND COALESCE(nu.descartada, FALSE) = FALSE
       AND (
           lower(COALESCE(p_estado, 'all')) = 'all'

@@ -6,6 +6,11 @@
 \i Tables/tb_permiso_modulo.sql
 \i Tables/tb_permiso_submodulo.sql
 \i Tables/tb_usuario.sql
+\i Tables/tb_proyecto.sql
+\i Tables/tb_usuario_rol.sql
+\i Tables/tb_cultivo.sql
+\i Tables/tb_proyecto_cultivo.sql
+\i Tables/tb_historial_parametrizacion_cultivo.sql
 \i Tables/tb_cliente.sql
 \i Tables/tb_finca.sql
 \i Tables/tb_usuario_finca.sql
@@ -35,6 +40,12 @@
 \i Functions/fn_descartar_notificacion.sql
 \i Functions/fn_buscar_usuario_recuperacion.sql
 \i Functions/fn_validar_token_recuperacion.sql
+\i Functions/fn_listar_proyectos_usuario.sql
+\i Functions/fn_listar_cultivos.sql
+\i Functions/fn_obtener_parametrizacion_cultivo.sql
+\i Functions/fn_listar_historial_parametrizacion.sql
+\i Functions/fn_validar_acceso_proyecto.sql
+\i Functions/fn_es_propietario.sql
 \i Stored Procedure/sp_actualizar_usuario.sql
 \i Stored Procedure/sp_actualizar_password_usuario.sql
 \i Stored Procedure/sp_actualizar_estado_usuario.sql
@@ -45,5 +56,12 @@
 \i Stored Procedure/sp_sincronizar_notificaciones_hardware.sql
 \i Stored Procedure/sp_crear_token_recuperacion.sql
 \i Stored Procedure/sp_restablecer_password.sql
+\i Stored Procedure/sp_crear_proyecto.sql
+\i Stored Procedure/sp_configurar_cultivo_proyecto.sql
+\i Stored Procedure/sp_crear_infraestructura_proyecto.sql
+\i Stored Procedure/sp_asignar_usuario_proyecto.sql
+\i Stored Procedure/sp_asignar_finca_proyecto.sql
+\i Stored Procedure/sp_cambiar_estado_usuario_proyecto.sql
+\i Stored Procedure/sp_cambiar_estado_proyecto.sql
 \i Functions/fn_login_usuario.sql
 \i Seeds/seed_permisos.sql

@@ -68,6 +68,7 @@ export const listTelemetriaHardware = async (req, res) => {
 
         const offset = (page - 1) * limit;
         const rows = await provider.listTelemetriaHardware({
+            projectId: req.projectId,
             idNodo: Number.isNaN(idNodo) ? null : idNodo,
             limit,
             offset,

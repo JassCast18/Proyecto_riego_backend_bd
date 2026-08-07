@@ -22,3 +22,6 @@ BEGIN
         );
     END IF;
 END $$;
+
+ALTER TABLE tb_finca
+ADD COLUMN IF NOT EXISTS tb_proyecto_id INT REFERENCES tb_proyecto(id);

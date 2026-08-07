@@ -29,9 +29,9 @@ export const navGroups = [
         permissionKey: "alertas.view",
       },
       {
-        label: "Configuración de cultivo",
+        label: "Parametrización de cultivo",
         icon: Sprout,
-        href: "#",
+        href: "/dashboard/parametrizacion-cultivo",
         permissionKey: "cultivo.view",
       },
     ],

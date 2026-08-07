@@ -8,10 +8,11 @@ import {
 
 export async function getNotifications(req, res) {
     try {
-        await syncHardwareNotifications();
+        await syncHardwareNotifications(req.projectId);
         const notifications = await listNotifications({
             userId: req.user.id,
-            roleId: req.user.tbRolId,
+            roleId: req.projectRoleId,
+            projectId: req.projectId,
             status: req.query.status || "all",
             limit: req.query.limit,
         });
@@ -27,7 +28,8 @@ export async function reviewNotification(req, res) {
         const updated = await markNotificationReviewed({
             notificationId: Number(req.params.id),
             userId: req.user.id,
-            roleId: req.user.tbRolId,
+            roleId: req.projectRoleId,
+            projectId: req.projectId,
         });
 
         if (!updated) return res.status(404).json(ResponseModel.fail("La notificación no existe.", null, 404));
@@ -42,7 +44,8 @@ export async function removeNotification(req, res) {
         const dismissed = await dismissNotification({
             notificationId: Number(req.params.id),
             userId: req.user.id,
-            roleId: req.user.tbRolId,
+            roleId: req.projectRoleId,
+            projectId: req.projectId,
         });
 
         if (!dismissed) return res.status(400).json(ResponseModel.fail("Esta notificación no se puede eliminar mientras requiera atención.", null, 400));
