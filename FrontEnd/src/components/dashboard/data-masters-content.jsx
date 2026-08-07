@@ -6,6 +6,8 @@ import {
   deleteMasterRecordRequest,
   listMasterRecordsRequest,
   updateMasterRecordRequest,
+  getRoleAccessRequest,
+  saveRoleAccessRequest,
 } from '../../auth/masters.service'
 import { useAuth } from '@/context/useAuth.js'
 import { useToast } from '@/context/useToast.js'
@@ -68,6 +70,8 @@ const MASTER_DEFINITIONS = [
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'nombre_rol', label: 'Nombre del rol' },
+      { key: 'modulos_asignados', label: 'Módulos' },
+      { key: 'submodulos_asignados', label: 'Submódulos' },
     ],
     fields: [
       { name: 'nombre_rol', label: 'Nombre del rol', type: 'text', placeholder: 'Ej. Supervisor' },
@@ -173,6 +177,7 @@ export function DataMastersContent() {
   const [form, setForm] = useState(getDefaultForm(currentDefinition))
   const [editingId, setEditingId] = useState(null)
   const [pendingDeleteRecord, setPendingDeleteRecord] = useState(null)
+  const [roleModules, setRoleModules] = useState([])
 
   useEffect(() => {
     if (message) {
@@ -192,6 +197,9 @@ export function DataMastersContent() {
     setForm(getDefaultForm(currentDefinition))
     setEditingId(null)
     setPendingDeleteRecord(null)
+    if (currentDefinition.key === 'roles') {
+      getRoleAccessRequest().then(setRoleModules).catch((requestError) => setError(requestError.message))
+    }
   }, [currentDefinition.key])
 
   useEffect(() => {
@@ -277,7 +285,15 @@ export function DataMastersContent() {
         Object.entries(form).filter(([key, value]) => key !== 'id' && value !== ''),
       )
 
-      if (editingId) {
+      if (currentDefinition.key === 'roles') {
+        const accessPayload = {
+          nombre_rol: form.nombre_rol,
+          modulos: roleModules.filter((module) => module.seleccionado).map((module) => module.id),
+          submodulos: roleModules.flatMap((module) => module.submodulos || []).filter((submodule) => submodule.seleccionado).map((submodule) => submodule.id),
+        }
+        await saveRoleAccessRequest(editingId, accessPayload)
+        setMessage(editingId ? 'Rol y accesos actualizados correctamente.' : 'Rol y accesos creados correctamente.')
+      } else if (editingId) {
         await updateMasterRecordRequest(currentDefinition.key, editingId, payload)
         setMessage('Registro actualizado correctamente.')
       } else {
@@ -288,6 +304,7 @@ export function DataMastersContent() {
       await reloadAllData()
       setForm(getDefaultForm(currentDefinition))
       setEditingId(null)
+      if (currentDefinition.key === 'roles') setRoleModules(await getRoleAccessRequest())
     } catch (submitError) {
       setError(submitError.message)
     } finally {
@@ -295,7 +312,7 @@ export function DataMastersContent() {
     }
   }
 
-  const handleEdit = (record) => {
+  const handleEdit = async (record) => {
     const nextForm = getDefaultForm(currentDefinition)
 
     currentDefinition.fields.forEach((field) => {
@@ -307,6 +324,10 @@ export function DataMastersContent() {
     setEditingId(record.id)
     setMessage('')
     setError('')
+    if (currentDefinition.key === 'roles') {
+      try { setRoleModules(await getRoleAccessRequest(record.id)) }
+      catch (requestError) { setError(requestError.message) }
+    }
   }
 
   const openDeleteModal = (record) => {
@@ -353,6 +374,23 @@ export function DataMastersContent() {
     setEditingId(null)
     setMessage('')
     setError('')
+    if (currentDefinition.key === 'roles') getRoleAccessRequest().then(setRoleModules).catch((requestError) => setError(requestError.message))
+  }
+
+  const toggleRoleModule = (moduleId) => {
+    setRoleModules((current) => current.map((module) => {
+      if (module.id !== moduleId) return module
+      const selected = !module.seleccionado
+      return { ...module, seleccionado: selected, submodulos: selected ? module.submodulos : (module.submodulos || []).map((submodule) => ({ ...submodule, seleccionado: false })) }
+    }))
+  }
+
+  const toggleRoleSubmodule = (moduleId, submoduleId) => {
+    setRoleModules((current) => current.map((module) => module.id !== moduleId ? module : {
+      ...module,
+      seleccionado: true,
+      submodulos: (module.submodulos || []).map((submodule) => submodule.id === submoduleId ? { ...submodule, seleccionado: !submodule.seleccionado } : submodule),
+    }))
   }
 
   return (
@@ -360,7 +398,7 @@ export function DataMastersContent() {
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-600">Datos maestros</p>
-          <h1 className="mt-2 text-3xl font-black text-slate-950">ABM dinámico de catálogos</h1>
+          <h1 className="mt-2 text-3xl font-black text-slate-950">Información base del proyecto</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-700">
             Administra fincas, sectores, clientes, roles, nodos y sensores desde un mismo módulo.
           </p>
@@ -437,7 +475,7 @@ export function DataMastersContent() {
                               ? record[column.key]
                               : column.source
                                 ? buildDisplayValue(column.source, recordsByKey[column.source]?.find((optionRecord) => optionRecord.id === record[column.key])) || record[column.key] || '-'
-                                : record[column.key] || '-'}
+                                : record[column.key] ?? '-'}
                           </td>
                         ))}
                         <td className="px-4 py-4">
@@ -476,6 +514,8 @@ export function DataMastersContent() {
                 options={optionSets[field.source] || []}
               />
             ))}
+
+            {currentDefinition.key === 'roles' ? <RoleAccessSelector modules={roleModules} onToggleModule={toggleRoleModule} onToggleSubmodule={toggleRoleSubmodule} /> : null}
 
             <div className="flex justify-end gap-3 pt-2">
               {editingId ? (
@@ -516,6 +556,20 @@ export function DataMastersContent() {
       ) : null}
     </section>
   )
+}
+
+function RoleAccessSelector({ modules, onToggleModule, onToggleSubmodule }) {
+  const selectedCount = modules.filter((module) => module.seleccionado).length
+  return <fieldset className="space-y-3 border-t border-white/10 pt-4">
+    <div><legend className="font-bold text-white">Accesos del rol</legend><p className="mt-1 text-xs text-slate-400">Selecciona los módulos que podrá utilizar. Los submódulos permiten definir accesos más específicos.</p></div>
+    <p className="text-xs font-semibold text-cyan-300">{selectedCount} de {modules.length} módulos seleccionados</p>
+    <div className="max-h-[25rem] space-y-2 overflow-y-auto pr-1">
+      {modules.map((module) => <div key={module.id} className={`rounded-xl border p-3 ${module.seleccionado ? 'border-cyan-400 bg-slate-800' : 'border-white/10 bg-slate-950'}`}>
+        <label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={Boolean(module.seleccionado)} onChange={() => onToggleModule(module.id)} className="mt-1 h-4 w-4 accent-cyan-400" /><span><span className="block text-sm font-bold text-white">{module.nombre}</span>{module.descripcion ? <span className="block text-xs text-slate-400">{module.descripcion}</span> : null}</span></label>
+        {(module.submodulos || []).length ? <div className="ml-7 mt-3 grid gap-2 sm:grid-cols-2">{module.submodulos.map((submodule) => <label key={submodule.id} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-xs ${submodule.seleccionado ? 'border-cyan-400 bg-cyan-400 font-bold text-slate-950' : 'border-white/10 text-slate-300'}`}><input type="checkbox" checked={Boolean(submodule.seleccionado)} onChange={() => onToggleSubmodule(module.id, submodule.id)} className="h-3.5 w-3.5 accent-slate-950" />{submodule.nombre}</label>)}</div> : null}
+      </div>)}
+    </div>
+  </fieldset>
 }
 
 function Field({ field, value, onChange, options }) {

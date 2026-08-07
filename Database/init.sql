@@ -34,6 +34,7 @@
 \i Functions/fn_listar_telemetria_hardware.sql
 \i Functions/fn_evaluar_estado_nodo.sql
 \i Functions/fn_listar_permisos_rol.sql
+\i Functions/fn_obtener_accesos_rol.sql
 \i Functions/fn_listar_catalogo_abm.sql
 \i Functions/fn_listar_notificaciones.sql
 \i Functions/fn_marcar_notificacion_revisada.sql
@@ -63,5 +64,6 @@
 \i Stored Procedure/sp_asignar_finca_proyecto.sql
 \i Stored Procedure/sp_cambiar_estado_usuario_proyecto.sql
 \i Stored Procedure/sp_cambiar_estado_proyecto.sql
+\i Stored Procedure/sp_guardar_rol_permisos.sql
 \i Functions/fn_login_usuario.sql
 \i Seeds/seed_permisos.sql

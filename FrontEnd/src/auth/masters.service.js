@@ -48,3 +48,23 @@ export async function deleteMasterRecordRequest(masterKey, id) {
     throw new Error(getApiErrorMessage(error, 'No fue posible eliminar el registro.'))
   }
 }
+
+export async function getRoleAccessRequest(roleId = null) {
+  try {
+    const response = await api.get('/masters/roles/accesos/configuracion', { params: roleId ? { rolId: roleId } : undefined })
+    return response.data?.data?.modulos || []
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible consultar los accesos del rol.'))
+  }
+}
+
+export async function saveRoleAccessRequest(roleId, payload) {
+  try {
+    const response = roleId
+      ? await api.patch(`/masters/roles/accesos/${roleId}`, payload)
+      : await api.post('/masters/roles/accesos', payload)
+    return response.data?.message || 'Rol guardado correctamente.'
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible guardar el rol y sus accesos.'))
+  }
+}

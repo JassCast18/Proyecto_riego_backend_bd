@@ -78,3 +78,18 @@ export function listMasterDefinitions() {
         tableName: value.tableName,
     }));
 }
+
+export async function getRoleAccess(roleId = null) {
+    const rows = await DatabaseExecutor.executeFunction("fn_obtener_accesos_rol", [roleId]);
+    return rows[0]?.fn_obtener_accesos_rol || [];
+}
+
+export async function saveRoleAccess({ roleId, name, moduleIds, submoduleIds }) {
+    return DatabaseExecutor.executeProcedureWithResult("sp_guardar_rol_permisos", [
+        roleId || null,
+        name,
+        moduleIds || [],
+        submoduleIds || [],
+        null,
+    ]);
+}
