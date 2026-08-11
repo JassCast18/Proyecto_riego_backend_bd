@@ -10,6 +10,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
 import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import ProjectsPage from './pages/ProjectsPage.jsx'
 import CropParametersPage from './pages/CropParametersPage.jsx'
+import ReportsPage from './pages/ReportsPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -20,6 +21,10 @@ export default function App() {
       <Route path="/olvide-password" element={<ForgotPasswordPage />} />
       <Route path="/restablecer-password" element={<ResetPasswordPage />} />
       <Route path="/proyectos" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+      <Route
+        path="/dashboard/reportes/*"
+        element={<ProtectedRoute requireProject requiredPermission="reportes.view"><ReportsPage /></ProtectedRoute>}
+      />
       <Route
         path="/dashboard/parametrizacion-cultivo"
         element={<ProtectedRoute requireProject requiredPermission="cultivo.view"><CropParametersPage /></ProtectedRoute>}

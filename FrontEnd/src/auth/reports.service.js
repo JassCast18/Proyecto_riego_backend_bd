@@ -1,0 +1,7 @@
+import api from './api'
+const message=(error,fallback)=>error?.response?.data?.message||error?.message||fallback
+export async function listFieldReportsRequest(){try{return (await api.get('/reportes/informes')).data?.data?.informes||[]}catch(error){throw new Error(message(error,'No fue posible consultar los informes.'))}}
+export async function createFieldReportRequest(payload,files=[]){try{const form=new FormData();Object.entries(payload).forEach(([key,value])=>form.append(key,value??''));files.forEach(file=>form.append('archivos',file));return (await api.post('/reportes/informes',form)).data?.message}catch(error){throw new Error(message(error,'No fue posible registrar el informe.'))}}
+export async function listOperationalHistoryRequest(){try{return (await api.get('/reportes/historial')).data?.data?.historial||[]}catch(error){throw new Error(message(error,'No fue posible consultar el historial.'))}}
+export async function listCycleComparisonRequest(){try{return (await api.get('/reportes/comparacion-ciclos')).data?.data?.ciclos||[]}catch(error){throw new Error(message(error,'No fue posible comparar los ciclos.'))}}
+export async function openReportAttachmentRequest(attachment){try{const response=await api.get(`/reportes/adjuntos/${attachment.id}`,{responseType:'blob'});const url=URL.createObjectURL(response.data);const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.click();setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(error){throw new Error(message(error,'No fue posible abrir el archivo adjunto.'))}}

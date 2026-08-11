@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, CircleOff, ListFilter, Power, RefreshCcw, Wifi } from 'lucide-react'
 import { listHardwareStateRequest, listTelemetryHardwareRequest, switchNodeEnergyRequest } from '../../auth/hardware.service'
 import { useToast } from '@/context/useToast.js'
+import { getActiveProject,getCropParametersRequest } from '@/auth/projects.service.js'
 
 function getStatusTone(status) {
   const normalized = String(status || '').toUpperCase()
@@ -50,6 +51,7 @@ export function HardwareStatusContent() {
   const [error, setError] = useState('')
   const [pendingNode, setPendingNode] = useState(null)
   const [selectedNodeId, setSelectedNodeId] = useState(null)
+  const [cycle, setCycle] = useState(null)
   const [pagination, setPagination] = useState({ page: 1, limit: 15, totalRegistros: 0, totalPaginas: 0, idNodo: null })
 
   useEffect(() => {
@@ -103,6 +105,8 @@ export function HardwareStatusContent() {
 
   useEffect(() => {
     loadNodes()
+    const project=getActiveProject()
+    if(project?.id)getCropParametersRequest(project.id).then(setCycle).catch(error=>setError(error.message))
   }, [])
 
   useEffect(() => {
@@ -173,7 +177,8 @@ export function HardwareStatusContent() {
   const currentPage = pagination.page || 1
 
   return (
-    <section className="min-h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm md:p-6">
+    <section className={`min-h-[calc(100vh-8rem)] rounded-xl border p-4 shadow-sm md:p-6 ${cycle?.ciclo_id?'border-slate-200 bg-slate-50':'border-slate-300 bg-slate-200'}`}>
+      <div className={`mb-5 rounded-xl border px-4 py-3 ${cycle?.ciclo_id?'border-green-200 bg-green-50 text-green-900':'border-slate-300 bg-slate-300 text-slate-700'}`}><p className="text-xs font-black uppercase tracking-wide">Contexto de telemetría</p><p className="mt-1 font-bold">{cycle?.ciclo_id?`Plantación #${cycle.numero_ciclo} · ${cycle.cultivo}`:'Sin plantación activa · preparación o descanso del terreno'}</p></div>
       <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-600">Hardware</p>

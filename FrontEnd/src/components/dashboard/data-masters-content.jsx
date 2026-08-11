@@ -78,6 +78,46 @@ const MASTER_DEFINITIONS = [
     ],
   },
   {
+    key: 'modulos',
+    label: 'Módulos',
+    description: 'Secciones principales disponibles para asignar a los roles.',
+    permissionKey: 'modulos_catalogo.view',
+    columns: [
+      { key: 'id', label: 'ID' }, { key: 'codigo_modulo', label: 'Código' },
+      { key: 'nombre_modulo', label: 'Nombre' }, { key: 'ruta', label: 'Ruta' },
+      { key: 'sn_activo', label: 'Activo' },
+    ],
+    fields: [
+      { name: 'codigo_modulo', label: 'Código del módulo', type: 'text' },
+      { name: 'nombre_modulo', label: 'Nombre del módulo', type: 'text' },
+      { name: 'descripcion', label: 'Descripción', type: 'text' },
+      { name: 'icono', label: 'Nombre del icono', type: 'text' },
+      { name: 'ruta', label: 'Ruta', type: 'text' },
+      { name: 'orden', label: 'Orden', type: 'number', defaultValue: 1 },
+      { name: 'sn_activo', label: 'Estado del módulo', type: 'booleanToggle', defaultValue: true },
+    ],
+  },
+  {
+    key: 'submodulos',
+    label: 'Submódulos',
+    description: 'Opciones específicas que dependen de cada módulo.',
+    permissionKey: 'submodulos_catalogo.view',
+    columns: [
+      { key: 'id', label: 'ID' }, { key: 'tb_modulo_id', label: 'Módulo', source: 'modulos' },
+      { key: 'codigo_submodulo', label: 'Código' }, { key: 'nombre_submodulo', label: 'Nombre' },
+      { key: 'sn_activo', label: 'Activo' },
+    ],
+    fields: [
+      { name: 'tb_modulo_id', label: 'Módulo padre', type: 'select', source: 'modulos' },
+      { name: 'codigo_submodulo', label: 'Código del submódulo', type: 'text' },
+      { name: 'nombre_submodulo', label: 'Nombre del submódulo', type: 'text' },
+      { name: 'descripcion', label: 'Descripción', type: 'text' },
+      { name: 'ruta', label: 'Ruta', type: 'text' },
+      { name: 'orden', label: 'Orden', type: 'number', defaultValue: 1 },
+      { name: 'sn_activo', label: 'Estado del submódulo', type: 'booleanToggle', defaultValue: true },
+    ],
+  },
+  {
     key: 'nodos',
     label: 'Nodos',
     description: 'Nodos IoT conectados a cada sector.',
@@ -127,6 +167,10 @@ function buildDisplayValue(masterKey, record) {
       return `Cliente #${record.id} · ${record.nit || record.direccion || 'Sin dato'}`
     case 'roles':
       return record.nombre_rol || `Rol #${record.id}`
+    case 'modulos':
+      return record.nombre_modulo || `Módulo #${record.id}`
+    case 'submodulos':
+      return record.nombre_submodulo || `Submódulo #${record.id}`
     case 'nodos':
       return `Nodo #${record.id} · ${record.tipo_nodo || 'Sin tipo'}`
     case 'sensores':
@@ -475,7 +519,9 @@ export function DataMastersContent() {
                               ? record[column.key]
                               : column.source
                                 ? buildDisplayValue(column.source, recordsByKey[column.source]?.find((optionRecord) => optionRecord.id === record[column.key])) || record[column.key] || '-'
-                                : record[column.key] ?? '-'}
+                                : typeof record[column.key] === 'boolean'
+                                  ? (record[column.key] ? 'Sí' : 'No')
+                                  : record[column.key] ?? '-'}
                           </td>
                         ))}
                         <td className="px-4 py-4">
@@ -574,6 +620,7 @@ function RoleAccessSelector({ modules, onToggleModule, onToggleSubmodule }) {
 
 function Field({ field, value, onChange, options }) {
   const isEnabled = String(value).toUpperCase() === 'ENCENDIDO'
+  const isBooleanEnabled = value === true || String(value).toLowerCase() === 'true'
 
   return (
     <label className="flex flex-col gap-2 text-sm font-medium text-white">
@@ -592,28 +639,28 @@ function Field({ field, value, onChange, options }) {
             </option>
           ))}
         </select>
-      ) : field.type === 'toggle' ? (
+      ) : field.type === 'toggle' || field.type === 'booleanToggle' ? (
         <button
           type="button"
           role="switch"
-          aria-checked={isEnabled}
+          aria-checked={field.type === 'booleanToggle' ? isBooleanEnabled : isEnabled}
           onClick={() => onChange({
             target: {
               name: field.name,
-              value: isEnabled ? 'APAGADO' : 'ENCENDIDO',
+              value: field.type === 'booleanToggle' ? !isBooleanEnabled : (isEnabled ? 'APAGADO' : 'ENCENDIDO'),
             },
           })}
           className="flex items-center justify-between rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 transition hover:border-white/20 focus:outline-none focus:ring-2 focus:ring-cyan-400/30"
         >
-          <span className={isEnabled ? 'text-emerald-300' : 'text-slate-300'}>
-            {isEnabled ? 'Encendido' : 'Apagado'}
+          <span className={(field.type === 'booleanToggle' ? isBooleanEnabled : isEnabled) ? 'text-emerald-300' : 'text-slate-300'}>
+            {(field.type === 'booleanToggle' ? isBooleanEnabled : isEnabled) ? 'Activo' : 'Inactivo'}
           </span>
           <span
             aria-hidden="true"
-            className={`relative h-7 w-12 rounded-full transition-colors ${isEnabled ? 'bg-emerald-500' : 'bg-slate-600'}`}
+            className={`relative h-7 w-12 rounded-full transition-colors ${(field.type === 'booleanToggle' ? isBooleanEnabled : isEnabled) ? 'bg-emerald-500' : 'bg-slate-600'}`}
           >
             <span
-              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`}
+              className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${(field.type === 'booleanToggle' ? isBooleanEnabled : isEnabled) ? 'translate-x-6' : 'translate-x-1'}`}
             />
           </span>
         </button>

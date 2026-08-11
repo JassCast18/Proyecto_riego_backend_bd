@@ -27,3 +27,7 @@ BEGIN
         );
     END IF;
 END $$;
+
+ALTER TABLE tb_datos_fenologicos ALTER COLUMN altura_planta_cm DROP NOT NULL;
+ALTER TABLE tb_datos_fenologicos ALTER COLUMN grosor_planta_cm DROP NOT NULL;
+ALTER TABLE tb_datos_fenologicos ALTER COLUMN cantidad_hojas DROP NOT NULL;

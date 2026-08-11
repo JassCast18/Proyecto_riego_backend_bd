@@ -130,3 +130,6 @@ export function getActiveProject() {
     return null
   }
 }
+
+export async function finishCropCycleRequest(projectId,payload){try{return(await api.post(`/proyectos/${projectId}/ciclos/finalizar`,payload)).data?.message}catch(error){throw new Error(message(error,'No fue posible finalizar la plantación.'))}}
+export async function startCropCycleRequest(projectId,payload){try{return(await api.post(`/proyectos/${projectId}/ciclos/iniciar`,payload)).data?.message}catch(error){throw new Error(message(error,'No fue posible iniciar la nueva plantación.'))}}

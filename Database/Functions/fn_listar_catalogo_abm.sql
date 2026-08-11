@@ -7,7 +7,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_sql TEXT;
 BEGIN
-    IF p_tabla NOT IN ('tb_finca','tb_sector','tb_cliente','tb_rol','tb_nodo_iot','tb_sensor_actuador') THEN
+    IF p_tabla NOT IN ('tb_finca','tb_sector','tb_cliente','tb_rol','tb_modulo','tb_submodulo','tb_nodo_iot','tb_sensor_actuador') THEN
         RAISE EXCEPTION 'La tabla solicitada no está habilitada para ABM dinámico.';
     END IF;
 
@@ -28,7 +28,7 @@ BEGIN
         ELSE format('SELECT to_jsonb(t) FROM %I t ORDER BY t.id', p_tabla)
     END;
 
-    IF p_tabla IN ('tb_cliente', 'tb_rol') THEN RETURN QUERY EXECUTE v_sql;
+    IF p_tabla IN ('tb_cliente','tb_rol','tb_modulo','tb_submodulo') THEN RETURN QUERY EXECUTE v_sql;
     ELSE RETURN QUERY EXECUTE v_sql USING p_proyecto_id;
     END IF;
 END;

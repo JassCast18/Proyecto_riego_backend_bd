@@ -93,3 +93,14 @@ export async function sendPasswordResetEmail({ recipient, name, resetUrl }) {
             </html>`,
     });
 }
+
+export async function sendNewReportEmail({ recipient,name,projectName,reportTitle,author,observationDate }) {
+    if (!isEmailServiceConfigured()) throw new Error("El servidor SMTP no está configurado.");
+    const safeName=escapeHtml(name); const safeProject=escapeHtml(projectName); const safeTitle=escapeHtml(reportTitle); const safeAuthor=escapeHtml(author);
+    await createTransporter().sendMail({
+        from:{name:"Sistema",address:getSenderAddress()},to:recipient,
+        subject:`Nuevo informe de campo · ${projectName}`,
+        text:`Se agregó el informe "${reportTitle}" al proyecto ${projectName}. Registrado por ${author} el ${observationDate}.`,
+        html:`<!doctype html><html lang="es"><body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827"><table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px"><tr><td style="background:#166534;color:#ffffff;padding:22px 28px;border-radius:12px 12px 0 0;font-size:20px;font-weight:bold">Frutas del Oasis</td></tr><tr><td style="padding:30px 28px"><h1 style="margin:0 0 18px;font-size:26px">Nuevo informe de campo</h1><p style="line-height:1.6">Hola${safeName?`, ${safeName}`:""}. Se agregó un nuevo informe a la plantación <strong>${safeProject}</strong>.</p><table width="100%" cellpadding="8" cellspacing="0" style="margin:20px 0;background:#f9fafb;border-radius:8px"><tr><td><strong>Informe</strong></td><td>${safeTitle}</td></tr><tr><td><strong>Registrado por</strong></td><td>${safeAuthor}</td></tr><tr><td><strong>Fecha observada</strong></td><td>${escapeHtml(observationDate)}</td></tr></table><p style="color:#4b5563;line-height:1.6">Ingresa al sistema para revisar las observaciones y archivos adjuntos.</p></td></tr></table></td></tr></table></body></html>`,
+    });
+}

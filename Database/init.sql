@@ -10,6 +10,7 @@
 \i Tables/tb_usuario_rol.sql
 \i Tables/tb_cultivo.sql
 \i Tables/tb_proyecto_cultivo.sql
+\i Tables/tb_ciclo_cultivo.sql
 \i Tables/tb_historial_parametrizacion_cultivo.sql
 \i Tables/tb_cliente.sql
 \i Tables/tb_finca.sql
@@ -26,6 +27,7 @@
 \i Tables/tb_recuperacion_password.sql
 \i Tables/tb_informe_supervision.sql
 \i Tables/tb_datos_fenologicos.sql
+\i Tables/tb_informe_adjunto.sql
 \i Tables/tb_prueba_unitaria.sql
 \i Tables/tb_version_modelo_ia.sql
 \i Functions/fn_listar_usuarios.sql
@@ -45,6 +47,11 @@
 \i Functions/fn_listar_cultivos.sql
 \i Functions/fn_obtener_parametrizacion_cultivo.sql
 \i Functions/fn_listar_historial_parametrizacion.sql
+\i Functions/fn_listar_informes_campo.sql
+\i Functions/fn_obtener_adjunto_informe.sql
+\i Functions/fn_listar_administradores_proyecto.sql
+\i Functions/fn_listar_historial_operativo.sql
+\i Functions/fn_listar_comparacion_ciclos.sql
 \i Functions/fn_validar_acceso_proyecto.sql
 \i Functions/fn_es_propietario.sql
 \i Stored Procedure/sp_actualizar_usuario.sql
@@ -65,5 +72,9 @@
 \i Stored Procedure/sp_cambiar_estado_usuario_proyecto.sql
 \i Stored Procedure/sp_cambiar_estado_proyecto.sql
 \i Stored Procedure/sp_guardar_rol_permisos.sql
+\i Stored Procedure/sp_registrar_informe_campo.sql
+\i Stored Procedure/sp_registrar_adjuntos_informe.sql
+\i Stored Procedure/sp_finalizar_ciclo_cultivo.sql
+\i Stored Procedure/sp_iniciar_ciclo_cultivo.sql
 \i Functions/fn_login_usuario.sql
 \i Seeds/seed_permisos.sql

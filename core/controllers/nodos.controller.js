@@ -26,6 +26,7 @@ export const switchNodeEnergy = async (req, res) => {
             id: Number(id),
             estadoEnergia: String(estado_energia).toUpperCase(),
             projectId: req.projectId,
+            userId: req.user.id,
         });
 
         return res.status(200).json(

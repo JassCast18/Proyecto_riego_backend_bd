@@ -10,6 +10,11 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('authToken')
 
+  // El navegador debe generar el boundary de multipart cuando se envían archivos.
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }

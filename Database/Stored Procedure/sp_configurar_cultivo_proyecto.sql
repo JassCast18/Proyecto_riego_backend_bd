@@ -69,5 +69,15 @@ BEGIN
             ),'Configuración inicial del proyecto',p_usuario_id
         );
     END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM tb_ciclo_cultivo WHERE tb_proyecto_id=p_proyecto_id) THEN
+        INSERT INTO tb_ciclo_cultivo(
+            tb_proyecto_id,numero_ciclo,tb_cultivo_id,variedad,fecha_inicio,
+            tiempo_cosecha_estimado_dias,estado,cod_usuario_registro
+        ) VALUES(
+            p_proyecto_id,1,p_cultivo_id,NULLIF(trim(p_variedad),''),p_fecha_siembra,
+            p_tiempo_cosecha_dias,'ACTIVO',p_usuario_id
+        );
+    END IF;
 END;
 $$;

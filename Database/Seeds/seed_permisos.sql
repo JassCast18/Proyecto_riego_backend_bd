@@ -19,7 +19,9 @@ VALUES
     ('usuarios', 'Usuarios', 'Gestión de usuarios', 'Users', '/dashboard/usuarios', 9),
     ('datos_maestros', 'Datos maestros', 'Módulo de catálogos maestros', 'Database', '/dashboard/maestros/finca', 10),
     ('soporte', 'Soporte', 'Ayuda y soporte', 'LifeBuoy', '#', 11)
-ON CONFLICT (codigo_modulo) DO NOTHING;
+ON CONFLICT (codigo_modulo) DO UPDATE SET
+    nombre_modulo=EXCLUDED.nombre_modulo,descripcion=EXCLUDED.descripcion,ruta=EXCLUDED.ruta,
+    orden=EXCLUDED.orden,sn_activo=TRUE;
 
 INSERT INTO tb_submodulo (tb_modulo_id, codigo_submodulo, nombre_submodulo, descripcion, ruta, orden)
 SELECT m.id, v.codigo_submodulo, v.nombre_submodulo, v.descripcion, v.ruta, v.orden
@@ -29,11 +31,20 @@ FROM (VALUES
     ('datos_maestros', 'cliente', 'Cliente', 'Gestión de clientes', '/dashboard/maestros/cliente', 3),
     ('datos_maestros', 'roles', 'Roles', 'Gestión de roles', '/dashboard/maestros/roles', 4),
     ('datos_maestros', 'nodos', 'Nodos', 'Gestión de nodos IoT', '/dashboard/maestros/nodos', 5),
-    ('datos_maestros', 'sensores', 'Sensores', 'Gestión de sensores y actuadores', '/dashboard/maestros/sensores', 6)
+    ('datos_maestros', 'sensores', 'Sensores', 'Gestión de sensores y actuadores', '/dashboard/maestros/sensores', 6),
+    ('datos_maestros', 'modulos_catalogo', 'Módulos', 'Gestión del catálogo de módulos', '/dashboard/maestros/modulos', 7),
+    ('datos_maestros', 'submodulos_catalogo', 'Submódulos', 'Gestión del catálogo de submódulos', '/dashboard/maestros/submodulos', 8),
+    ('reportes', 'informes', 'Generación de informes', 'Registro manual de observaciones del cultivo', '/dashboard/reportes/informes', 1),
+    ('reportes', 'historial_operativo', 'Historial operativo', 'Decisiones y cambios realizados en el proyecto', '/dashboard/reportes/historial', 2),
+    ('reportes', 'comparacion_ciclos', 'Comparación de plantaciones', 'Comparación entre ciclos de cultivo', '/dashboard/reportes/comparacion', 3),
+    ('reportes', 'listado_informes', 'Listado de informes', 'Consulta y búsqueda del historial completo de informes', '/dashboard/reportes/listado-informes', 4),
+    ('reportes', 'exportar_reportes', 'Reportes', 'Exportación de datos del proyecto', '/dashboard/reportes/exportar', 5)
 ) AS v(codigo_modulo, codigo_submodulo, nombre_submodulo, descripcion, ruta, orden)
 INNER JOIN tb_modulo m
     ON m.codigo_modulo = v.codigo_modulo
-ON CONFLICT (codigo_submodulo) DO NOTHING;
+ON CONFLICT (codigo_submodulo) DO UPDATE SET
+    tb_modulo_id=EXCLUDED.tb_modulo_id,nombre_submodulo=EXCLUDED.nombre_submodulo,
+    descripcion=EXCLUDED.descripcion,ruta=EXCLUDED.ruta,orden=EXCLUDED.orden,sn_activo=TRUE;
 
 INSERT INTO tb_permiso (codigo_permiso, nombre_permiso, descripcion, tipo_permiso)
 VALUES
@@ -53,15 +64,24 @@ VALUES
     ('cliente.view', 'Ver clientes', 'Acceso al catálogo de clientes', 'submodulo'),
     ('roles.view', 'Ver roles', 'Acceso al catálogo de roles', 'submodulo'),
     ('nodos.view', 'Ver nodos', 'Acceso al catálogo de nodos', 'submodulo'),
-    ('sensores.view', 'Ver sensores', 'Acceso al catálogo de sensores', 'submodulo')
-ON CONFLICT (codigo_permiso) DO NOTHING;
+    ('sensores.view', 'Ver sensores', 'Acceso al catálogo de sensores', 'submodulo'),
+    ('modulos_catalogo.view', 'Ver módulos', 'Acceso al catálogo de módulos', 'submodulo'),
+    ('submodulos_catalogo.view', 'Ver submódulos', 'Acceso al catálogo de submódulos', 'submodulo'),
+    ('informes.view', 'Ver informes', 'Acceso a informes manuales de campo', 'submodulo'),
+    ('historial_operativo.view', 'Ver historial operativo', 'Acceso a decisiones y cambios del proyecto', 'submodulo'),
+    ('comparacion_ciclos.view', 'Ver comparación de ciclos', 'Acceso a comparación entre plantaciones', 'submodulo'),
+    ('listado_informes.view', 'Ver listado de informes', 'Acceso al historial completo de informes', 'submodulo'),
+    ('exportar_reportes.view', 'Exportar reportes', 'Acceso a filtros y exportación de reportes', 'submodulo')
+ON CONFLICT (codigo_permiso) DO UPDATE SET
+    nombre_permiso=EXCLUDED.nombre_permiso,descripcion=EXCLUDED.descripcion,
+    tipo_permiso=EXCLUDED.tipo_permiso,sn_activo=TRUE;
 
 INSERT INTO tb_permiso_modulo (tb_rol_id, tb_modulo_id, tb_permiso_id)
 SELECT 1, m.id, p.id
 FROM tb_modulo m
 INNER JOIN tb_permiso p ON p.codigo_permiso = 'dashboard.view'
 WHERE m.codigo_modulo = 'dashboard'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (tb_rol_id, tb_modulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_modulo (tb_rol_id, tb_modulo_id, tb_permiso_id)
 SELECT 1, m.id, p.id
@@ -79,37 +99,46 @@ WHERE m.codigo_modulo IN (
     'datos_maestros',
     'soporte'
 )
-ON CONFLICT DO NOTHING;
+ON CONFLICT (tb_rol_id, tb_modulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_submodulo (tb_rol_id, tb_submodulo_id, tb_permiso_id)
 SELECT 1, s.id, p.id
 FROM tb_submodulo s
 INNER JOIN tb_permiso p ON p.codigo_permiso = s.codigo_submodulo || '.view'
-ON CONFLICT DO NOTHING;
+ON CONFLICT (tb_rol_id, tb_submodulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_modulo (tb_rol_id, tb_modulo_id, tb_permiso_id)
 SELECT 2, m.id, p.id
 FROM tb_modulo m
 INNER JOIN tb_permiso p ON p.codigo_permiso = m.codigo_modulo || '.view'
 WHERE m.codigo_modulo IN ('dashboard', 'alertas', 'cultivo', 'hardware', 'reportes', 'auditoria', 'soporte')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (tb_rol_id, tb_modulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_submodulo (tb_rol_id, tb_submodulo_id, tb_permiso_id)
 SELECT 2, s.id, p.id
 FROM tb_submodulo s
 INNER JOIN tb_permiso p ON p.codigo_permiso = s.codigo_submodulo || '.view'
 WHERE s.codigo_submodulo IN ('finca', 'sector', 'cliente', 'nodos', 'sensores')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (tb_rol_id, tb_submodulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_modulo (tb_rol_id, tb_modulo_id, tb_permiso_id)
 SELECT 3, m.id, p.id
 FROM tb_modulo m
 INNER JOIN tb_permiso p ON p.codigo_permiso = m.codigo_modulo || '.view'
 WHERE m.codigo_modulo IN ('dashboard', 'alertas', 'hardware', 'control_manual', 'soporte')
-ON CONFLICT DO NOTHING;
+ON CONFLICT (tb_rol_id, tb_modulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
--- Supervisor no administra usuarios ni catálogos maestros.
-DELETE FROM tb_permiso_submodulo WHERE tb_rol_id = 2;
+-- Supervisor conserva reportes, pero no administra catálogos maestros.
+DELETE FROM tb_permiso_submodulo ps
+USING tb_submodulo s
+WHERE ps.tb_submodulo_id=s.id AND ps.tb_rol_id=2
+  AND s.codigo_submodulo IN ('finca','sector','cliente','roles','nodos','sensores');
+
+INSERT INTO tb_permiso_submodulo (tb_rol_id,tb_submodulo_id,tb_permiso_id)
+SELECT 2,s.id,p.id FROM tb_submodulo s
+JOIN tb_permiso p ON p.codigo_permiso=s.codigo_submodulo||'.view'
+WHERE s.codigo_submodulo IN ('informes','historial_operativo','comparacion_ciclos','listado_informes','exportar_reportes')
+ON CONFLICT (tb_rol_id, tb_submodulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 DELETE FROM tb_permiso_modulo pm
 USING tb_modulo m

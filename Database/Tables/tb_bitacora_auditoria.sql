@@ -30,3 +30,17 @@ BEGIN
         );
     END IF;
 END $$;
+
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS tb_proyecto_id INT REFERENCES tb_proyecto(id) ON DELETE CASCADE;
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS categoria VARCHAR(40) NOT NULL DEFAULT 'SISTEMA';
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS origen VARCHAR(30) NOT NULL DEFAULT 'SISTEMA';
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS entidad VARCHAR(60);
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS entidad_id INT;
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS detalle TEXT;
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS valores_anteriores JSONB;
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS valores_nuevos JSONB;
+ALTER TABLE tb_bitacora_auditoria ADD COLUMN IF NOT EXISTS tb_usuario_id INT REFERENCES tb_usuario(id);
+ALTER TABLE tb_bitacora_auditoria ALTER COLUMN fecha_hora SET DEFAULT NOW();
+
+CREATE INDEX IF NOT EXISTS ix_bitacora_auditoria_proyecto_fecha
+ON tb_bitacora_auditoria(tb_proyecto_id,fecha_hora DESC);

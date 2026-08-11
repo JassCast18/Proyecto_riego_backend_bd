@@ -108,9 +108,30 @@
   animation-fill-mode: forwards;
 }
 
+@keyframes plant-sway { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes leaf-left-sway { 0%, 100% { transform: rotate(-38deg) scale(1); } 50% { transform: rotate(-31deg) scale(1.03); } }
+@keyframes leaf-right-sway { 0%, 100% { transform: rotate(38deg) scale(1); } 50% { transform: rotate(31deg) scale(1.03); } }
+.plant-graphic { position: relative; width: 12rem; height: 12rem; margin: 1.5rem auto 0; transform-origin: 50% 100%; }
+.plant-pot { position: absolute; bottom: 0; left: 50%; width: 5.5rem; height: 3.5rem; transform: translateX(-50%); border-radius: .4rem .4rem 1.2rem 1.2rem; background: #92400e; }
+.plant-stem { position: absolute; bottom: 3.2rem; left: calc(50% - .28rem); width: .56rem; height: 6.8rem; border-radius: 1rem; background: #15803d; }
+.plant-leaf { position: absolute; width: 3.8rem; height: 2rem; border-radius: 100% 0 100% 0; background: #22c55e; transform-origin: 100% 100%; }
+.plant-leaf-left { left: 2.15rem; top: 4.3rem; transform: rotate(-38deg); }
+.plant-leaf-right { right: 2.15rem; top: 2.7rem; border-radius: 0 100% 0 100%; transform-origin: 0 100%; transform: rotate(38deg); }
+.plant-leaf-top { left: 4.15rem; top: .75rem; transform: rotate(-42deg) scale(.9); }
+.plant-active { animation: plant-sway 3.8s ease-in-out infinite; }
+.plant-active .plant-leaf-left { animation: leaf-left-sway 2.6s ease-in-out infinite; }
+.plant-active .plant-leaf-right { animation: leaf-right-sway 3.1s ease-in-out infinite; }
+.plant-attention .plant-leaf, .plant-attention .plant-stem { background: #ca8a04; }
+.plant-waiting { filter: grayscale(1); opacity: .48; }
+
 @media (prefers-reduced-motion: reduce) {
   .toast-enter,
   .toast-timer {
+    animation: none;
+  }
+  .plant-active,
+  .plant-active .plant-leaf-left,
+  .plant-active .plant-leaf-right {
     animation: none;
   }
 }

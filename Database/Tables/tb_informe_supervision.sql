@@ -23,3 +23,19 @@ BEGIN
         );
     END IF;
 END $$;
+
+ALTER TABLE tb_informe_supervision ALTER COLUMN ruta_documento_pdf DROP NOT NULL;
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS tb_proyecto_id INT REFERENCES tb_proyecto(id) ON DELETE CASCADE;
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS tb_ciclo_cultivo_id INT REFERENCES tb_ciclo_cultivo(id);
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS titulo VARCHAR(150);
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS asunto VARCHAR(200);
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS observaciones TEXT;
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS estado_general VARCHAR(30);
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS presencia_plagas BOOLEAN;
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS descripcion_plagas VARCHAR(300);
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS acciones_realizadas TEXT;
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS fecha_observacion DATE;
+ALTER TABLE tb_informe_supervision ADD COLUMN IF NOT EXISTS fecha_registra TIMESTAMP NOT NULL DEFAULT NOW();
+
+CREATE INDEX IF NOT EXISTS ix_informe_supervision_proyecto_fecha
+ON tb_informe_supervision(tb_proyecto_id,fecha_observacion DESC,fecha_registra DESC);

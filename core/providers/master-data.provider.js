@@ -13,6 +13,12 @@ const MASTER_TABLES = {
     roles: {
         tableName: "tb_rol",
     },
+    modulos: {
+        tableName: "tb_modulo",
+    },
+    submodulos: {
+        tableName: "tb_submodulo",
+    },
     nodos: {
         tableName: "tb_nodo_iot",
     },

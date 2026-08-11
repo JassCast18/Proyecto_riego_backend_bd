@@ -65,8 +65,15 @@ export const navGroups = [
       {
         label: "Historial y reportes",
         icon: FileBarChart,
-        href: "#",
+        href: "/dashboard/reportes/informes",
         permissionKey: "reportes.view",
+        children: [
+          { label: "Generación de informes", href: "/dashboard/reportes/informes", permissionKey: "informes.view" },
+          { label: "Historial operativo", href: "/dashboard/reportes/historial", permissionKey: "historial_operativo.view" },
+          { label: "Comparación de plantaciones", href: "/dashboard/reportes/comparacion", permissionKey: "comparacion_ciclos.view" },
+          { label: "Listado de informes", href: "/dashboard/reportes/listado-informes", permissionKey: "listado_informes.view" },
+          { label: "Reportes", href: "/dashboard/reportes/exportar", permissionKey: "exportar_reportes.view" },
+        ],
       },
       {
         label: "Auditoría de acciones",
@@ -117,6 +124,16 @@ export const navGroups = [
             label: "Roles",
             href: "/dashboard/maestros/roles",
             permissionKey: "roles.view",
+          },
+          {
+            label: "Módulos",
+            href: "/dashboard/maestros/modulos",
+            permissionKey: "modulos_catalogo.view",
+          },
+          {
+            label: "Submódulos",
+            href: "/dashboard/maestros/submodulos",
+            permissionKey: "submodulos_catalogo.view",
           },
           {
             label: "Nodos",

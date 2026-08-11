@@ -4,11 +4,11 @@
 #include <esp_now.h>
 #include <esp_wifi.h>
 
-const char* ssidRouter = "Familia Castellanos";
-const char* passwordRouter = "TeamoJesus";
+const char* ssidRouter = "HUAWEI nova 9 SE";
+const char* passwordRouter = "Jaser1806";
 
 // URL exacta combinando el prefijo de Express y tu ruta POST "/lecturas"
-const char* servidorAPI = "http://192.168.0.13:3000/api/telemetria/lecturas"; 
+const char* servidorAPI = "http://192.168.43.43:3000/api/telemetria/lecturas"; 
 const char* iotApiKey = "Oasis_Telemetria_SuperSecreta_2026";
 
 typedef struct struct_mensaje {

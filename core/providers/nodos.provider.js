@@ -37,6 +37,6 @@ export const listHardwareNodes = async (projectId = null) => {
     return evaluations;
 };
 
-export const updateNodeEnergyState = async ({ id, estadoEnergia, projectId }) => {
-    await DatabaseExecutor.executeProcedure("sp_actualizar_estado_energia_nodo", [id, estadoEnergia, projectId]);
+export const updateNodeEnergyState = async ({ id, estadoEnergia, projectId, userId }) => {
+    await DatabaseExecutor.executeProcedure("sp_actualizar_estado_energia_nodo", [id, estadoEnergia, projectId, userId]);
 };

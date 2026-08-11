@@ -16,7 +16,7 @@ DECLARE
     v_sequence_name TEXT; v_max_id BIGINT; v_rows_affected BIGINT;
     v_pertenece BOOLEAN := FALSE;
 BEGIN
-    IF p_tabla NOT IN ('tb_finca','tb_sector','tb_cliente','tb_rol','tb_nodo_iot','tb_sensor_actuador') THEN
+    IF p_tabla NOT IN ('tb_finca','tb_sector','tb_cliente','tb_rol','tb_modulo','tb_submodulo','tb_nodo_iot','tb_sensor_actuador') THEN
         RAISE EXCEPTION 'La tabla solicitada no está habilitada para ABM dinámico.';
     END IF;
 
@@ -70,5 +70,21 @@ BEGIN
             GET DIAGNOSTICS v_rows_affected=ROW_COUNT;
         ELSE RAISE EXCEPTION 'La acción indicada no es válida.';
     END CASE;
+
+    IF lower(trim(p_accion)) IN ('insertar','actualizar') AND p_tabla='tb_modulo' THEN
+        INSERT INTO tb_permiso(codigo_permiso,nombre_permiso,descripcion,tipo_permiso,sn_activo)
+        VALUES(
+            (v_datos->>'codigo_modulo')||'.view','Ver '||COALESCE(v_datos->>'nombre_modulo',v_datos->>'codigo_modulo'),
+            COALESCE(v_datos->>'descripcion','Acceso al módulo'),'modulo',COALESCE((v_datos->>'sn_activo')::BOOLEAN,TRUE)
+        ) ON CONFLICT(codigo_permiso) DO UPDATE SET
+            nombre_permiso=EXCLUDED.nombre_permiso,descripcion=EXCLUDED.descripcion,sn_activo=EXCLUDED.sn_activo;
+    ELSIF lower(trim(p_accion)) IN ('insertar','actualizar') AND p_tabla='tb_submodulo' THEN
+        INSERT INTO tb_permiso(codigo_permiso,nombre_permiso,descripcion,tipo_permiso,sn_activo)
+        VALUES(
+            (v_datos->>'codigo_submodulo')||'.view','Ver '||COALESCE(v_datos->>'nombre_submodulo',v_datos->>'codigo_submodulo'),
+            COALESCE(v_datos->>'descripcion','Acceso al submódulo'),'submodulo',COALESCE((v_datos->>'sn_activo')::BOOLEAN,TRUE)
+        ) ON CONFLICT(codigo_permiso) DO UPDATE SET
+            nombre_permiso=EXCLUDED.nombre_permiso,descripcion=EXCLUDED.descripcion,sn_activo=EXCLUDED.sn_activo;
+    END IF;
 END;
 $$;

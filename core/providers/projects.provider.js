@@ -75,3 +75,13 @@ export const assignUser = async ({ projectId, assignedUserId, roleId, administra
         projectId, assignedUserId, roleId, administratorId,
     ])
 );
+
+export const finishCropCycle = async (payload) => DatabaseExecutor.executeProcedure("sp_finalizar_ciclo_cultivo",[
+    payload.projectId,payload.userId,payload.endDate,payload.result,payload.quantity ?? null,
+    payload.unit || null,payload.quality || null,payload.observations || null,
+    payload.sproutDate || null,payload.sproutPercentage ?? null,
+]);
+
+export const startCropCycle = async (payload) => DatabaseExecutor.executeProcedure("sp_iniciar_ciclo_cultivo",[
+    payload.projectId,payload.userId,payload.cropId,payload.variety || null,payload.startDate,payload.harvestDays ?? null,
+]);

@@ -165,3 +165,20 @@ export const assignProjectUser = async (req, res) => {
         return projectError(res, error);
     }
 };
+
+export const finishCropCycle = async (req,res) => {
+    try {
+        if (!req.body?.fechaFin || !req.body?.resultado) return res.status(400).json(ResponseModel.fail("La fecha y el resultado son obligatorios.",null,400));
+        await provider.finishCropCycle({projectId:Number(req.params.id),userId:req.user.id,endDate:req.body.fechaFin,result:req.body.resultado,quantity:req.body.cantidad===""?null:Number(req.body.cantidad),unit:req.body.unidad,quality:req.body.calidad,observations:req.body.observaciones,sproutDate:req.body.fechaPrimerBrote,sproutPercentage:req.body.porcentajeBrote===""?null:Number(req.body.porcentajeBrote)});
+        return res.json(ResponseModel.ok(null,"Plantación finalizada. El proyecto quedó listo para iniciar un nuevo ciclo."));
+    } catch(error){return projectError(res,error);}
+};
+
+export const startCropCycle = async (req,res) => {
+    try {
+        const cropId=Number(req.body?.cultivoId);
+        if(!cropId||!req.body?.fechaInicio)return res.status(400).json(ResponseModel.fail("El cultivo y la fecha de siembra son obligatorios.",null,400));
+        await provider.startCropCycle({projectId:Number(req.params.id),userId:req.user.id,cropId,variety:req.body.variedad,startDate:req.body.fechaInicio,harvestDays:req.body.tiempoCosechaDias===""?null:Number(req.body.tiempoCosechaDias)});
+        return res.status(201).json(ResponseModel.ok(null,"Nueva plantación iniciada correctamente.",201));
+    } catch(error){return projectError(res,error);}
+};
