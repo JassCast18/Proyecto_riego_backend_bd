@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AlertCircle, CheckCircle2, CircleOff, ListFilter, Power, RefreshCcw, Wifi } from 'lucide-react'
 import { listHardwareStateRequest, listTelemetryHardwareRequest, switchNodeEnergyRequest } from '../../auth/hardware.service'
 import { useToast } from '@/context/useToast.js'
@@ -68,8 +68,8 @@ export function HardwareStatusContent() {
     }
   }, [error, toast])
 
-  const loadNodes = async () => {
-    setLoadingNodes(true)
+  const loadNodes = useCallback(async ({ background = false } = {}) => {
+    if (!background) setLoadingNodes(true)
     setError('')
 
     try {
@@ -78,9 +78,9 @@ export function HardwareStatusContent() {
     } catch (requestError) {
       setError(requestError.message)
     } finally {
-      setLoadingNodes(false)
+      if (!background) setLoadingNodes(false)
     }
-  }
+  }, [])
 
   const loadTelemetrias = async ({ nodeId = selectedNodeId, page = 1 } = {}) => {
     setLoadingTelemetrias(true)
@@ -107,7 +107,13 @@ export function HardwareStatusContent() {
     loadNodes()
     const project=getActiveProject()
     if(project?.id)getCropParametersRequest(project.id).then(setCycle).catch(error=>setError(error.message))
-  }, [])
+
+    const intervalId = window.setInterval(() => {
+      loadNodes({ background: true })
+    }, 5_000)
+
+    return () => window.clearInterval(intervalId)
+  }, [loadNodes])
 
   useEffect(() => {
     loadTelemetrias({ nodeId: selectedNodeId, page: 1 })
@@ -241,8 +247,12 @@ export function HardwareStatusContent() {
 
                 <div className="space-y-3 text-sm text-slate-700">
                   <Row label="Energía" value={node.estadoEnergia || 'ENCENDIDO'} />
-                  <Row label="Temperatura" value={`${node.estadoTemp || 'OK'} · ${node.mensajeTemp || ''}`} />
-                  <Row label="Humedad" value={`${node.estadoHum || 'OK'} · ${node.mensajeHum || ''}`} />
+                  {(node.componentes || []).map((component) => (
+                    <ComponentRow key={component.id} component={component} />
+                  ))}
+                  {(node.componentes || []).length === 0 ? (
+                    <Row label="Sensores" value="No hay sensores asociados" />
+                  ) : null}
                   <Row label="Última conexión" value={formatDate(node.ultimaConexion)} />
                 </div>
 
@@ -432,6 +442,25 @@ function Row({ label, value }) {
     <div className="flex items-start justify-between gap-4">
       <span className="text-slate-500">{label}</span>
       <span className="text-right font-medium text-slate-900">{value || 'Sin datos'}</span>
+    </div>
+  )
+}
+
+function ComponentRow({ component }) {
+  const reading = component.ultimaLectura === null || component.ultimaLectura === undefined
+    ? 'Sin lectura'
+    : formatReading(component.ultimaLectura)
+
+  return (
+    <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+      <div className="flex items-start justify-between gap-3">
+        <span className="font-semibold text-slate-900">{component.tipoComponente}</span>
+        <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${getStatusTone(component.estado)}`}>
+          {component.estado}
+        </span>
+      </div>
+      <p className="mt-1 text-xs text-slate-600">Lectura: {reading}</p>
+      <p className="mt-1 text-xs text-slate-500">{component.mensaje}</p>
     </div>
   )
 }

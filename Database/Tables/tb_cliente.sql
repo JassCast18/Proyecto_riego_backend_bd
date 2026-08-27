@@ -20,7 +20,11 @@ BEGIN
             tb_persona_id INT REFERENCES tb_persona(id),
             NIT VARCHAR(20),
             direccion VARCHAR(100) NOT NULL,
-            telefono INT
+            telefono VARCHAR(20)
         );
     END IF;
 END $$;
+
+-- El teléfono es un dato de identificación, no una cantidad numérica.
+ALTER TABLE tb_cliente
+ALTER COLUMN telefono TYPE VARCHAR(20) USING telefono::VARCHAR;

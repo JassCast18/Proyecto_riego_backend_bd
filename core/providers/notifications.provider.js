@@ -23,42 +23,34 @@ function buildHardwareIncidents(nodes) {
             continue;
         }
 
-        const tempStatus = String(node.estadoTemp).toUpperCase();
-        const humStatus = String(node.estadoHum).toUpperCase();
+        const components = node.componentes || [];
+        const allOffline = components.length > 0
+            && components.every((component) => String(component.estado).toUpperCase() === "OFFLINE");
 
-        if (tempStatus === "OFFLINE" && humStatus === "OFFLINE") {
+        if (allOffline) {
             incidents.push({
                 key: `${prefix}:SIN_COMUNICACION`,
                 nodeId: node.id,
                 type: "NODO_SIN_COMUNICACION",
                 title: "Nodo sin comunicación",
-                message: `${nodeName}: ${node.mensajeTemp || "no reporta telemetría"}`,
+                message: `${nodeName}: no reporta telemetría en ninguno de sus sensores.`,
                 severity: "ERROR",
                 dismissible: false,
             });
             continue;
         }
 
-        if (tempStatus !== "OK") {
-            incidents.push({
-                key: `${prefix}:TEMPERATURA`,
-                nodeId: node.id,
-                type: "SENSOR_TEMPERATURA",
-                title: "Sensor de temperatura no disponible",
-                message: `${nodeName}: ${node.mensajeTemp}`,
-                severity: tempStatus === "WARNING" ? "WARNING" : "ERROR",
-                dismissible: false,
-            });
-        }
+        for (const component of components) {
+            const status = String(component.estado).toUpperCase();
+            if (status === "OK") continue;
 
-        if (humStatus !== "OK") {
             incidents.push({
-                key: `${prefix}:HUMEDAD`,
+                key: `${prefix}:SENSOR:${component.id}`,
                 nodeId: node.id,
-                type: "SENSOR_HUMEDAD",
-                title: "Sensor de humedad no disponible",
-                message: `${nodeName}: ${node.mensajeHum}`,
-                severity: humStatus === "WARNING" ? "WARNING" : "ERROR",
+                type: "SENSOR_NO_DISPONIBLE",
+                title: `${component.tipoComponente} requiere atención`,
+                message: `${nodeName}: ${component.mensaje}`,
+                severity: status === "WARNING" ? "WARNING" : "ERROR",
                 dismissible: false,
             });
         }

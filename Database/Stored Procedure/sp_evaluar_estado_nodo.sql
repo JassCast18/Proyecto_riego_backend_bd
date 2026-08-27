@@ -15,7 +15,7 @@ DECLARE
     v_temp_actual DECIMAL;
     v_temp_anterior DECIMAL;
     v_hum_actual DECIMAL;
-    v_minutos_inactividad DECIMAL;
+    v_segundos_inactividad DECIMAL;
 BEGIN
     -- 1. Inicializar valores por defecto como 'OK'
     p_estado_general := 'OK';
@@ -50,14 +50,14 @@ BEGIN
         RETURN;
     END IF;
 
-    -- Calcular minutos desde la última lectura
-    v_minutos_inactividad := EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - p_ultima_conexion)) / 60;
+    -- Calcular segundos desde la última lectura
+    v_segundos_inactividad := EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - p_ultima_conexion));
 
-    -- Timeout de 10 minutos
-    IF v_minutos_inactividad > 10 THEN
+    -- Timeout de 10 segundos para pruebas
+    IF v_segundos_inactividad > 10 THEN
         p_estado_general := 'ERROR';
         p_estado_temp := 'OFFLINE';
-        p_mensaje_temp := 'Sin comunicación hace ' || ROUND(v_minutos_inactividad) || ' minutos.';
+        p_mensaje_temp := 'Sin comunicación hace ' || ROUND(v_segundos_inactividad) || ' segundos.';
         p_estado_hum := 'OFFLINE';
         p_mensaje_hum := 'Nodo desconectado.';
         RETURN; -- Salimos del SP si está offline, no hay necesidad de evaluar lo demás

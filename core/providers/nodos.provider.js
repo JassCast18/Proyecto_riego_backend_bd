@@ -1,12 +1,20 @@
 import DatabaseExecutor from "../database/database.executor.js";
 
 function normalizeEvaluation(row = {}) {
+    const componentes = Array.isArray(row.p_componentes ?? row.componentes)
+        ? (row.p_componentes ?? row.componentes)
+        : [];
+    const temperatura = componentes.find((item) => /term/i.test(item.tipoComponente ?? item.tipo_componente ?? ""));
+    const humedad = componentes.find((item) => /(higr|hum)/i.test(item.tipoComponente ?? item.tipo_componente ?? ""));
+
     return {
         estadoGeneral: row.p_estado_general ?? row.estado_general ?? "OK",
-        estadoTemp: row.p_estado_temp ?? row.estado_temp ?? "OK",
-        mensajeTemp: row.p_mensaje_temp ?? row.mensaje_temp ?? "Operando con normalidad",
-        estadoHum: row.p_estado_hum ?? row.estado_hum ?? "OK",
-        mensajeHum: row.p_mensaje_hum ?? row.mensaje_hum ?? "Operando con normalidad",
+        componentes,
+        // Compatibilidad con clientes y firmware que todavia consumen estos campos.
+        estadoTemp: temperatura?.estado ?? "NO_CONFIGURADO",
+        mensajeTemp: temperatura?.mensaje ?? "Sensor no asociado al nodo",
+        estadoHum: humedad?.estado ?? "NO_CONFIGURADO",
+        mensajeHum: humedad?.mensaje ?? "Sensor no asociado al nodo",
         ultimaConexion: row.p_ultima_conexion ?? row.ultima_conexion ?? null,
     };
 }

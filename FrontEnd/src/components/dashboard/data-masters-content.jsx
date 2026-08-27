@@ -16,7 +16,7 @@ const MASTER_DEFINITIONS = [
   {
     key: 'finca',
     label: 'Finca',
-    description: 'Administración de fincas asociadas a clientes.',
+    description: 'Administración de fincas y sus clientes propietarios.',
     permissionKey: 'finca.view',
     columns: [
       { key: 'id', label: 'ID' },
@@ -46,19 +46,20 @@ const MASTER_DEFINITIONS = [
   {
     key: 'cliente',
     label: 'Cliente',
-    description: 'Clientes vinculados al sistema.',
+    description: 'Personas propietarias de las fincas administradas.',
     permissionKey: 'cliente.view',
     columns: [
       { key: 'id', label: 'ID' },
-      { key: 'tb_persona_id', label: 'Persona', source: 'persona' },
+      { key: 'nombre_completo', label: 'Propietario' },
       { key: 'nit', label: 'NIT' },
       { key: 'direccion', label: 'Dirección' },
       { key: 'telefono', label: 'Teléfono' },
     ],
     fields: [
-      { name: 'tb_persona_id', label: 'Persona', type: 'number', placeholder: 'ID de persona (opcional)' },
+      { name: 'nombres', label: 'Nombres del propietario', type: 'text', placeholder: 'Ej. Ana María', required: true },
+      { name: 'apellidos', label: 'Apellidos del propietario', type: 'text', placeholder: 'Ej. López Pérez', required: true },
       { name: 'nit', label: 'NIT', type: 'text', placeholder: '900123456-7' },
-      { name: 'direccion', label: 'Dirección', type: 'text', placeholder: 'Dirección del cliente' },
+      { name: 'direccion', label: 'Dirección', type: 'text', placeholder: 'Dirección del cliente', required: true },
       { name: 'telefono', label: 'Teléfono', type: 'text', placeholder: '3001234567' },
     ],
   },
@@ -164,7 +165,7 @@ function buildDisplayValue(masterKey, record) {
     case 'sector':
       return `Sector #${record.id} · ${record.nombre_sector || 'Sin nombre'}`
     case 'cliente':
-      return `Cliente #${record.id} · ${record.nit || record.direccion || 'Sin dato'}`
+      return record.nombre_completo || `Cliente #${record.id}`
     case 'roles':
       return record.nombre_rol || `Rol #${record.id}`
     case 'modulos':
@@ -607,7 +608,7 @@ export function DataMastersContent() {
 function RoleAccessSelector({ modules, onToggleModule, onToggleSubmodule }) {
   const selectedCount = modules.filter((module) => module.seleccionado).length
   return <fieldset className="space-y-3 border-t border-white/10 pt-4">
-    <div><legend className="font-bold text-white">Accesos del rol</legend><p className="mt-1 text-xs text-slate-400">Selecciona los módulos que podrá utilizar. Los submódulos permiten definir accesos más específicos.</p></div>
+    <div><legend className="font-bold text-white">Accesos del rol</legend><p className="mt-1 text-xs text-slate-400">Selecciona los módulos que podrá utilizar. Distintos roles pueden compartir los mismos accesos.</p></div>
     <p className="text-xs font-semibold text-cyan-300">{selectedCount} de {modules.length} módulos seleccionados</p>
     <div className="max-h-[25rem] space-y-2 overflow-y-auto pr-1">
       {modules.map((module) => <div key={module.id} className={`rounded-xl border p-3 ${module.seleccionado ? 'border-cyan-400 bg-slate-800' : 'border-white/10 bg-slate-950'}`}>
@@ -630,6 +631,7 @@ function Field({ field, value, onChange, options }) {
           name={field.name}
           value={value}
           onChange={onChange}
+          required={field.required}
           className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
         >
           <option value="">{field.placeholder || 'Selecciona una opción'}</option>
@@ -671,6 +673,7 @@ function Field({ field, value, onChange, options }) {
           value={value}
           onChange={onChange}
           placeholder={field.placeholder}
+          required={field.required}
           className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20"
         />
       )}

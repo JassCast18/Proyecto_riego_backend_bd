@@ -20,6 +20,15 @@ BEGIN
             'SELECT to_jsonb(t) FROM tb_nodo_iot t INNER JOIN tb_sector s ON s.id=t.tb_sector_id INNER JOIN tb_finca f ON f.id=s.tb_finca_id WHERE f.tb_proyecto_id=$1 ORDER BY t.id'
         WHEN 'tb_sensor_actuador' THEN
             'SELECT to_jsonb(t) FROM tb_sensor_actuador t INNER JOIN tb_nodo_iot n ON n.id=t.tb_nodo_id INNER JOIN tb_sector s ON s.id=n.tb_sector_id INNER JOIN tb_finca f ON f.id=s.tb_finca_id WHERE f.tb_proyecto_id=$1 ORDER BY t.id'
+        WHEN 'tb_cliente' THEN
+            'SELECT to_jsonb(x) FROM (
+                SELECT c.id,c.tb_persona_id,p.nombres,p.apellidos,
+                       concat_ws('' '',p.nombres,p.apellidos) AS nombre_completo,
+                       c.nit,c.direccion,c.telefono
+                FROM tb_cliente c
+                LEFT JOIN tb_persona p ON p.id=c.tb_persona_id
+                ORDER BY c.id
+             ) x'
         WHEN 'tb_rol' THEN
             'SELECT to_jsonb(x) FROM (SELECT r.id,r.nombre_rol,
                 (SELECT count(DISTINCT pm.tb_modulo_id) FROM tb_permiso_modulo pm WHERE pm.tb_rol_id=r.id AND pm.sn_activo=TRUE) AS modulos_asignados,

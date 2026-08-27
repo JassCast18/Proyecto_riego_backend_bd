@@ -43,9 +43,17 @@ function normalizePayload(payload = {}) {
     );
 }
 
-async function executeMasterAction(masterKey, action, id, payload, projectId) {
+async function executeMasterAction(masterKey, action, id, payload, projectId, userId) {
     const { tableName } = getMasterDefinition(masterKey);
     const cleanedPayload = normalizePayload(payload);
+
+    if (masterKey === "cliente") {
+        await DatabaseExecutor.executeProcedure(
+            "sp_abm_cliente",
+            [action, id ?? null, JSON.stringify(cleanedPayload), userId],
+        );
+        return;
+    }
 
     await DatabaseExecutor.executeProcedure(
         "sp_abm_catalogo",
@@ -66,16 +74,16 @@ export async function listMasterRecords(masterKey, projectId) {
     return rows.map((row) => row.registro ?? row);
 }
 
-export async function createMasterRecord(masterKey, payload, projectId) {
-    await executeMasterAction(masterKey, "insertar", null, payload, projectId);
+export async function createMasterRecord(masterKey, payload, projectId, userId) {
+    await executeMasterAction(masterKey, "insertar", null, payload, projectId, userId);
 }
 
-export async function updateMasterRecord(masterKey, id, payload, projectId) {
-    await executeMasterAction(masterKey, "actualizar", Number(id), payload, projectId);
+export async function updateMasterRecord(masterKey, id, payload, projectId, userId) {
+    await executeMasterAction(masterKey, "actualizar", Number(id), payload, projectId, userId);
 }
 
-export async function deleteMasterRecord(masterKey, id, projectId) {
-    await executeMasterAction(masterKey, "eliminar", Number(id), {}, projectId);
+export async function deleteMasterRecord(masterKey, id, projectId, userId) {
+    await executeMasterAction(masterKey, "eliminar", Number(id), {}, projectId, userId);
 }
 
 export function listMasterDefinitions() {

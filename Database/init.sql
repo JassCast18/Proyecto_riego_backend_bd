@@ -61,6 +61,7 @@
 \i Stored Procedure/sp_evaluar_estado_nodo.sql
 \i Stored Procedure/sp_registro_usuario.sql
 \i Stored Procedure/sp_abm_catalogo.sql
+\i Stored Procedure/sp_abm_cliente.sql
 \i Stored Procedure/sp_sincronizar_notificaciones_hardware.sql
 \i Stored Procedure/sp_crear_token_recuperacion.sql
 \i Stored Procedure/sp_restablecer_password.sql

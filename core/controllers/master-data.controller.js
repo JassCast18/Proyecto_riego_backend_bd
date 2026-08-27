@@ -9,6 +9,27 @@ import {
     saveRoleAccess,
 } from "../providers/master-data.provider.js";
 
+function respondMasterError(res, error) {
+    if (error.code === "23503") {
+        return res.status(409).json(ResponseModel.fail(
+            "No se puede completar la operación porque el registro está siendo utilizado por otro dato del sistema.",
+            null,
+            409,
+        ));
+    }
+    if (error.code === "23505") {
+        return res.status(409).json(ResponseModel.fail("Ya existe un registro con esos datos.", null, 409));
+    }
+    if (error.code === "23502") {
+        return res.status(400).json(ResponseModel.fail("Falta completar un campo obligatorio.", null, 400));
+    }
+    if (error.code === "P0001") {
+        const status = /no puedes eliminar|está siendo utilizado|dueño de/i.test(error.message) ? 409 : 400;
+        return res.status(status).json(ResponseModel.fail(error.message, null, status));
+    }
+    return res.status(500).json(ResponseModel.fail("No fue posible completar la operación solicitada."));
+}
+
 export const getRoleAccessConfiguration = async (req, res) => {
     try {
         const roleId = req.query.rolId ? Number(req.query.rolId) : null;
@@ -27,8 +48,18 @@ export const saveRoleWithAccess = async (req, res) => {
         const result = await saveRoleAccess({ roleId, name, moduleIds, submoduleIds });
         return res.status(roleId ? 200 : 201).json(ResponseModel.ok({ rolId: result?.p_rol_guardado_id }, roleId ? "Rol actualizado correctamente." : "Rol creado correctamente.", roleId ? 200 : 201));
     } catch (error) {
-        const conflict = /ya existe/i.test(error.message);
-        return res.status(conflict ? 409 : 500).json(ResponseModel.fail(error.message, null, conflict ? 409 : 500));
+        if (error.code === "23503") {
+            return res.status(400).json(ResponseModel.fail("Uno de los módulos o submódulos seleccionados ya no existe. Actualiza la página e inténtalo nuevamente.", null, 400));
+        }
+        if (error.code === "23505") {
+            return res.status(409).json(ResponseModel.fail("No fue posible asignar los accesos porque uno de ellos está repetido dentro del mismo rol.", null, 409));
+        }
+        const expected = /ya existe|obligatorio|no existe|inactivo/i.test(error.message);
+        return res.status(expected ? 400 : 500).json(ResponseModel.fail(
+            expected ? error.message : "No fue posible guardar el rol y sus accesos.",
+            null,
+            expected ? 400 : 500,
+        ));
     }
 };
 
@@ -50,7 +81,7 @@ export const listMasters = async (req, res) => {
             ResponseModel.ok({ registros, masters: listMasterDefinitions() }, "Datos maestros consultados correctamente.")
         );
     } catch (error) {
-        return res.status(500).json(ResponseModel.fail(error.message));
+        return respondMasterError(res, error);
     }
 };
 
@@ -63,11 +94,11 @@ export const createMaster = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Debe indicar el módulo maestro.", null, 400));
         }
 
-        await createMasterRecord(masterKey, payload, req.projectId);
+        await createMasterRecord(masterKey, payload, req.projectId, req.user.id);
 
         return res.status(201).json(ResponseModel.ok(null, "Registro creado correctamente.", 201));
     } catch (error) {
-        return res.status(500).json(ResponseModel.fail(error.message));
+        return respondMasterError(res, error);
     }
 };
 
@@ -81,11 +112,11 @@ export const updateMaster = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Debe indicar el módulo maestro y el id del registro.", null, 400));
         }
 
-        await updateMasterRecord(masterKey, id, payload, req.projectId);
+        await updateMasterRecord(masterKey, id, payload, req.projectId, req.user.id);
 
         return res.status(200).json(ResponseModel.ok(null, "Registro actualizado correctamente."));
     } catch (error) {
-        return res.status(500).json(ResponseModel.fail(error.message));
+        return respondMasterError(res, error);
     }
 };
 
@@ -98,10 +129,10 @@ export const removeMaster = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Debe indicar el módulo maestro y el id del registro.", null, 400));
         }
 
-        await deleteMasterRecord(masterKey, id, req.projectId);
+        await deleteMasterRecord(masterKey, id, req.projectId, req.user.id);
 
         return res.status(200).json(ResponseModel.ok(null, "Registro eliminado correctamente."));
     } catch (error) {
-        return res.status(500).json(ResponseModel.fail(error.message));
+        return respondMasterError(res, error);
     }
 };
