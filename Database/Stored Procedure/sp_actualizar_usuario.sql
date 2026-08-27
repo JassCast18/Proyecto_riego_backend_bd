@@ -52,7 +52,10 @@ BEGIN
         RAISE EXCEPTION 'El número de teléfono ya está registrado por otro usuario.';
     END IF;
 
-    IF NOT EXISTS (SELECT 1 FROM tb_rol WHERE id = p_tb_rol_id) THEN
+    IF EXISTS (
+        SELECT 1 FROM tb_usuario_rol
+        WHERE tb_usuario_id=p_usuario_id AND tb_proyecto_id=p_proyecto_id AND sn_activo=TRUE
+    ) AND NOT EXISTS (SELECT 1 FROM tb_rol WHERE id = p_tb_rol_id) THEN
         RAISE EXCEPTION 'El rol seleccionado no existe.';
     END IF;
 

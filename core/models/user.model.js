@@ -22,6 +22,7 @@ export default class Usuario {
         this.asignadoProyecto = Boolean(data.asignado_proyecto ?? data.asignadoProyecto);
         this.tbRolProyectoId = data.tb_rol_proyecto_id ?? data.tbRolProyectoId ?? null;
         this.rolProyecto = data.rol_proyecto ?? data.rolProyecto ?? "";
+        this.recibeAlertasCorreo = Boolean(data.recibe_alertas_correo ?? data.recibeAlertasCorreo);
     }
 
     toResponse() {
@@ -36,6 +37,7 @@ export default class Usuario {
             tbRolId: this.tbRolId,
             permisos: this.permisos,
             snPropietario: this.snPropietario,
+            recibeAlertasCorreo: this.recibeAlertasCorreo,
         };
     }
 
@@ -61,6 +63,7 @@ export default class Usuario {
             tbRolProyectoId: this.tbRolProyectoId,
             rolProyecto: this.rolProyecto,
             snPropietario: this.snPropietario,
+            recibeAlertasCorreo: this.recibeAlertasCorreo,
         };
     }
 }

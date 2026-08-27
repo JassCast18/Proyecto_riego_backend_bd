@@ -8,6 +8,7 @@ import {
   listUsersRequest,
   updatePasswordRequest,
   updateStatusRequest,
+  updateAlertEmailPreferenceRequest,
   updateUserRequest,
 } from '../../auth/users.service'
 import { useAuth } from '@/context/useAuth.js'
@@ -46,6 +47,7 @@ const INITIAL_EDIT = {
   telefono: '',
   tb_rol_id: '2',
   sn_activo: true,
+  asignadoProyecto: false,
 }
 
 export function UserManagementContent() {
@@ -68,6 +70,7 @@ export function UserManagementContent() {
   const [passwordOpen, setPasswordOpen] = useState(false)
   const [pendingStatusUser, setPendingStatusUser] = useState(null)
   const [pendingMembershipUser, setPendingMembershipUser] = useState(null)
+  const [pendingEmailUser, setPendingEmailUser] = useState(null)
   const [membershipRoleId, setMembershipRoleId] = useState('2')
 
   const roleOptions = useMemo(() => {
@@ -201,6 +204,7 @@ export function UserManagementContent() {
       telefono: user.telefono || '',
       tb_rol_id: String(user.tbRolId || 2),
       sn_activo: Boolean(user.snActivo),
+      asignadoProyecto: Boolean(user.asignadoProyecto),
     })
     setEditOpen(true)
   }
@@ -325,6 +329,22 @@ export function UserManagementContent() {
     }
   }
 
+  const changeAlertEmailPreference = async () => {
+    if (!pendingEmailUser) return
+    const enabled = !pendingEmailUser.recibeAlertasCorreo
+    setSaving(true)
+    try {
+      await updateAlertEmailPreferenceRequest(pendingEmailUser.id, enabled)
+      toast.success(enabled ? 'Correos de alertas activados.' : 'Correos de alertas desactivados.')
+      setPendingEmailUser(null)
+      await loadUsers(search)
+    } catch (submitError) {
+      toast.error(submitError.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const activeUsers = users.filter((user) => user.snActivo).length
   const inactiveUsers = users.length - activeUsers
 
@@ -427,6 +447,7 @@ export function UserManagementContent() {
                       <Th>Usuario</Th>
                       <Th>Correo</Th>
                       <Th>Rol</Th>
+                      <Th>Alertas por correo</Th>
                       <Th>Estado</Th>
                       <Th>Acciones</Th>
                     </tr>
@@ -434,19 +455,20 @@ export function UserManagementContent() {
                   <tbody className="divide-y divide-emerald-50 bg-white">
                     {loading ? (
                       <tr>
-                        <td colSpan="5" className="px-4 py-8 text-center text-emerald-900/60">
+                        <td colSpan="6" className="px-4 py-8 text-center text-emerald-900/60">
                           Cargando usuarios...
                         </td>
                       </tr>
                     ) : users.length === 0 ? (
                       <tr>
-                        <td colSpan="5" className="px-4 py-8 text-center text-emerald-900/60">
+                        <td colSpan="6" className="px-4 py-8 text-center text-emerald-900/60">
                           No hay usuarios que coincidan con la búsqueda.
                         </td>
                       </tr>
                     ) : (
                       users.map((user) => {
                         const isCurrentUser = Number(user.id) === Number(authenticatedUser?.id)
+                        const canReceiveAlertEmails = user.asignadoProyecto && user.snActivo && String(user.rolProyecto || user.rol).toLowerCase() === 'administrador'
 
                         return (
                         <tr key={user.id} className={isCurrentUser ? 'bg-emerald-50' : 'hover:bg-slate-50'}>
@@ -465,6 +487,13 @@ export function UserManagementContent() {
                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${user.asignadoProyecto ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'}`}>
                               {user.asignadoProyecto ? (user.rolProyecto || user.rol || 'Asignado') : 'No existe rol'}
                             </span>
+                          </td>
+                          <td className="px-4 py-4">
+                            <EmailPreferenceSwitch
+                              enabled={Boolean(user.recibeAlertasCorreo)}
+                              disabled={!canReceiveAlertEmails}
+                              onClick={() => setPendingEmailUser(user)}
+                            />
                           </td>
                           <td className="px-4 py-4">
                             <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${user.snActivo ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'}`}>
@@ -509,7 +538,10 @@ export function UserManagementContent() {
             <Field label="Correo electrónico" name="correo_electronico" type="email" value={editForm.correo_electronico} onChange={handleEditChange} />
             <Field label="Usuario" name="username" value={editForm.username} disabled title="El nombre de usuario no se puede modificar." />
             <PhoneField codigoPais={editForm.codigo_pais} telefono={editForm.telefono} onChange={handleEditChange} />
-            <SelectField label="Rol" name="tb_rol_id" value={editForm.tb_rol_id} onChange={handleEditChange} options={roleOptions} />
+            <div>
+              <SelectField label="Rol" name="tb_rol_id" value={editForm.tb_rol_id} onChange={handleEditChange} options={roleOptions} disabled={!editForm.asignadoProyecto} />
+              {!editForm.asignadoProyecto ? <p className="mt-2 text-xs text-amber-700">Primero agrega el usuario al proyecto para poder asignarle o cambiarle el rol.</p> : null}
+            </div>
 
             <div className="md:col-span-2 flex justify-end gap-3">
               <button type="button" onClick={() => setEditOpen(false)} className="rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-800">
@@ -575,6 +607,15 @@ export function UserManagementContent() {
           saving={saving}
           onCancel={() => setPendingMembershipUser(null)}
           onConfirm={changeMembership}
+        />
+      ) : null}
+
+      {pendingEmailUser ? (
+        <EmailPreferenceConfirmationModal
+          user={pendingEmailUser}
+          saving={saving}
+          onCancel={() => setPendingEmailUser(null)}
+          onConfirm={changeAlertEmailPreference}
         />
       ) : null}
     </DashboardFrame>
@@ -684,6 +725,48 @@ function StatusConfirmationModal({ user, saving, onCancel, onConfirm }) {
         <div className="mt-6 flex justify-end gap-3">
           <button type="button" onClick={onCancel} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60">Cancelar</button>
           <button type="button" onClick={onConfirm} disabled={saving} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60">{saving ? 'Desactivando...' : 'Desactivar'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function EmailPreferenceSwitch({ enabled, disabled, onClick }) {
+  return (
+    <div className="flex flex-col items-start gap-1">
+      <button
+        type="button"
+        role="switch"
+        aria-checked={enabled}
+        aria-label={`${enabled ? 'Desactivar' : 'Activar'} alertas por correo`}
+        onClick={onClick}
+        disabled={disabled}
+        title={disabled ? 'Solo los administradores activos del proyecto pueden recibir alertas.' : undefined}
+        className={`relative h-6 w-11 rounded-full transition-colors ${enabled ? 'bg-emerald-600' : 'bg-slate-300'} disabled:cursor-not-allowed disabled:opacity-45`}
+      >
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      </button>
+      <span className="text-[11px] text-slate-500">{disabled ? 'Solo administradores' : enabled ? 'Activado' : 'Desactivado'}</span>
+    </div>
+  )
+}
+
+function EmailPreferenceConfirmationModal({ user, saving, onCancel, onConfirm }) {
+  const enabling = !user.recibeAlertasCorreo
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+      <div role="dialog" aria-modal="true" aria-labelledby="email-confirmation-title" className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-lg">
+        <h3 id="email-confirmation-title" className="text-lg font-bold text-slate-950">¿Estás seguro de {enabling ? 'activar' : 'desactivar'} los correos para {user.nombreCompleto}?</h3>
+        <p className="mt-2 text-sm text-slate-600">
+          {enabling
+            ? `Las alertas importantes de este proyecto se enviarán a ${user.correoElectronico}.`
+            : `${user.correoElectronico} dejará de recibir las alertas de este proyecto.`}
+        </p>
+        <div className="mt-6 flex justify-end gap-3">
+          <button type="button" onClick={onCancel} disabled={saving} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">Cancelar</button>
+          <button type="button" onClick={onConfirm} disabled={saving} className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${enabling ? 'bg-emerald-700' : 'bg-red-600'}`}>
+            {saving ? 'Guardando...' : enabling ? 'Activar correos' : 'Desactivar correos'}
+          </button>
         </div>
       </div>
     </div>

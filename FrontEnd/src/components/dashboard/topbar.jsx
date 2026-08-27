@@ -44,8 +44,10 @@ export function Topbar({ onMenuClick }) {
 
   const loadNotifications = useCallback(async () => {
     try {
-      setNotifications(await listNotificationsRequest({ status: "active", limit: 3 }));
+      const result = await listNotificationsRequest({ status: "active", page: 1, pageSize: 3 });
+      setNotifications(Array.isArray(result.notificaciones) ? result.notificaciones : []);
     } catch {
+      setNotifications([]);
       // El panel sigue disponible si la consulta de notificaciones falla temporalmente.
     }
   }, []);

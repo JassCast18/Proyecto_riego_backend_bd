@@ -80,6 +80,12 @@ export const changeProjectMembership = async ({ projectId, userId, active, roleI
     ]);
 };
 
+export const updateAlertEmailPreference = async ({ projectId, userId, enabled, administratorId }) => {
+    await DatabaseExecutor.executeProcedure("sp_actualizar_preferencia_alertas_correo", [
+        projectId, userId, enabled, administratorId,
+    ]);
+};
+
 export const updateUser = async ({
     id,
     nombres,

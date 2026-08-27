@@ -20,7 +20,7 @@ function handleUserError(res, error) {
     }
 
     const isConflict = error.code === "23505" || /ya existe|ya está registrado|ya está en uso/i.test(message);
-    const status = isConflict ? 409 : 500;
+    const status = isConflict ? 409 : error.code === "P0001" ? 400 : 500;
 
     return res.status(status).json(ResponseModel.fail(message, null, status));
 }
@@ -213,6 +213,31 @@ export const changeProjectMembership = async (req, res) => {
             administratorId: getCurrentUserId(req),
         });
         return res.status(200).json(ResponseModel.ok(null, active ? "Usuario agregado al proyecto." : "Usuario retirado del proyecto."));
+    } catch (error) {
+        return handleUserError(res, error);
+    }
+};
+
+export const updateAlertEmailPreference = async (req, res) => {
+    try {
+        const userId = Number(req.params.id);
+        const enabled = req.body?.habilitado;
+
+        if (!userId || typeof enabled !== "boolean") {
+            return res.status(400).json(ResponseModel.fail("Usuario y preferencia de correo son obligatorios.", null, 400));
+        }
+
+        await provider.updateAlertEmailPreference({
+            projectId: req.projectId,
+            userId,
+            enabled,
+            administratorId: getCurrentUserId(req),
+        });
+
+        const message = enabled
+            ? "Recepción de alertas por correo activada."
+            : "Recepción de alertas por correo desactivada.";
+        return res.status(200).json(ResponseModel.ok(null, message));
     } catch (error) {
         return handleUserError(res, error);
     }

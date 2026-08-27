@@ -33,14 +33,21 @@
 \i Functions/fn_listar_usuarios.sql
 \i Functions/fn_listar_roles.sql
 \i Functions/fn_listar_nodos_hardware.sql
+\i Functions/fn_obtener_nombre_usuario.sql
 \i Functions/fn_listar_telemetria_hardware.sql
 \i Functions/fn_evaluar_estado_nodo.sql
 \i Functions/fn_listar_permisos_rol.sql
 \i Functions/fn_obtener_accesos_rol.sql
 \i Functions/fn_listar_catalogo_abm.sql
 \i Functions/fn_listar_notificaciones.sql
+\i Functions/fn_resumen_notificaciones.sql
+\i Functions/fn_listar_revisores_notificaciones.sql
 \i Functions/fn_marcar_notificacion_revisada.sql
 \i Functions/fn_descartar_notificacion.sql
+\i Functions/fn_reconocer_incidente.sql
+\i Functions/fn_obtener_reglas_cultivo_alertas.sql
+\i Functions/fn_listar_proyectos_monitoreo.sql
+\i Functions/fn_listar_alertas_email_pendientes.sql
 \i Functions/fn_buscar_usuario_recuperacion.sql
 \i Functions/fn_validar_token_recuperacion.sql
 \i Functions/fn_listar_proyectos_usuario.sql
@@ -63,6 +70,7 @@
 \i Stored Procedure/sp_abm_catalogo.sql
 \i Stored Procedure/sp_abm_cliente.sql
 \i Stored Procedure/sp_sincronizar_notificaciones_hardware.sql
+\i Stored Procedure/sp_registrar_entrega_alerta.sql
 \i Stored Procedure/sp_crear_token_recuperacion.sql
 \i Stored Procedure/sp_restablecer_password.sql
 \i Stored Procedure/sp_crear_proyecto.sql
@@ -71,9 +79,11 @@
 \i Stored Procedure/sp_asignar_usuario_proyecto.sql
 \i Stored Procedure/sp_asignar_finca_proyecto.sql
 \i Stored Procedure/sp_cambiar_estado_usuario_proyecto.sql
+\i Stored Procedure/sp_actualizar_preferencia_alertas_correo.sql
 \i Stored Procedure/sp_cambiar_estado_proyecto.sql
 \i Stored Procedure/sp_guardar_rol_permisos.sql
 \i Stored Procedure/sp_registrar_informe_campo.sql
+\i Stored Procedure/sp_crear_notificacion_informe.sql
 \i Stored Procedure/sp_registrar_adjuntos_informe.sql
 \i Stored Procedure/sp_finalizar_ciclo_cultivo.sql
 \i Stored Procedure/sp_iniciar_ciclo_cultivo.sql

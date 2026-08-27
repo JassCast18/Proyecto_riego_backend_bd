@@ -47,10 +47,10 @@ export function SummaryContent() {
       const [hardware, telemetryResult, activeNotifications, parameters] = await Promise.all([
         listHardwareStateRequest(),
         listTelemetryHardwareRequest({ page: 1, limit: 500 }),
-        listNotificationsRequest({ status: 'active', limit: 3 }),
+        listNotificationsRequest({ status: 'active', page: 1, pageSize: 3 }),
         getCropParametersRequest(project.id),
       ])
-      setNodes(hardware); setTelemetry(telemetryResult.telemetrias); setNotifications(activeNotifications); setCrop(parameters?.ciclo_id?parameters:{...parameters,cultivo:null})
+      setNodes(hardware); setTelemetry(telemetryResult.telemetrias); setNotifications(Array.isArray(activeNotifications.notificaciones) ? activeNotifications.notificaciones : []); setCrop(parameters?.ciclo_id?parameters:{...parameters,cultivo:null})
     } catch (requestError) { setError(requestError.message) }
     finally { setLoading(false) }
   }, [project?.id])

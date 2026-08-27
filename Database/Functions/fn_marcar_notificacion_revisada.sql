@@ -22,7 +22,7 @@ BEGIN
     SELECT id, p_usuario_id, TRUE, NOW()
     FROM tb_notificacion
     WHERE id = p_notificacion_id
-      AND (tb_rol_id IS NULL OR tb_rol_id = p_rol_id)
+      AND (p_rol_id=1 OR tb_rol_id IS NULL OR tb_rol_id = p_rol_id)
       AND tb_proyecto_id = p_proyecto_id
     ON CONFLICT (tb_notificacion_id, tb_usuario_id)
     DO UPDATE SET revisada = TRUE, fecha_revision = NOW();

@@ -9,7 +9,7 @@ RETURNS TABLE(
     sn_activo BOOLEAN,cod_usuario_registro INTEGER,fecha_registra TIMESTAMP,
     cod_usuario_modifica INTEGER,fecha_modifica TIMESTAMP,
     asignado_proyecto BOOLEAN,tb_rol_proyecto_id INTEGER,rol_proyecto VARCHAR,
-    sn_propietario SMALLINT
+    sn_propietario SMALLINT,recibe_alertas_correo BOOLEAN
 )
 LANGUAGE sql
 AS $$
@@ -19,7 +19,8 @@ AS $$
            u.fecha_registra,u.cod_usuario_modifica,u.fecha_modifica,
            (ur.id IS NOT NULL AND ur.sn_activo),
            CASE WHEN ur.sn_activo THEN ur.tb_rol_id END,
-           CASE WHEN ur.sn_activo THEN r.nombre_rol END,u.sn_propietario
+           CASE WHEN ur.sn_activo THEN r.nombre_rol END,u.sn_propietario,
+           CASE WHEN ur.sn_activo THEN ur.recibe_alertas_correo ELSE FALSE END
     FROM tb_usuario u
     INNER JOIN tb_persona p ON p.id=u.tb_persona_id
     LEFT JOIN tb_usuario_rol ur ON ur.tb_usuario_id=u.id AND ur.tb_proyecto_id=p_proyecto_id

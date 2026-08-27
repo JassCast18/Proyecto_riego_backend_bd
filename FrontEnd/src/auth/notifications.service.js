@@ -4,10 +4,10 @@ function getApiErrorMessage(error, fallbackMessage) {
   return error?.response?.data?.message || error?.response?.data?.errors || error?.message || fallbackMessage
 }
 
-export async function listNotificationsRequest({ status = 'all', limit = 50 } = {}) {
+export async function listNotificationsRequest({ status = 'active', reviewer = 'all', page = 1, pageSize = 10 } = {}) {
   try {
-    const response = await api.get('/notificaciones', { params: { status, limit } })
-    return response.data?.data?.notificaciones || []
+    const response = await api.get('/notificaciones', { params: { status, reviewer, page, pageSize } })
+    return response.data?.data || { notificaciones: [], revisores: [], resumen: {}, paginacion: {} }
   } catch (error) {
     throw new Error(getApiErrorMessage(error, 'No fue posible consultar las notificaciones.'))
   }
@@ -18,6 +18,14 @@ export async function reviewNotificationRequest(id) {
     await api.patch(`/notificaciones/${id}/revisada`)
   } catch (error) {
     throw new Error(getApiErrorMessage(error, 'No fue posible marcar la notificación como revisada.'))
+  }
+}
+
+export async function acknowledgeNotificationRequest(id) {
+  try {
+    await api.patch(`/notificaciones/${id}/reconocida`)
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible reconocer el incidente.'))
   }
 }
 

@@ -14,3 +14,8 @@ export const saveReportAttachments = async (reportId,projectId,attachments) => D
 export const getReportAttachment = async (attachmentId,projectId,userId) => (await DatabaseExecutor.executeFunction("fn_obtener_adjunto_informe",[attachmentId,projectId,userId]))[0]||null;
 export const listProjectAdministrators = async (projectId) => DatabaseExecutor.executeFunction("fn_listar_administradores_proyecto",[projectId]);
 export const getReportEmailContext = async (projectId,userId) => (await DatabaseExecutor.executeFunction("fn_obtener_parametrizacion_cultivo",[projectId,userId]))[0]||null;
+export const createReportNotification = async (projectId,reportId,userId,title) => DatabaseExecutor.executeProcedure("sp_crear_notificacion_informe",[projectId,reportId,userId,title]);
+export const getUserDisplayName = async (userId) => {
+    const rows=await DatabaseExecutor.executeFunction("fn_obtener_nombre_usuario",[userId]);
+    return rows[0]?.fn_obtener_nombre_usuario || "";
+};

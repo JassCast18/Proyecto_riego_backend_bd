@@ -26,18 +26,23 @@ export async function createFieldReport(req,res) {
             ruta_archivo:path.relative(process.cwd(),file.path).replaceAll("\\","/"),tipo_mime:file.mimetype,tamano_bytes:file.size,
         }));
         if (attachments.length) await provider.saveReportAttachments(reportId,req.projectId,attachments);
+        await provider.createReportNotification(req.projectId,reportId,req.user.id,title);
 
         let emailSent=true;
         try {
             if (!isEmailServiceConfigured()) emailSent=false;
             else {
-                const [admins,context]=await Promise.all([provider.listProjectAdministrators(req.projectId),provider.getReportEmailContext(req.projectId,req.user.id)]);
+                const [admins,context,authorName]=await Promise.all([
+                    provider.listProjectAdministrators(req.projectId),
+                    provider.getReportEmailContext(req.projectId,req.user.id),
+                    provider.getUserDisplayName(req.user.id),
+                ]);
                 const results=await Promise.allSettled(admins.map(admin=>sendNewReportEmail({
                     recipient:admin.correo,name:admin.nombre,projectName:context?.proyecto||`Proyecto #${req.projectId}`,
-                    reportTitle:title,author:req.user.username||`Usuario #${req.user.id}`,
+                    reportTitle:title,author:authorName||req.user.usuario||`Usuario #${req.user.id}`,
                     observationDate:req.body.fechaObservacion||new Date().toISOString().slice(0,10),
                 })));
-                emailSent=results.every(item=>item.status==="fulfilled");
+                emailSent=admins.length>0 && results.every(item=>item.status==="fulfilled");
             }
         } catch(emailError) { emailSent=false; console.error("No fue posible notificar el nuevo informe:",emailError.message); }
         return res.status(201).json(ResponseModel.ok({informeId:reportId,adjuntos:attachments.length,correoEnviado:emailSent},emailSent?"Informe registrado y administradores notificados.":"Informe registrado. No fue posible enviar todas las notificaciones por correo.",201));

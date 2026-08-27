@@ -104,3 +104,20 @@ export async function sendNewReportEmail({ recipient,name,projectName,reportTitl
         html:`<!doctype html><html lang="es"><body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827"><table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px"><tr><td style="background:#166534;color:#ffffff;padding:22px 28px;border-radius:12px 12px 0 0;font-size:20px;font-weight:bold">Frutas del Oasis</td></tr><tr><td style="padding:30px 28px"><h1 style="margin:0 0 18px;font-size:26px">Nuevo informe de campo</h1><p style="line-height:1.6">Hola${safeName?`, ${safeName}`:""}. Se agregó un nuevo informe a la plantación <strong>${safeProject}</strong>.</p><table width="100%" cellpadding="8" cellspacing="0" style="margin:20px 0;background:#f9fafb;border-radius:8px"><tr><td><strong>Informe</strong></td><td>${safeTitle}</td></tr><tr><td><strong>Registrado por</strong></td><td>${safeAuthor}</td></tr><tr><td><strong>Fecha observada</strong></td><td>${escapeHtml(observationDate)}</td></tr></table><p style="color:#4b5563;line-height:1.6">Ingresa al sistema para revisar las observaciones y archivos adjuntos.</p></td></tr></table></td></tr></table></body></html>`,
     });
 }
+
+export async function sendAlertEmail({ recipient,name,projectName,title,message,severity,category,detectedAt }) {
+    if (!isEmailServiceConfigured()) throw new Error("El servidor SMTP no está configurado.");
+    const critical = severity === "CRITICAL";
+    const color = critical ? "#be123c" : "#b45309";
+    const safe = {
+        name: escapeHtml(name), project: escapeHtml(projectName), title: escapeHtml(title),
+        message: escapeHtml(message), severity: escapeHtml(severity), category: escapeHtml(category),
+        detectedAt: escapeHtml(new Date(detectedAt).toLocaleString("es-GT")),
+    };
+    await createTransporter().sendMail({
+        from:{name:"Frutas del Oasis · Alertas",address:getSenderAddress()},to:recipient,
+        subject:`${critical ? "Alerta crítica" : "Advertencia"} · ${projectName}`,
+        text:`${title}. ${message}. Proyecto: ${projectName}. Detectada: ${safe.detectedAt}. Ingresa al sistema para reconocer el incidente.`,
+        html:`<!doctype html><html lang="es"><body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827"><table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px"><tr><td align="center"><table width="100%" cellpadding="0" cellspacing="0" style="max-width:580px;background:#fff;border-radius:14px;overflow:hidden"><tr><td style="background:${color};color:#fff;padding:22px 28px;font-size:20px;font-weight:bold">${critical ? "Alerta crítica" : "Advertencia de cultivo"}</td></tr><tr><td style="padding:30px 28px"><p>Hola${safe.name ? `, ${safe.name}` : ""}.</p><h1 style="font-size:25px;margin:18px 0">${safe.title}</h1><p style="line-height:1.7">${safe.message}</p><table width="100%" cellpadding="8" style="margin:22px 0;background:#f8fafc"><tr><td><strong>Proyecto</strong></td><td>${safe.project}</td></tr><tr><td><strong>Categoría</strong></td><td>${safe.category}</td></tr><tr><td><strong>Prioridad</strong></td><td>${safe.severity}</td></tr><tr><td><strong>Detectada</strong></td><td>${safe.detectedAt}</td></tr></table><p style="color:#475569">Ingresa al módulo Gestión de alertas para reconocer el incidente y darle seguimiento.</p></td></tr></table></td></tr></table></body></html>`,
+    });
+}

@@ -8,6 +8,7 @@ import {
 	updateStatus,
 	updateUser,
 	changeProjectMembership,
+	updateAlertEmailPreference,
 } from "../controllers/users.controller.js";
 import { listMyPermissions as listMyRolePermissions } from "../controllers/permissions.controller.js";
 import { verifyToken } from "../middlewares/jwt.middleware.js";
@@ -28,6 +29,7 @@ router.patch("/manage/:id", verifyToken, verifyProjectAccess, requireProjectAdmi
 router.patch("/manage/:id/password", verifyToken, verifyProjectAccess, requireProjectAdministrator, updatePassword);
 router.patch("/manage/:id/status", verifyToken, verifyProjectAccess, requireProjectAdministrator, updateStatus);
 router.patch("/manage/:id/project", verifyToken, verifyProjectAccess, requireProjectAdministrator, changeProjectMembership);
+router.patch("/manage/:id/alert-email", verifyToken, verifyProjectAccess, requireProjectAdministrator, updateAlertEmailPreference);
 
 
 export default router;

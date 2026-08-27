@@ -82,3 +82,14 @@ export async function changeProjectMembershipRequest(id, payload, projectId = nu
     throw new Error(getApiErrorMessage(error, 'No fue posible cambiar la asignación al proyecto.'))
   }
 }
+
+export async function updateAlertEmailPreferenceRequest(id, enabled, projectId = null) {
+  try {
+    const response = await api.patch(`/users/manage/${id}/alert-email`, { habilitado: enabled }, {
+      headers: projectId ? { 'X-Project-Id': projectId } : undefined,
+    })
+    return response.data?.message
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error, 'No fue posible cambiar la recepción de alertas por correo.'))
+  }
+}

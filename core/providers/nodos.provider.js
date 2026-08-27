@@ -37,6 +37,8 @@ export const listHardwareNodes = async (projectId = null) => {
                 tipoNodo: node.tipo_nodo,
                 direccionMac: node.direccion_mac,
                 estadoEnergia: node.estado_energia,
+                usuarioCambioEnergia: node.usuario_cambio_energia || "",
+                fechaCambioEnergia: node.fecha_cambio_energia || null,
                 ...evaluation,
             };
         })
