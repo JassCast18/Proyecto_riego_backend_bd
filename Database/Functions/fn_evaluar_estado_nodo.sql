@@ -15,7 +15,7 @@ AS $$
             actual.valor_lectura AS valor_actual,
             actual.fecha_hora AS ultima_conexion,
             anterior.valor_lectura AS valor_anterior
-        FROM tb_sensor_actuador sa
+        FROM tb_sensor sa
         LEFT JOIN LATERAL (
             SELECT t.valor_lectura, t.fecha_hora
             FROM tb_telemetria t

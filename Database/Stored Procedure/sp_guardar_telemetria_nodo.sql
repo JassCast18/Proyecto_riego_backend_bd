@@ -11,13 +11,13 @@ DECLARE
 BEGIN
     -- 1. Buscar el ID del sensor de humedad asociado a este nodo específico
     SELECT id INTO v_id_sensor_humedad
-    FROM tb_sensor_actuador
+    FROM tb_sensor
     WHERE tb_nodo_id = p_id_nodo AND tipo_componente = 'Higrometro_A0'
     LIMIT 1;
 
     -- 2. Buscar el ID del sensor de temperatura asociado a este nodo específico
     SELECT id INTO v_id_sensor_temperatura
-    FROM tb_sensor_actuador
+    FROM tb_sensor
     WHERE tb_nodo_id = p_id_nodo AND tipo_componente = 'Termometro_DS18B20'
     LIMIT 1;
 

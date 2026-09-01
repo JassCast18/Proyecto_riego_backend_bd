@@ -18,7 +18,8 @@
 \i Tables/tb_sector.sql
 \i Tables/tb_configuracion_cultivo.sql
 \i Tables/tb_nodo_iot.sql
-\i Tables/tb_sensor_actuador.sql
+\i Tables/tb_sensor.sql
+\i Tables/tb_actuador.sql
 \i Tables/tb_telemetria.sql
 \i Tables/tb_ticket_soporte.sql
 \i Tables/tb_bitacora_auditoria.sql
@@ -33,6 +34,11 @@
 \i Functions/fn_listar_usuarios.sql
 \i Functions/fn_listar_roles.sql
 \i Functions/fn_listar_nodos_hardware.sql
+\i Functions/fn_listar_catalogo_control_manual.sql
+\i Functions/fn_sincronizar_pruebas_actuador.sql
+\i Functions/fn_listar_pruebas_control_manual.sql
+\i Functions/fn_obtener_prueba_control_manual.sql
+\i Functions/fn_tomar_comandos_iot.sql
 \i Functions/fn_obtener_nombre_usuario.sql
 \i Functions/fn_listar_telemetria_hardware.sql
 \i Functions/fn_evaluar_estado_nodo.sql
@@ -65,6 +71,11 @@
 \i Stored Procedure/sp_actualizar_password_usuario.sql
 \i Stored Procedure/sp_actualizar_estado_usuario.sql
 \i Stored Procedure/sp_actualizar_estado_energia_nodo.sql
+\i Stored Procedure/sp_iniciar_prueba_control_manual.sql
+\i Stored Procedure/sp_registrar_actuador.sql
+\i Stored Procedure/sp_finalizar_prueba_control_manual.sql
+\i Stored Procedure/sp_confirmar_comando_iot.sql
+\i Stored Procedure/sp_registrar_lecturas_prueba.sql
 \i Stored Procedure/sp_evaluar_estado_nodo.sql
 \i Stored Procedure/sp_registro_usuario.sql
 \i Stored Procedure/sp_abm_catalogo.sql

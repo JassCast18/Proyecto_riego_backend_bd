@@ -14,11 +14,11 @@ BEGIN
     RETURN QUERY SELECT cc.id,cc.numero_ciclo,cu.nombre,cc.variedad,cc.fecha_inicio,cc.fecha_fin,cc.estado,
       GREATEST(0,(COALESCE(cc.fecha_fin,CURRENT_DATE)-COALESCE(cc.fecha_inicio,cc.fecha_registra::DATE)))::INT,
       COUNT(DISTINCT i.id),ROUND(AVG(d.altura_planta_cm),2),ROUND(AVG(d.cantidad_hojas),2),
-      ROUND((SELECT AVG(t.valor_lectura) FROM tb_telemetria t JOIN tb_sensor_actuador sa ON sa.id=t.tb_sensor_id
+      ROUND((SELECT AVG(t.valor_lectura) FROM tb_telemetria t JOIN tb_sensor sa ON sa.id=t.tb_sensor_id
         JOIN tb_nodo_iot n ON n.id=sa.tb_nodo_id JOIN tb_sector s ON s.id=n.tb_sector_id JOIN tb_finca f ON f.id=s.tb_finca_id
         WHERE f.tb_proyecto_id=p_proyecto_id AND sa.tipo_componente ILIKE '%Termometro%'
           AND t.fecha_hora::DATE>=COALESCE(cc.fecha_inicio,cc.fecha_registra::DATE) AND t.fecha_hora::DATE<=COALESCE(cc.fecha_fin,CURRENT_DATE)),2),
-      ROUND((SELECT AVG(t.valor_lectura) FROM tb_telemetria t JOIN tb_sensor_actuador sa ON sa.id=t.tb_sensor_id
+      ROUND((SELECT AVG(t.valor_lectura) FROM tb_telemetria t JOIN tb_sensor sa ON sa.id=t.tb_sensor_id
         JOIN tb_nodo_iot n ON n.id=sa.tb_nodo_id JOIN tb_sector s ON s.id=n.tb_sector_id JOIN tb_finca f ON f.id=s.tb_finca_id
         WHERE f.tb_proyecto_id=p_proyecto_id AND sa.tipo_componente ILIKE '%Higrometro%'
           AND t.fecha_hora::DATE>=COALESCE(cc.fecha_inicio,cc.fecha_registra::DATE) AND t.fecha_hora::DATE<=COALESCE(cc.fecha_fin,CURRENT_DATE)),2),

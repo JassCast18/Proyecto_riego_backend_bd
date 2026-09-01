@@ -7,7 +7,7 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_sql TEXT;
 BEGIN
-    IF p_tabla NOT IN ('tb_finca','tb_sector','tb_cliente','tb_rol','tb_modulo','tb_submodulo','tb_nodo_iot','tb_sensor_actuador') THEN
+    IF p_tabla NOT IN ('tb_finca','tb_sector','tb_cliente','tb_rol','tb_modulo','tb_submodulo','tb_nodo_iot','tb_sensor','tb_actuador') THEN
         RAISE EXCEPTION 'La tabla solicitada no está habilitada para ABM dinámico.';
     END IF;
 
@@ -18,8 +18,24 @@ BEGIN
             'SELECT to_jsonb(t) FROM tb_sector t INNER JOIN tb_finca f ON f.id=t.tb_finca_id WHERE f.tb_proyecto_id=$1 ORDER BY t.id'
         WHEN 'tb_nodo_iot' THEN
             'SELECT to_jsonb(t) FROM tb_nodo_iot t INNER JOIN tb_sector s ON s.id=t.tb_sector_id INNER JOIN tb_finca f ON f.id=s.tb_finca_id WHERE f.tb_proyecto_id=$1 ORDER BY t.id'
-        WHEN 'tb_sensor_actuador' THEN
-            'SELECT to_jsonb(t) FROM tb_sensor_actuador t INNER JOIN tb_nodo_iot n ON n.id=t.tb_nodo_id INNER JOIN tb_sector s ON s.id=n.tb_sector_id INNER JOIN tb_finca f ON f.id=s.tb_finca_id WHERE f.tb_proyecto_id=$1 ORDER BY t.id'
+        WHEN 'tb_sensor' THEN
+            'SELECT to_jsonb(t) FROM tb_sensor t INNER JOIN tb_nodo_iot n ON n.id=t.tb_nodo_id INNER JOIN tb_sector s ON s.id=n.tb_sector_id INNER JOIN tb_finca f ON f.id=s.tb_finca_id WHERE f.tb_proyecto_id=$1 ORDER BY t.id'
+        WHEN 'tb_actuador' THEN
+            'SELECT to_jsonb(x) FROM (
+                SELECT a.id,a.nombre,a.tipo_actuador,a.estado_actual,a.activo_en_low,
+                       a.duracion_maxima_segundos,a.sn_activo,a.fecha_registra,
+                       na.tb_nodo_id,na.pin_control
+                FROM tb_actuador a
+                LEFT JOIN LATERAL (
+                    SELECT relacion.tb_nodo_id,relacion.pin_control
+                    FROM tb_nodo_actuador relacion
+                    WHERE relacion.tb_actuador_id=a.id AND relacion.sn_activo=TRUE
+                    ORDER BY relacion.es_principal DESC,relacion.tb_nodo_id
+                    LIMIT 1
+                ) na ON TRUE
+                WHERE a.tb_proyecto_id=$1
+                ORDER BY a.id
+             ) x'
         WHEN 'tb_cliente' THEN
             'SELECT to_jsonb(x) FROM (
                 SELECT c.id,c.tb_persona_id,p.nombres,p.apellidos,

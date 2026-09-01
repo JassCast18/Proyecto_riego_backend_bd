@@ -140,7 +140,7 @@ const MASTER_DEFINITIONS = [
   {
     key: 'sensores',
     label: 'Sensores',
-    description: 'Sensores y actuadores instalados por nodo.',
+    description: 'Sensores de medición instalados por nodo.',
     permissionKey: 'sensores.view',
     columns: [
       { key: 'id', label: 'ID' },
@@ -150,6 +150,30 @@ const MASTER_DEFINITIONS = [
     fields: [
       { name: 'tb_nodo_id', label: 'Nodo', type: 'select', source: 'nodos', placeholder: 'Selecciona un nodo' },
       { name: 'tipo_componente', label: 'Tipo de componente', type: 'text', placeholder: 'Ej. Higrometro_A0' },
+    ],
+  },
+  {
+    key: 'actuadores',
+    label: 'Actuadores',
+    description: 'Dispositivos que el sistema puede accionar desde un nodo IoT.',
+    permissionKey: 'actuadores.view',
+    columns: [
+      { key: 'id', label: 'ID' },
+      { key: 'nombre', label: 'Nombre' },
+      { key: 'tipo_actuador', label: 'Tipo' },
+      { key: 'tb_nodo_id', label: 'Nodo controlador', source: 'nodos' },
+      { key: 'pin_control', label: 'GPIO' },
+      { key: 'estado_actual', label: 'Estado real' },
+      { key: 'activo_en_low', label: 'Activo en LOW' },
+    ],
+    fields: [
+      { name: 'nombre', label: 'Nombre del actuador', type: 'text', placeholder: 'Ej. Válvula sector norte', required: true },
+      { name: 'tipo_actuador', label: 'Tipo de actuador', type: 'text', placeholder: 'Ej. VALVULA', defaultValue: 'VALVULA', required: true },
+      { name: 'tb_nodo_id', label: 'Nodo controlador', type: 'select', source: 'nodos', placeholder: 'Selecciona un nodo', required: true },
+      { name: 'pin_control', label: 'GPIO de control', type: 'number', defaultValue: 5, required: true },
+      { name: 'duracion_maxima_segundos', label: 'Límite seguro (segundos)', type: 'number', defaultValue: 60, required: true },
+      { name: 'activo_en_low', label: 'Activación eléctrica en LOW', type: 'booleanToggle', defaultValue: true },
+      { name: 'sn_activo', label: 'Disponible para control', type: 'booleanToggle', defaultValue: true },
     ],
   },
 ]
@@ -176,6 +200,8 @@ function buildDisplayValue(masterKey, record) {
       return `Nodo #${record.id} · ${record.tipo_nodo || 'Sin tipo'}`
     case 'sensores':
       return `Sensor #${record.id} · ${record.tipo_componente || 'Sin tipo'}`
+    case 'actuadores':
+      return record.nombre || `Actuador #${record.id}`
     default:
       return `Registro #${record.id}`
   }
@@ -445,7 +471,7 @@ export function DataMastersContent() {
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-600">Datos maestros</p>
           <h1 className="mt-2 text-3xl font-black text-slate-950">Información base del proyecto</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-700">
-            Administra fincas, sectores, clientes, roles, nodos y sensores desde un mismo módulo.
+            Administra fincas, sectores, clientes, roles, nodos, sensores y actuadores desde un mismo módulo.
           </p>
         </div>
 

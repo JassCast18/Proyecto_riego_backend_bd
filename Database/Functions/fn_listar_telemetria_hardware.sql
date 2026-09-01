@@ -22,7 +22,7 @@ AS $$
         SELECT t.id, t.tb_sensor_id, sa.tb_nodo_id, sa.tipo_componente,
                t.valor_lectura, t.fecha_hora, COUNT(*) OVER() AS total_registros
         FROM tb_telemetria t
-        INNER JOIN tb_sensor_actuador sa ON sa.id = t.tb_sensor_id
+        INNER JOIN tb_sensor sa ON sa.id = t.tb_sensor_id
         INNER JOIN tb_nodo_iot n ON n.id = sa.tb_nodo_id
         INNER JOIN tb_sector s ON s.id = n.tb_sector_id
         INNER JOIN tb_finca f ON f.id = s.tb_finca_id

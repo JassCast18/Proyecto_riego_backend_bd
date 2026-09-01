@@ -23,7 +23,10 @@ const MASTER_TABLES = {
         tableName: "tb_nodo_iot",
     },
     sensores: {
-        tableName: "tb_sensor_actuador",
+        tableName: "tb_sensor",
+    },
+    actuadores: {
+        tableName: "tb_actuador",
     },
 };
 

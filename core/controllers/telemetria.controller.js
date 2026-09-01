@@ -1,10 +1,12 @@
 import * as provider from "../providers/telemetria.provider.js";
 import { listHardwareNodes } from "../providers/nodos.provider.js";
 import ResponseModel from "../models/response.model.js";
+import { registerTestReadings } from "../providers/manual-control.provider.js";
 
 export const insertarTelemetria = async (req, res) => {
     try {
         const { id_nodo, humedad_cruda, temp_suelo } = req.body;
+        const pruebaId = Number(req.body?.prueba_id || 0);
 
         // Validación de seguridad 
         if (!id_nodo || humedad_cruda === undefined || temp_suelo === undefined) {
@@ -15,7 +17,9 @@ export const insertarTelemetria = async (req, res) => {
         const nodo = nodos.find((item) => Number(item.id) === Number(id_nodo));
         const debeSuspender = nodo?.estadoEnergia === "APAGADO";
 
-        if (!debeSuspender) {
+        if (!debeSuspender && pruebaId > 0) {
+            await registerTestReadings(pruebaId, Number(id_nodo), humedad_cruda, temp_suelo);
+        } else if (!debeSuspender) {
             await provider.insertarTelemetria({
                 id_nodo,
                 humedad: humedad_cruda,
@@ -28,7 +32,7 @@ export const insertarTelemetria = async (req, res) => {
         return res.status(201).json(
             ResponseModel.ok(
                 {
-                    accion: debeSuspender ? "SUSPENDER" : "CONTINUAR",
+                    accion: debeSuspender ? "SUSPENDER" : pruebaId > 0 ? "PRUEBA_REGISTRADA" : "CONTINUAR",
                     estadoEnergia: nodo?.estadoEnergia ?? "ENCENDIDO",
                     nodo: nodo ? {
                         id: nodo.id,
@@ -41,7 +45,9 @@ export const insertarTelemetria = async (req, res) => {
                 },
                 debeSuspender
                     ? "El nodo está apagado. Telemetría ignorada (no guardada)."
-                    : "Datos de telemetría guardados correctamente.",
+                    : pruebaId > 0
+                        ? "Lectura de prueba guardada sin afectar la telemetría normal."
+                        : "Datos de telemetría guardados correctamente.",
                 201
             )
         );

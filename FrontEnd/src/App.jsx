@@ -11,6 +11,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
 import ProjectsPage from './pages/ProjectsPage.jsx'
 import CropParametersPage from './pages/CropParametersPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
+import ManualControlPage from './pages/ManualControlPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -21,6 +22,10 @@ export default function App() {
       <Route path="/olvide-password" element={<ForgotPasswordPage />} />
       <Route path="/restablecer-password" element={<ResetPasswordPage />} />
       <Route path="/proyectos" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+      <Route
+        path="/dashboard/control-manual/*"
+        element={<ProtectedRoute requireProject requiredPermission="control_manual.view"><ManualControlPage /></ProtectedRoute>}
+      />
       <Route
         path="/dashboard/reportes/*"
         element={<ProtectedRoute requireProject requiredPermission="reportes.view"><ReportsPage /></ProtectedRoute>}

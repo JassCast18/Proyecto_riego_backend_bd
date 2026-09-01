@@ -31,9 +31,12 @@ FROM (VALUES
     ('datos_maestros', 'cliente', 'Cliente', 'Gestión de clientes', '/dashboard/maestros/cliente', 3),
     ('datos_maestros', 'roles', 'Roles', 'Gestión de roles', '/dashboard/maestros/roles', 4),
     ('datos_maestros', 'nodos', 'Nodos', 'Gestión de nodos IoT', '/dashboard/maestros/nodos', 5),
-    ('datos_maestros', 'sensores', 'Sensores', 'Gestión de sensores y actuadores', '/dashboard/maestros/sensores', 6),
-    ('datos_maestros', 'modulos_catalogo', 'Módulos', 'Gestión del catálogo de módulos', '/dashboard/maestros/modulos', 7),
-    ('datos_maestros', 'submodulos_catalogo', 'Submódulos', 'Gestión del catálogo de submódulos', '/dashboard/maestros/submodulos', 8),
+    ('datos_maestros', 'sensores', 'Sensores', 'Gestión de sensores', '/dashboard/maestros/sensores', 6),
+    ('datos_maestros', 'actuadores', 'Actuadores', 'Gestión de actuadores y sus nodos controladores', '/dashboard/maestros/actuadores', 7),
+    ('datos_maestros', 'modulos_catalogo', 'Módulos', 'Gestión del catálogo de módulos', '/dashboard/maestros/modulos', 8),
+    ('datos_maestros', 'submodulos_catalogo', 'Submódulos', 'Gestión del catálogo de submódulos', '/dashboard/maestros/submodulos', 9),
+    ('control_manual', 'pruebas_unitarias', 'Pruebas unitarias', 'Pruebas rápidas y aisladas de sensores', '/dashboard/control-manual/pruebas', 1),
+    ('control_manual', 'gestion_valvulas', 'Gestión de válvulas', 'Pruebas manuales seguras de actuadores', '/dashboard/control-manual/valvulas', 2),
     ('reportes', 'informes', 'Generación de informes', 'Registro manual de observaciones del cultivo', '/dashboard/reportes/informes', 1),
     ('reportes', 'historial_operativo', 'Historial operativo', 'Decisiones y cambios realizados en el proyecto', '/dashboard/reportes/historial', 2),
     ('reportes', 'comparacion_ciclos', 'Comparación de plantaciones', 'Comparación entre ciclos de cultivo', '/dashboard/reportes/comparacion', 3),
@@ -65,8 +68,11 @@ VALUES
     ('roles.view', 'Ver roles', 'Acceso al catálogo de roles', 'submodulo'),
     ('nodos.view', 'Ver nodos', 'Acceso al catálogo de nodos', 'submodulo'),
     ('sensores.view', 'Ver sensores', 'Acceso al catálogo de sensores', 'submodulo'),
+    ('actuadores.view', 'Ver actuadores', 'Acceso al catálogo de actuadores', 'submodulo'),
     ('modulos_catalogo.view', 'Ver módulos', 'Acceso al catálogo de módulos', 'submodulo'),
     ('submodulos_catalogo.view', 'Ver submódulos', 'Acceso al catálogo de submódulos', 'submodulo'),
+    ('pruebas_unitarias.view', 'Ver pruebas unitarias', 'Ejecutar pruebas de sensores', 'submodulo'),
+    ('gestion_valvulas.view', 'Gestionar válvulas', 'Ejecutar pruebas seguras de actuadores', 'submodulo'),
     ('informes.view', 'Ver informes', 'Acceso a informes manuales de campo', 'submodulo'),
     ('historial_operativo.view', 'Ver historial operativo', 'Acceso a decisiones y cambios del proyecto', 'submodulo'),
     ('comparacion_ciclos.view', 'Ver comparación de ciclos', 'Acceso a comparación entre plantaciones', 'submodulo'),
@@ -82,6 +88,11 @@ FROM tb_modulo m
 INNER JOIN tb_permiso p ON p.codigo_permiso = 'dashboard.view'
 WHERE m.codigo_modulo = 'dashboard'
 ON CONFLICT (tb_rol_id, tb_modulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
+
+INSERT INTO tb_permiso_submodulo(tb_rol_id,tb_submodulo_id,tb_permiso_id)
+SELECT 3,s.id,p.id FROM tb_submodulo s JOIN tb_permiso p ON p.codigo_permiso=s.codigo_submodulo||'.view'
+WHERE s.codigo_submodulo IN('pruebas_unitarias','gestion_valvulas')
+ON CONFLICT(tb_rol_id,tb_submodulo_id,tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_modulo (tb_rol_id, tb_modulo_id, tb_permiso_id)
 SELECT 1, m.id, p.id

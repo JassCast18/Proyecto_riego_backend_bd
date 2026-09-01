@@ -17,7 +17,7 @@ BEGIN
     IF NOT v_exists THEN
         CREATE TABLE tb_telemetria (
             id BIGSERIAL PRIMARY KEY,
-            tb_sensor_id INT REFERENCES tb_sensor_actuador(id),
+            tb_sensor_id INT REFERENCES tb_sensor(id),
             valor_lectura DECIMAL NOT NULL,
             fecha_hora TIMESTAMP NOT NULL
         );

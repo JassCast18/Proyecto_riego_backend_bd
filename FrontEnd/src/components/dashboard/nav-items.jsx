@@ -46,10 +46,14 @@ export const navGroups = [
         permissionKey: "hardware.view",
       },
       {
-        label: "Control manual",
+        label: "Gestión de control manual",
         icon: SlidersHorizontal,
-        href: "#",
+        href: "/dashboard/control-manual/pruebas",
         permissionKey: "control_manual.view",
+        children: [
+          { label: "Pruebas unitarias", href: "/dashboard/control-manual/pruebas", permissionKey: "pruebas_unitarias.view" },
+          { label: "Gestión de válvulas", href: "/dashboard/control-manual/valvulas", permissionKey: "gestion_valvulas.view" },
+        ],
       },
       {
         label: "Reentrenamiento IA",
@@ -144,6 +148,11 @@ export const navGroups = [
             label: "Sensores",
             href: "/dashboard/maestros/sensores",
             permissionKey: "sensores.view",
+          },
+          {
+            label: "Actuadores",
+            href: "/dashboard/maestros/actuadores",
+            permissionKey: "actuadores.view",
           },
         ],
       },

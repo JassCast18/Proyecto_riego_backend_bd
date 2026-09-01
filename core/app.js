@@ -7,6 +7,7 @@ import nodosRoutes from "./routes/nodos.routes.js";
 import notificationsRoutes from "./routes/notifications.routes.js";
 import projectsRoutes from "./routes/projects.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
+import manualControlRoutes from "./routes/manual-control.routes.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -22,6 +23,7 @@ app.use("/api/nodos", nodosRoutes);
 app.use("/api/notificaciones", notificationsRoutes);
 app.use("/api/proyectos", projectsRoutes);
 app.use("/api/reportes", reportsRoutes);
+app.use("/api/control-manual", manualControlRoutes);
 app.get("/", (req,res)=>{
     res.json({
         message:"API funcionando"

@@ -12,7 +12,7 @@ BEGIN
                ('Nodo #'||n.id||' inició funcionamiento')::TEXT,
                ('Primera telemetría recibida por '||n.tipo_nodo)::TEXT,'tb_nodo_iot'::VARCHAR,n.id,MIN(t.fecha_hora),NULL::JSONB,
                jsonb_build_object('estado','EN FUNCIONAMIENTO')
-        FROM tb_nodo_iot n JOIN tb_sensor_actuador s ON s.tb_nodo_id=n.id JOIN tb_telemetria t ON t.tb_sensor_id=s.id
+        FROM tb_nodo_iot n JOIN tb_sensor s ON s.tb_nodo_id=n.id JOIN tb_telemetria t ON t.tb_sensor_id=s.id
         JOIN tb_sector se ON se.id=n.tb_sector_id JOIN tb_finca f ON f.id=se.tb_finca_id
         WHERE f.tb_proyecto_id=p_proyecto_id GROUP BY n.id,n.tipo_nodo
     ) q ORDER BY q.fecha_hora DESC;

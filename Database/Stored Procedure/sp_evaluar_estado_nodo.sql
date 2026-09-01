@@ -26,12 +26,12 @@ BEGIN
 
     -- 2. Obtener IDs de los sensores asociados a este nodo
     SELECT id INTO v_id_sensor_temp
-    FROM tb_sensor_actuador
+    FROM tb_sensor
     WHERE tb_nodo_id = p_id_nodo AND tipo_componente = 'Termometro_DS18B20'
     LIMIT 1;
 
     SELECT id INTO v_id_sensor_hum
-    FROM tb_sensor_actuador
+    FROM tb_sensor
     WHERE tb_nodo_id = p_id_nodo AND tipo_componente = 'Higrometro_A0'
     LIMIT 1;
 
