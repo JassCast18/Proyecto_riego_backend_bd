@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { configure, evaluate, resolve, state, train } from "../controllers/ai.controller.js";
+import { verifyToken } from "../middlewares/jwt.middleware.js";
+import { requireProjectAdministrator, verifyProjectAccess } from "../middlewares/project.middleware.js";
+const router=Router();
+router.use(verifyToken,verifyProjectAccess);
+router.get("/estado",state);
+router.post("/entrenar",requireProjectAdministrator,train);
+router.post("/evaluar",requireProjectAdministrator,evaluate);
+router.patch("/decisiones/:id/resolver",requireProjectAdministrator,resolve);
+router.put("/configuracion",requireProjectAdministrator,configure);
+export default router;

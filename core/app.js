@@ -8,6 +8,7 @@ import notificationsRoutes from "./routes/notifications.routes.js";
 import projectsRoutes from "./routes/projects.routes.js";
 import reportsRoutes from "./routes/reports.routes.js";
 import manualControlRoutes from "./routes/manual-control.routes.js";
+import aiRoutes from "./routes/ai.routes.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -24,6 +25,7 @@ app.use("/api/notificaciones", notificationsRoutes);
 app.use("/api/proyectos", projectsRoutes);
 app.use("/api/reportes", reportsRoutes);
 app.use("/api/control-manual", manualControlRoutes);
+app.use("/api/ia", aiRoutes);
 app.get("/", (req,res)=>{
     res.json({
         message:"API funcionando"

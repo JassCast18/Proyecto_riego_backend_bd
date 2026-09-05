@@ -27,8 +27,9 @@ function buildHardwareIncidents(nodes) {
         }
 
         const components = node.componentes || [];
-        const allOffline = components.length > 0
-            && components.every((component) => String(component.estado).toUpperCase() === "OFFLINE");
+        const monitoredComponents = components.filter((component) => !["EN_REVISION","REQUIERE_REPARACION"].includes(String(component.estado).toUpperCase()));
+        const allOffline = monitoredComponents.length > 0
+            && monitoredComponents.every((component) => String(component.estado).toUpperCase() === "OFFLINE");
 
         if (allOffline) {
             incidents.push({
@@ -47,6 +48,17 @@ function buildHardwareIncidents(nodes) {
         for (const component of components) {
             const status = String(component.estado).toUpperCase();
             if (status === "OK") continue;
+            if (status === "REQUIERE_REPARACION") continue;
+
+            if (status === "EN_REVISION") {
+                incidents.push({
+                    key: `${prefix}:SENSOR:${component.id}:REVISION`,nodeId:node.id,
+                    type:"SENSOR_EN_REVISION",title:`${component.tipoComponente} en revisión`,
+                    message:`${nodeName}: ${component.mensaje}`,severity:"INFO",
+                    dismissible:true,persistenceSeconds:0,
+                });
+                continue;
+            }
 
             incidents.push({
                 key: `${prefix}:SENSOR:${component.id}`,

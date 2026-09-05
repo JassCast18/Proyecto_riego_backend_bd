@@ -11,6 +11,8 @@ function getStatusTone(status) {
   if (normalized === 'WARNING') return 'bg-amber-100 text-amber-800 border-amber-200'
   if (normalized === 'ERROR') return 'bg-red-100 text-red-800 border-red-200'
   if (normalized === 'OFFLINE') return 'bg-slate-200 text-slate-700 border-slate-300'
+  if (normalized === 'EN_REVISION') return 'bg-sky-100 text-sky-800 border-sky-200'
+  if (normalized === 'REQUIERE_REPARACION') return 'bg-amber-100 text-amber-900 border-amber-300'
 
   return 'bg-sky-100 text-sky-800 border-sky-200'
 }
@@ -240,7 +242,7 @@ export function HardwareStatusContent() {
                     <p className="text-sm text-slate-600">MAC: {node.direccionMac || 'Sin MAC'}</p>
                   </div>
 
-                  <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${getStatusTone(node.estadoGeneral)}`}>
+                  <span className={`max-w-36 break-words rounded-full border px-3 py-1 text-center text-xs font-semibold ${getStatusTone(node.estadoGeneral)}`}>
                     {node.estadoGeneral}
                   </span>
                 </div>
@@ -453,10 +455,10 @@ function ComponentRow({ component }) {
 
   return (
     <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-      <div className="flex items-start justify-between gap-3">
-        <span className="font-semibold text-slate-900">{component.tipoComponente}</span>
-        <span className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${getStatusTone(component.estado)}`}>
-          {component.estado}
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
+        <span className="min-w-0 break-words font-semibold text-slate-900">{component.tipoComponente}</span>
+        <span className={`max-w-full break-words rounded-full border px-2 py-0.5 text-center text-[11px] font-bold ${getStatusTone(component.estado)}`}>
+          {String(component.estado).replaceAll('_',' ')}
         </span>
       </div>
       <p className="mt-1 text-xs text-slate-600">Lectura: {reading}</p>

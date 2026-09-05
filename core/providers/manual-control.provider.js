@@ -7,9 +7,13 @@ export const startTest = (data) => DatabaseExecutor.executeProcedureWithResult("
   data.projectId,data.userId,data.nodeId,data.type,data.componentId,data.objective,data.intervalSeconds,data.durationSeconds,null,
 ]);
 export const finishTest = (data) => DatabaseExecutor.executeProcedure("sp_finalizar_prueba_control_manual",[
-  data.testId,data.projectId,data.userId,data.cancel,data.result,data.conclusion,
+  data.testId,data.projectId,data.userId,data.cancel,data.result,data.conclusion,data.disableSensor,
 ]);
 export const takeCommands = (nodeId) => DatabaseExecutor.executeFunction("fn_tomar_comandos_iot",[nodeId]);
 export const confirmCommand = (commandId,success,message="") => DatabaseExecutor.executeProcedure("sp_confirmar_comando_iot",[commandId,success,message]);
 export const registerTestReadings = (testId,nodeId,humidity,temperature) => DatabaseExecutor.executeProcedure("sp_registrar_lecturas_prueba",[testId,nodeId,humidity,temperature]);
+export const registerSensorCalibration = (data) => DatabaseExecutor.executeProcedure("sp_registrar_calibracion_sensor",[
+  data.projectId,data.userId,data.sensorId,data.testId,data.dryAdc,data.wetAdc,
+]);
 export const createActuator = (data) => DatabaseExecutor.executeProcedureWithResult("sp_registrar_actuador",[data.projectId,data.nodeId,data.name,data.pin,data.maxDuration,null]);
+export const completeSensorRepair = (data) => DatabaseExecutor.executeProcedure("sp_completar_reparacion_sensor",[data.projectId,data.userId,data.sensorId,data.observation]);

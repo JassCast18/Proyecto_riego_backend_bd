@@ -67,7 +67,9 @@ export function Topbar({ onMenuClick }) {
       }
     }
     setOpen(false);
-    navigate("/dashboard/notificaciones");
+    const testMatch = String(notification.tipo || "").match(/^PRUEBA_CONTROL_MANUAL_(SENSOR|ACTUADOR)_(\d+)$/);
+    const testPath = testMatch?.[1] === "ACTUADOR" ? "valvulas" : "pruebas";
+    navigate(testMatch ? `/dashboard/control-manual/${testPath}?prueba=${testMatch[2]}&calificar=1` : "/dashboard/notificaciones");
   };
 
   return (

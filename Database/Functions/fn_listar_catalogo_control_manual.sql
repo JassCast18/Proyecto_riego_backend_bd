@@ -1,3 +1,4 @@
+DROP FUNCTION IF EXISTS fn_listar_catalogo_control_manual(INT);
 CREATE OR REPLACE FUNCTION fn_listar_catalogo_control_manual(p_proyecto_id INT)
 RETURNS TABLE(nodo_id INT,tipo_nodo VARCHAR,direccion_mac VARCHAR,estado_energia VARCHAR,sensores JSONB,actuadores JSONB)
 LANGUAGE sql
@@ -5,8 +6,11 @@ AS $$
   SELECT n.id,n.tipo_nodo,n.direccion_mac,n.estado_energia,
     COALESCE((SELECT jsonb_agg(jsonb_build_object(
       'id',s.id,'nombre',COALESCE(s.nombre,s.tipo_componente),'tipo',s.tipo_componente,
-      'unidad',s.unidad,'recomendacion',s.recomendacion_prueba) ORDER BY s.id)
-      FROM tb_sensor s WHERE s.tb_nodo_id=n.id AND s.sn_activo=TRUE),'[]'::JSONB),
+      'unidad',s.unidad,'recomendacion',s.recomendacion_prueba,
+      'estadoOperativo',s.estado_operativo,'observacionEstado',s.observacion_estado,'activo',s.sn_activo,
+      'calibrado',s.adc_seco IS NOT NULL AND s.adc_humedo IS NOT NULL,
+      'adcSeco',s.adc_seco,'adcHumedo',s.adc_humedo,'fechaCalibracion',s.fecha_calibracion) ORDER BY s.id)
+      FROM tb_sensor s WHERE s.tb_nodo_id=n.id),'[]'::JSONB),
     COALESCE((SELECT jsonb_agg(jsonb_build_object(
       'id',a.id,'nombre',a.nombre,'tipo',a.tipo_actuador,'estado',a.estado_actual,
       'duracionMaxima',a.duracion_maxima_segundos,'pin',na.pin_control,

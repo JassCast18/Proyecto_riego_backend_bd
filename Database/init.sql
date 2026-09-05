@@ -25,12 +25,15 @@
 \i Tables/tb_bitacora_auditoria.sql
 \i Tables/tb_alerta_hidrica.sql
 \i Tables/tb_notificacion.sql
+\i Tables/tb_ciclo_riego.sql
 \i Tables/tb_recuperacion_password.sql
 \i Tables/tb_informe_supervision.sql
 \i Tables/tb_datos_fenologicos.sql
 \i Tables/tb_informe_adjunto.sql
 \i Tables/tb_prueba_unitaria.sql
+\i Tables/tb_calibracion_sensor.sql
 \i Tables/tb_version_modelo_ia.sql
+\i Tables/tb_configuracion_ia.sql
 \i Functions/fn_listar_usuarios.sql
 \i Functions/fn_listar_roles.sql
 \i Functions/fn_listar_nodos_hardware.sql
@@ -67,15 +70,27 @@
 \i Functions/fn_listar_comparacion_ciclos.sql
 \i Functions/fn_validar_acceso_proyecto.sql
 \i Functions/fn_es_propietario.sql
+\i Functions/fn_auditar_componentes_nuevos.sql
+\i Functions/fn_obtener_dataset_ia.sql
+\i Functions/fn_obtener_contextos_ia.sql
+\i Functions/fn_listar_actuadores_ia.sql
+\i Functions/fn_obtener_estado_ia.sql
+\i Functions/fn_obtener_configuracion_ia.sql
+\i Functions/fn_listar_proyectos_ia_automatica.sql
 \i Stored Procedure/sp_actualizar_usuario.sql
 \i Stored Procedure/sp_actualizar_password_usuario.sql
 \i Stored Procedure/sp_actualizar_estado_usuario.sql
 \i Stored Procedure/sp_actualizar_estado_energia_nodo.sql
+\i Stored Procedure/sp_sincronizar_ciclos_riego.sql
+\i Stored Procedure/sp_evaluar_riego_automatico.sql
+\i Stored Procedure/sp_guardar_telemetria_nodo.sql
 \i Stored Procedure/sp_iniciar_prueba_control_manual.sql
 \i Stored Procedure/sp_registrar_actuador.sql
 \i Stored Procedure/sp_finalizar_prueba_control_manual.sql
+\i Stored Procedure/sp_completar_reparacion_sensor.sql
 \i Stored Procedure/sp_confirmar_comando_iot.sql
 \i Stored Procedure/sp_registrar_lecturas_prueba.sql
+\i Stored Procedure/sp_registrar_calibracion_sensor.sql
 \i Stored Procedure/sp_evaluar_estado_nodo.sql
 \i Stored Procedure/sp_registro_usuario.sql
 \i Stored Procedure/sp_abm_catalogo.sql
@@ -98,5 +113,10 @@
 \i Stored Procedure/sp_registrar_adjuntos_informe.sql
 \i Stored Procedure/sp_finalizar_ciclo_cultivo.sql
 \i Stored Procedure/sp_iniciar_ciclo_cultivo.sql
+\i Stored Procedure/sp_registrar_modelo_ia.sql
+\i Stored Procedure/sp_registrar_decision_ia.sql
+\i Stored Procedure/sp_resolver_decision_ia.sql
+\i Stored Procedure/sp_configurar_ia.sql
+\i Stored Procedure/sp_corregir_parametros_iniciales.sql
 \i Functions/fn_login_usuario.sql
 \i Seeds/seed_permisos.sql

@@ -17,7 +17,7 @@ export const insertarTelemetria = async (req, res) => {
         const nodo = nodos.find((item) => Number(item.id) === Number(id_nodo));
         const debeSuspender = nodo?.estadoEnergia === "APAGADO";
 
-        if (!debeSuspender && pruebaId > 0) {
+        if (pruebaId > 0) {
             await registerTestReadings(pruebaId, Number(id_nodo), humedad_cruda, temp_suelo);
         } else if (!debeSuspender) {
             await provider.insertarTelemetria({
@@ -32,7 +32,7 @@ export const insertarTelemetria = async (req, res) => {
         return res.status(201).json(
             ResponseModel.ok(
                 {
-                    accion: debeSuspender ? "SUSPENDER" : pruebaId > 0 ? "PRUEBA_REGISTRADA" : "CONTINUAR",
+                    accion: pruebaId > 0 ? "PRUEBA_REGISTRADA" : debeSuspender ? "SUSPENDER" : "CONTINUAR",
                     estadoEnergia: nodo?.estadoEnergia ?? "ENCENDIDO",
                     nodo: nodo ? {
                         id: nodo.id,
@@ -43,10 +43,10 @@ export const insertarTelemetria = async (req, res) => {
                         ultimaConexion: nodo.ultimaConexion,
                     } : null,
                 },
-                debeSuspender
-                    ? "El nodo está apagado. Telemetría ignorada (no guardada)."
-                    : pruebaId > 0
+                pruebaId > 0
                         ? "Lectura de prueba guardada sin afectar la telemetría normal."
+                    : debeSuspender
+                    ? "El nodo está apagado. Telemetría ignorada (no guardada)."
                         : "Datos de telemetría guardados correctamente.",
                 201
             )

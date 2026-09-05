@@ -24,3 +24,7 @@ BEGIN
         );
     END IF;
 END $$;
+
+DROP TRIGGER IF EXISTS tr_normalizar_nombre_nodo ON tb_nodo_iot;
+DROP FUNCTION IF EXISTS fn_normalizar_nombre_nodo();
+ALTER TABLE tb_nodo_iot DROP COLUMN IF EXISTS nombre_nodo;

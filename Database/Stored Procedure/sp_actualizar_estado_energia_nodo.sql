@@ -11,6 +11,29 @@ LANGUAGE plpgsql
 AS $$
 DECLARE v_estado_anterior VARCHAR;
 BEGIN
+    PERFORM pg_advisory_xact_lock(4100,p_id_nodo);
+    CALL sp_sincronizar_ciclos_riego(p_proyecto_id,p_id_nodo);
+    IF UPPER(TRIM(p_estado_energia))='APAGADO' AND EXISTS(SELECT 1 FROM tb_ciclo_riego WHERE tb_nodo_id=p_id_nodo AND estado='ACTIVO') THEN
+        RAISE EXCEPTION 'No puedes apagar el nodo mientras existe un riego activo; espera el cierre de seguridad.';
+    END IF;
+    IF UPPER(TRIM(p_estado_energia)) NOT IN ('ENCENDIDO','APAGADO') THEN
+        RAISE EXCEPTION 'El estado de energia solicitado no es valido.';
+    END IF;
+
+    IF UPPER(TRIM(p_estado_energia))='ENCENDIDO' AND (
+        NOT EXISTS(
+            SELECT 1 FROM tb_sensor s WHERE s.tb_nodo_id=p_id_nodo AND s.sn_activo=TRUE
+              AND s.estado_operativo='OPERATIVO'
+        ) OR EXISTS(
+            SELECT 1 FROM tb_sensor s WHERE s.tb_nodo_id=p_id_nodo AND s.sn_activo=TRUE
+              AND s.estado_operativo='OPERATIVO'
+              AND (s.tipo_componente ILIKE '%higr%' OR s.tipo_componente ILIKE '%hum%')
+              AND (s.adc_seco IS NULL OR s.adc_humedo IS NULL)
+        )
+    ) THEN
+        RAISE EXCEPTION 'El nodo necesita al menos un sensor operativo y los sensores de humedad operativos deben estar calibrados.';
+    END IF;
+
     SELECT n.estado_energia INTO v_estado_anterior FROM tb_nodo_iot n
     JOIN tb_sector s ON s.id=n.tb_sector_id JOIN tb_finca f ON f.id=s.tb_finca_id
     WHERE n.id=p_id_nodo AND f.tb_proyecto_id=p_proyecto_id;

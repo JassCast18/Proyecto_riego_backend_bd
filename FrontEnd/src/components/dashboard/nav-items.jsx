@@ -52,13 +52,15 @@ export const navGroups = [
         permissionKey: "control_manual.view",
         children: [
           { label: "Pruebas unitarias", href: "/dashboard/control-manual/pruebas", permissionKey: "pruebas_unitarias.view" },
+          { label: "Calibración de sensores", href: "/dashboard/control-manual/calibracion", permissionKey: "pruebas_unitarias.view" },
           { label: "Gestión de válvulas", href: "/dashboard/control-manual/valvulas", permissionKey: "gestion_valvulas.view" },
+          { label: "Mantenimiento de sensores", href: "/dashboard/control-manual/mantenimiento", permissionKey: "pruebas_unitarias.view" },
         ],
       },
       {
-        label: "Reentrenamiento IA",
+        label: "Inteligencia artificial",
         icon: BrainCircuit,
-        href: "#",
+        href: "/dashboard/ia",
         permissionKey: "ia.view",
       },
     ],
@@ -109,6 +111,11 @@ export const navGroups = [
         href: "/dashboard/maestros/finca",
         permissionKey: "datos_maestros.view",
         children: [
+          {
+            label: "Parámetros iniciales",
+            href: "/dashboard/maestros/parametros-iniciales",
+            permissionKey: "datos_maestros.view",
+          },
           {
             label: "Finca",
             href: "/dashboard/maestros/finca",

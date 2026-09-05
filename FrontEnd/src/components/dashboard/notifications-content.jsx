@@ -7,6 +7,7 @@ import {
   reviewNotificationRequest,
 } from '../../auth/notifications.service'
 import { useToast } from '@/context/useToast.js'
+import { useNavigate } from 'react-router-dom'
 
 const FILTERS = [
   { value: 'active', label: 'Activas' },
@@ -46,6 +47,7 @@ function stateLabel(state) {
 
 export function NotificationsContent() {
   const toast = useToast()
+  const navigate = useNavigate()
   const [notifications, setNotifications] = useState([])
   const [filter, setFilter] = useState('active')
   const [reviewer, setReviewer] = useState('all')
@@ -129,6 +131,13 @@ export function NotificationsContent() {
     }
   }
 
+  const openManualTest = async (notification) => {
+    const match = String(notification.tipo || '').match(/^PRUEBA_CONTROL_MANUAL_(SENSOR|ACTUADOR)_(\d+)$/)
+    if (!match) return
+    if (!notification.revisada) await reviewNotificationRequest(notification.id)
+    navigate(`/dashboard/control-manual/${match[1] === 'ACTUADOR' ? 'valvulas' : 'pruebas'}?prueba=${match[2]}&calificar=1`)
+  }
+
   return (
     <section className="min-h-[calc(100vh-8rem)] rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm md:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -202,6 +211,7 @@ export function NotificationsContent() {
                 {notification.estado === 'RESUELTA' ? <p className="mt-2 text-xs font-semibold text-emerald-700">Resuelta automáticamente · {formatDate(notification.fechaResolucion)}</p> : null}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
+                {String(notification.tipo||'').startsWith('PRUEBA_CONTROL_MANUAL_')?<button type="button" disabled={busyId===notification.id} onClick={()=>openManualTest(notification)} className="inline-flex items-center gap-2 rounded-full bg-green-700 px-3 py-2 text-xs font-semibold text-white hover:bg-green-800"><Eye size={14}/>Calificar prueba</button>:null}
                 {notification.estado === 'ACTIVA' ? (
                   notification.severidad === 'INFO' ? (
                     !notification.revisada ? <button type="button" disabled={busyId === notification.id} onClick={() => review(notification)} className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-3 py-2 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50"><Eye size={14} /> Marcar revisada</button> : null

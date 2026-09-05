@@ -8,6 +8,10 @@ export const getCropParameters = async (projectId, userId) => {
     const rows = await DatabaseExecutor.executeFunction("fn_obtener_parametrizacion_cultivo", [projectId, userId]);
     return rows[0] || null;
 };
+export const correctInitialParameters = (data) => DatabaseExecutor.executeProcedure("sp_corregir_parametros_iniciales", [
+    data.projectId,data.userId,data.cropId,data.variety||null,data.plantingDate||null,data.harvestDays,
+    data.minimumHumidity,data.maximumHumidity,data.minimumTemperature,data.maximumTemperature,data.observations||null,data.reason,
+]);
 
 export const listCropParameterHistory = async (projectId, userId) => (
     DatabaseExecutor.executeFunction("fn_listar_historial_parametrizacion", [projectId, userId])

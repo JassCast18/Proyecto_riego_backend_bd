@@ -12,6 +12,7 @@ import ProjectsPage from './pages/ProjectsPage.jsx'
 import CropParametersPage from './pages/CropParametersPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
 import ManualControlPage from './pages/ManualControlPage.jsx'
+import AIPage from './pages/AIPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -25,6 +26,10 @@ export default function App() {
       <Route
         path="/dashboard/control-manual/*"
         element={<ProtectedRoute requireProject requiredPermission="control_manual.view"><ManualControlPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/dashboard/ia"
+        element={<ProtectedRoute requireProject requiredPermission="ia.view"><AIPage /></ProtectedRoute>}
       />
       <Route
         path="/dashboard/reportes/*"

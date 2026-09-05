@@ -145,10 +145,12 @@ const MASTER_DEFINITIONS = [
     columns: [
       { key: 'id', label: 'ID' },
       { key: 'tb_nodo_id', label: 'Nodo', source: 'nodos' },
+      { key: 'nombre', label: 'Nombre del sensor' },
       { key: 'tipo_componente', label: 'Tipo de componente' },
     ],
     fields: [
       { name: 'tb_nodo_id', label: 'Nodo', type: 'select', source: 'nodos', placeholder: 'Selecciona un nodo' },
+      { name: 'nombre', label: 'Nombre del sensor', type: 'text', placeholder: 'Ej. Humedad sector norte' },
       { name: 'tipo_componente', label: 'Tipo de componente', type: 'text', placeholder: 'Ej. Higrometro_A0' },
     ],
   },

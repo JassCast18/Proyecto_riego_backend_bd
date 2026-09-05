@@ -9,31 +9,29 @@ DECLARE
     v_id_sensor_humedad INT;
     v_id_sensor_temperatura INT;
 BEGIN
-    -- 1. Buscar el ID del sensor de humedad asociado a este nodo específico
     SELECT id INTO v_id_sensor_humedad
     FROM tb_sensor
-    WHERE tb_nodo_id = p_id_nodo AND tipo_componente = 'Higrometro_A0'
+    WHERE tb_nodo_id=p_id_nodo AND tipo_componente='Higrometro_A0'
+      AND sn_activo=TRUE AND estado_operativo='OPERATIVO'
     LIMIT 1;
 
-    -- 2. Buscar el ID del sensor de temperatura asociado a este nodo específico
     SELECT id INTO v_id_sensor_temperatura
     FROM tb_sensor
-    WHERE tb_nodo_id = p_id_nodo AND tipo_componente = 'Termometro_DS18B20'
+    WHERE tb_nodo_id=p_id_nodo AND tipo_componente='Termometro_DS18B20'
+      AND sn_activo=TRUE AND estado_operativo='OPERATIVO'
     LIMIT 1;
 
-    -- 3. Validar de seguridad: Verificar que los sensores existan antes de insertar
-    IF v_id_sensor_humedad IS NULL OR v_id_sensor_temperatura IS NULL THEN
-        RAISE EXCEPTION 'Fallo de integridad: No se encontraron los sensores registrados para el nodo %', p_id_nodo;
+    IF v_id_sensor_humedad IS NOT NULL THEN
+        INSERT INTO tb_telemetria(tb_sensor_id,valor_lectura,fecha_hora)
+        VALUES(v_id_sensor_humedad,p_humedad,CURRENT_TIMESTAMP);
     END IF;
 
-    -- 4. Insertar la lectura de humedad en la tabla de telemetría
-    INSERT INTO tb_telemetria (tb_sensor_id, valor_lectura, fecha_hora)
-    VALUES (v_id_sensor_humedad, p_humedad, CURRENT_TIMESTAMP);
-
-    -- 5. Insertar la lectura de temperatura en la tabla de telemetría
-    INSERT INTO tb_telemetria (tb_sensor_id, valor_lectura, fecha_hora)
-    VALUES (v_id_sensor_temperatura, p_temperatura, CURRENT_TIMESTAMP);
-
-    -- El COMMIT es implícito si no ocurren errores (Transaccionalidad ACID)
+    IF v_id_sensor_temperatura IS NOT NULL THEN
+        INSERT INTO tb_telemetria(tb_sensor_id,valor_lectura,fecha_hora)
+        VALUES(v_id_sensor_temperatura,p_temperatura,CURRENT_TIMESTAMP);
+    END IF;
+    IF v_id_sensor_humedad IS NOT NULL THEN
+        CALL sp_evaluar_riego_automatico(p_id_nodo,p_humedad);
+    END IF;
 END;
 $$;

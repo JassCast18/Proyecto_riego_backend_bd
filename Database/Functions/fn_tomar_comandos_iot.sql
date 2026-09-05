@@ -14,6 +14,14 @@ BEGIN
   ), actualizados AS (
     UPDATE tb_comando_iot c SET estado='ENTREGADO',intentos=c.intentos+1,fecha_entrega=NOW()
     FROM elegidos e WHERE c.id=e.id RETURNING c.id,c.tipo_comando,c.payload
+  ), pruebas_iniciadas AS (
+    UPDATE tb_prueba_unitaria p
+    SET estado='EN_CURSO',fecha_inicio=COALESCE(p.fecha_inicio,NOW()),ultima_comunicacion=NOW()
+    FROM actualizados a
+    WHERE p.id=NULLIF(a.payload->>'pruebaId','')::INT
+      AND p.estado='ESPERANDO'
+      AND a.tipo_comando IN('INICIAR_PRUEBA_SENSOR','ACTIVAR_ACTUADOR')
+    RETURNING p.id
   ) SELECT a.id,a.tipo_comando,a.payload FROM actualizados a;
 END;
 $$;

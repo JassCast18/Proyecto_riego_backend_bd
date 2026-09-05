@@ -5,7 +5,8 @@ import { getPlantReference, searchPlantVarieties } from "../services/plant-refer
 function projectError(res, error) {
     const conflict = error.code === "23505" || /ya tienes|ya existe/i.test(error.message);
     const forbidden = /no tienes (?:permiso|acceso)|solo un administrador/i.test(error.message);
-    const status = conflict ? 409 : forbidden ? 403 : 500;
+    const invalid = /motivo|no es válido|mínima no puede|no existe|no tiene parámetros/i.test(error.message);
+    const status = conflict ? 409 : forbidden ? 403 : invalid ? 400 : 500;
     return res.status(status).json(ResponseModel.fail(error.message, null, status));
 }
 
@@ -127,6 +128,17 @@ export const configureProjectCrop = async (req, res) => {
     } catch (error) {
         return projectError(res, error);
     }
+};
+
+export const correctInitialParameters = async (req,res) => {
+    try {
+        const projectId=Number(req.params.id),cropId=Number(req.body?.cultivoId),reason=String(req.body?.motivo||'').trim();
+        if(projectId!==Number(req.projectId)||!cropId)return res.status(400).json(ResponseModel.fail('Proyecto y cultivo son obligatorios.',null,400));
+        if(reason.length<10)return res.status(400).json(ResponseModel.fail('Debes indicar un motivo de al menos 10 caracteres.',null,400));
+        const nullable=value=>value===''||value===null||value===undefined?null:Number(value);
+        await provider.correctInitialParameters({projectId,userId:req.user.id,cropId,variety:req.body.variedad,plantingDate:req.body.fechaSiembra,harvestDays:nullable(req.body.tiempoCosechaDias),minimumHumidity:nullable(req.body.humedadMinima),maximumHumidity:nullable(req.body.humedadMaxima),minimumTemperature:nullable(req.body.temperaturaMinima),maximumTemperature:nullable(req.body.temperaturaMaxima),observations:req.body.observaciones,reason});
+        return res.json(ResponseModel.ok(null,'Parámetros corregidos. La IA volvió a estado de revisión.'));
+    } catch(error){return projectError(res,error);}
 };
 
 export const createProjectInfrastructure = async (req, res) => {

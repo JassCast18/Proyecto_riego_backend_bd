@@ -12,6 +12,8 @@ AS $$
         SELECT
             sa.id AS sensor_id,
             sa.tipo_componente,
+            sa.estado_operativo,
+            sa.observacion_estado,
             actual.valor_lectura AS valor_actual,
             actual.fecha_hora AS ultima_conexion,
             anterior.valor_lectura AS valor_anterior
@@ -35,8 +37,10 @@ AS $$
         SELECT
             *,
             CASE
+                WHEN estado_operativo='EN_REVISION' THEN 'EN_REVISION'
+                WHEN estado_operativo='REQUIERE_REPARACION' THEN 'REQUIERE_REPARACION'
                 WHEN ultima_conexion IS NULL THEN 'OFFLINE'
-                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 10 THEN 'OFFLINE'
+                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 75 THEN 'OFFLINE'
                 WHEN tipo_componente ILIKE '%term%' AND valor_actual = -127.00 THEN 'ERROR'
                 WHEN tipo_componente ILIKE '%term%' AND valor_anterior IS NOT NULL
                      AND ABS(valor_actual - valor_anterior) > 5 THEN 'WARNING'
@@ -45,8 +49,10 @@ AS $$
                 ELSE 'OK'
             END AS estado,
             CASE
+                WHEN estado_operativo='EN_REVISION' THEN COALESCE(observacion_estado,'Sensor apartado para revisión técnica.')
+                WHEN estado_operativo='REQUIERE_REPARACION' THEN COALESCE(observacion_estado,'Sensor apartado hasta completar la reparación.')
                 WHEN ultima_conexion IS NULL THEN 'No hay datos registrados.'
-                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 10
+                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 75
                     THEN 'Sin comunicacion hace ' || ROUND(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion))) || ' segundos.'
                 WHEN tipo_componente ILIKE '%term%' AND valor_actual = -127.00
                     THEN 'Cable de datos desconectado (-127).'
@@ -64,7 +70,7 @@ AS $$
         CASE
             WHEN COUNT(*) = 0 THEN 'ERROR'
             WHEN BOOL_OR(estado IN ('ERROR', 'OFFLINE')) THEN 'ERROR'
-            WHEN BOOL_OR(estado = 'WARNING') THEN 'WARNING'
+            WHEN BOOL_OR(estado IN ('WARNING','EN_REVISION','REQUIERE_REPARACION')) THEN 'WARNING'
             ELSE 'OK'
         END::VARCHAR,
         MAX(ultima_conexion),
@@ -74,6 +80,7 @@ AS $$
                     'id', sensor_id,
                     'tipoComponente', tipo_componente,
                     'estado', estado,
+                    'estadoOperativo',estado_operativo,
                     'mensaje', mensaje,
                     'ultimaLectura', valor_actual,
                     'ultimaConexion', ultima_conexion

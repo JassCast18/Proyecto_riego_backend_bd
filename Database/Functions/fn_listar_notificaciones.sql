@@ -19,6 +19,7 @@ RETURNS TABLE (
 )
 LANGUAGE sql
 AS $$
+    SELECT fn_sincronizar_pruebas_actuador(p_proyecto_id,NULL);
     WITH visibles AS (
         SELECT n.*,COALESCE(nu.revisada,FALSE) AS revisada_usuario,
                rv.tb_usuario_id AS revisada_por_id,rv.fecha_revision AS fecha_revision_general

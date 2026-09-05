@@ -84,6 +84,7 @@ export async function configureProjectCropRequest(projectId, payload) {
     throw new Error(message(error, 'No fue posible configurar el cultivo.'))
   }
 }
+export async function correctInitialParametersRequest(projectId,payload){try{return(await api.put(`/proyectos/${projectId}/parametros-iniciales`,payload)).data?.message}catch(error){throw new Error(message(error,'No fue posible corregir los parámetros iniciales.'))}}
 
 export async function createProjectInfrastructureRequest(projectId, payload) {
   try {

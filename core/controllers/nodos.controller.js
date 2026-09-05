@@ -9,7 +9,8 @@ export const listHardwareState = async (req, res) => {
             ResponseModel.ok({ nodos }, "Estado de hardware consultado correctamente.")
         );
     } catch (error) {
-        return res.status(500).json(ResponseModel.fail(error.message));
+        const status = /calibrar|no existe|estado de energia/i.test(error.message) ? 400 : 500;
+        return res.status(status).json(ResponseModel.fail(error.message, null, status));
     }
 };
 
@@ -40,6 +41,7 @@ export const switchNodeEnergy = async (req, res) => {
             )
         );
     } catch (error) {
-        return res.status(500).json(ResponseModel.fail(error.message));
+        const status = /calibrar|no existe|estado de energia/i.test(error.message) ? 400 : 500;
+        return res.status(status).json(ResponseModel.fail(error.message, null, status));
     }
 };
