@@ -1,5 +1,6 @@
+DROP FUNCTION IF EXISTS fn_obtener_contextos_ia(INT);
 CREATE OR REPLACE FUNCTION fn_obtener_contextos_ia(p_proyecto_id INT)
-RETURNS TABLE(nodo_id INT,nodo VARCHAR,humedad DECIMAL,temperatura DECIMAL,hora INT,dias_cultivo INT,humedad_minima DECIMAL,humedad_maxima DECIMAL)
+RETURNS TABLE(nodo_id INT,nodo VARCHAR,humedad DECIMAL,temperatura DECIMAL,hora INT,dias_cultivo INT,humedad_minima DECIMAL,humedad_maxima DECIMAL,salud_foliar DECIMAL)
 LANGUAGE sql AS $$
  WITH humedad_reciente AS (
    SELECT DISTINCT ON (n.id) n.id nodo_id,n.tipo_nodo nodo,sh.id sensor_id,t.valor_lectura,t.fecha_hora,
@@ -18,7 +19,8 @@ LANGUAGE sql AS $$
      THEN (h.adc_seco-h.valor_lectura)*100/(h.adc_seco-h.adc_humedo) ELSE (1023-h.valor_lectura)*100/1023 END)),
    COALESCE(temp.valor_lectura,20),EXTRACT(HOUR FROM h.fecha_hora)::INT,
    GREATEST(0,(h.fecha_hora::DATE-COALESCE(cc.fecha_inicio,pc.fecha_siembra,h.fecha_hora::DATE)))::INT,
-   pc.humedad_suelo_minima,pc.humedad_suelo_maxima
+   pc.humedad_suelo_minima,pc.humedad_suelo_maxima,
+   COALESCE((fn_obtener_resumen_foliar_ia(p_proyecto_id)->>'promedioReciente')::DECIMAL,85)
  FROM humedad_reciente h
  JOIN tb_nodo_iot n ON n.id=h.nodo_id JOIN tb_sector se ON se.id=n.tb_sector_id JOIN tb_finca f ON f.id=se.tb_finca_id
  JOIN tb_proyecto_cultivo pc ON pc.tb_proyecto_id=f.tb_proyecto_id

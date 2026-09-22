@@ -36,6 +36,9 @@ ALTER TABLE tb_notificacion
 ALTER TABLE tb_notificacion
 ADD COLUMN IF NOT EXISTS tb_proyecto_id INT REFERENCES tb_proyecto(id);
 
+ALTER TABLE tb_notificacion
+ADD COLUMN IF NOT EXISTS tb_usuario_destino_id INT REFERENCES tb_usuario(id);
+
 CREATE INDEX IF NOT EXISTS ix_notificacion_proyecto_fecha
 ON tb_notificacion (tb_proyecto_id, fecha_actualizacion DESC);
 

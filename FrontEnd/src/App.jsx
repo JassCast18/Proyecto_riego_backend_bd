@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import LandingPage from './pages/LandingPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
 import DashboardPage from './pages/DashboardPage.jsx'
@@ -13,6 +14,9 @@ import CropParametersPage from './pages/CropParametersPage.jsx'
 import ReportsPage from './pages/ReportsPage.jsx'
 import ManualControlPage from './pages/ManualControlPage.jsx'
 import AIPage from './pages/AIPage.jsx'
+const AIRetrainingPage=lazy(()=>import('./pages/AIRetrainingPage.jsx'))
+import AuditPage from './pages/AuditPage.jsx'
+import SupportPage from './pages/SupportPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
 
 export default function App() {
@@ -26,6 +30,18 @@ export default function App() {
       <Route
         path="/dashboard/control-manual/*"
         element={<ProtectedRoute requireProject requiredPermission="control_manual.view"><ManualControlPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/dashboard/auditoria/*"
+        element={<ProtectedRoute requireProject requiredPermission="auditoria.view"><AuditPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/dashboard/soporte/*"
+        element={<ProtectedRoute requireProject requiredPermission="soporte.view"><SupportPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/dashboard/ia/reentrenamiento"
+        element={<ProtectedRoute requireProject requiredPermission="ia.view"><Suspense fallback={<div className="p-8 text-sm text-slate-500">Cargando árbol de decisiones...</div>}><AIRetrainingPage /></Suspense></ProtectedRoute>}
       />
       <Route
         path="/dashboard/ia"

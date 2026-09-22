@@ -57,6 +57,7 @@ CREATE TABLE IF NOT EXISTS tb_decision_ia(
   CONSTRAINT ck_decision_ia_decision CHECK(decision IN('REGAR','NO_REGAR')),
   CONSTRAINT ck_decision_ia_modo CHECK(modo IN('OBSERVACION','AUTOMATICO'))
 );
+ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS tb_decision_base_id BIGINT REFERENCES tb_decision_ia(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS ix_decision_ia_proyecto_fecha ON tb_decision_ia(tb_proyecto_id,fecha_hora DESC);
 ALTER TABLE tb_decision_ia ADD COLUMN IF NOT EXISTS estado VARCHAR(25) NOT NULL DEFAULT 'REGISTRADA';
 ALTER TABLE tb_decision_ia ADD COLUMN IF NOT EXISTS tb_usuario_resuelve_id INT REFERENCES tb_usuario(id);

@@ -19,7 +19,7 @@ export function Sidebar({ open, onClose }) {
       .map((group) => {
         const items = group.items
           .map((item) => {
-            const children = item.children?.filter((child) => !child.permissionKey || permissions.has(child.permissionKey)) ?? [];
+            const children = item.children?.filter((child) => (!child.ownerOnly || Number(user?.snPropietario) === -1) && (!child.permissionKey || permissions.has(child.permissionKey))) ?? [];
             const itemAllowed = !item.permissionKey || permissions.has(item.permissionKey) || children.length > 0;
 
             if (!itemAllowed) {
@@ -36,7 +36,7 @@ export function Sidebar({ open, onClose }) {
         return items.length > 0 ? { ...group, items } : null;
       })
       .filter(Boolean);
-  }, [permissions]);
+  }, [permissions, user?.snPropietario]);
 
   useEffect(() => {
     const nextExpanded = {};

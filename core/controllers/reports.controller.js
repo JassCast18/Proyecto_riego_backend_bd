@@ -11,9 +11,12 @@ export async function createFieldReport(req,res) {
     try {
         const title=String(req.body?.titulo||"").trim(); const observations=String(req.body?.observaciones||"").trim();
         if (!title || !observations) return res.status(400).json(ResponseModel.fail("El título y las observaciones son obligatorios.",null,400));
+        const leafColor=String(req.body?.colorHojas||"").trim().toUpperCase();
+        const validLeafColors=new Set(["VERDE OSCURO","VERDE","VERDE CLARO","AMARILLO","MARRÓN","SECO O MARCHITO"]);
+        if(!validLeafColors.has(leafColor))return res.status(400).json(ResponseModel.fail("Selecciona un color de hojas válido para alimentar la IA.",null,400));
         const result=await provider.createFieldReport({
             projectId:req.projectId,userId:req.user.id,title,observations,subject:req.body.asunto,
-            generalState:req.body.estadoGeneral,leafColor:req.body.colorHojas,
+            generalState:req.body.estadoGeneral,leafColor,
             leafCount:req.body.cantidadHojas===""?null:Number(req.body.cantidadHojas),
             heightCm:req.body.alturaCm===""?null:Number(req.body.alturaCm),
             stemWidthCm:req.body.grosorCm===""?null:Number(req.body.grosorCm),

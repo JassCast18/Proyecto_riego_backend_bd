@@ -6,6 +6,7 @@ import { evaluateAiProject } from "../services/ai-orchestrator.service.js";
 const numericRow = row => ({
   humedad:Number(row.humedad), temperatura:Number(row.temperatura), hora:Number(row.hora),
   dias_cultivo:Number(row.dias_cultivo), humedad_minima:Number(row.humedad_minima), humedad_maxima:Number(row.humedad_maxima),
+  salud_foliar:Number(row.salud_foliar??85),
 });
 const fail=(res,error,status=500)=>res.status(status).json(ResponseModel.fail(error.message,null,status));
 
@@ -20,21 +21,43 @@ function referenceRows(rows) {
 
 export async function state(req,res) {
   try {
-    const [stored,health,actuators,configuration]=await Promise.all([provider.getAiState(req.projectId),checkAiHealth().catch(error=>({status:"offline",detail:error.message})),provider.listAiActuators(req.projectId),provider.getAiConfiguration(req.projectId)]);
-    return res.json(ResponseModel.ok({...stored,actuadores:actuators,configuracion:configuration,servicio:health,modo:configuration.modo},"Estado de IA consultado."));
+    const [stored,health,actuators,configuration,leafHealth]=await Promise.all([provider.getAiState(req.projectId),checkAiHealth().catch(error=>({status:"offline",detail:error.message})),provider.listAiActuators(req.projectId),provider.getAiConfiguration(req.projectId),provider.getLeafHealthSummary(req.projectId)]);
+    return res.json(ResponseModel.ok({...stored,actuadores:actuators,configuracion:configuration,saludFoliar:leafHealth,servicio:health,modo:configuration.modo},"Estado de IA consultado."));
   } catch(error){return fail(res,error);}
 }
 
 export async function train(req,res) {
   try {
-    const historic=(await provider.getTrainingDataset(req.projectId)).map(row=>({...numericRow(row),decision:row.decision}));
+    const decisionId=Number(req.body?.decisionId)||null;
+    if(decisionId){
+      const retraining=await provider.getRetrainingState(req.projectId);
+      const cutoff=(retraining.arbol||[]).find(item=>Number(item.id)===decisionId);
+      if(!cutoff)return fail(res,new Error("La decisión seleccionada no pertenece al recorrido disponible."),400);
+      if(cutoff.es_ultima)return fail(res,new Error("La decisión más reciente ya representa el conjunto actual y no puede usarse como punto de retroceso."),422);
+    }
+    const [historicRows,feedbackRows]=await Promise.all([provider.getTrainingDataset(req.projectId,5000,decisionId),provider.getTrainingFeedback(req.projectId,500,decisionId)]);
+    const historic=historicRows.map(row=>({...numericRow(row),decision:row.decision}));
+    const feedback=feedbackRows.map(row=>({...numericRow(row),decision:row.decision}));
     if(!historic.length) return fail(res,new Error("Configura el cultivo y recibe al menos una lectura de humedad antes de entrenar."),422);
-    const rows=[...historic,...referenceRows(historic)];
+    const weightedFeedback=feedback.flatMap(row=>Array.from({length:5},()=>({...row})));
+    const rows=[...historic,...referenceRows(historic),...weightedFeedback];
     const model=await trainRandomForest(req.projectId,rows);
-    const saved=await provider.saveModel({projectId:req.projectId,userId:req.user.id,modelPath:model.model_path,version:model.version,algorithm:model.algorithm,samples:model.samples,accuracy:model.accuracy,precision:model.precision,recall:model.recall,featureImportance:model.feature_importance});
-    return res.status(201).json(ResponseModel.ok({modeloId:Number(saved?.p_modelo_id),...model,muestrasHistoricas:historic.length,muestrasReferencia:rows.length-historic.length},"Modelo Random Forest entrenado y activado.",201));
+    const saved=await provider.saveModel({projectId:req.projectId,userId:req.user.id,modelPath:model.model_path,version:model.version,algorithm:model.algorithm,samples:model.samples,accuracy:model.accuracy,precision:model.precision,recall:model.recall,featureImportance:model.feature_importance,decisionId});
+    return res.status(201).json(ResponseModel.ok({modeloId:Number(saved?.p_modelo_id),...model,muestrasHistoricas:historic.length,correccionesHumanas:feedback.length,muestrasReferencia:rows.length-historic.length-weightedFeedback.length,decisionCorteId:decisionId},"Modelo Random Forest entrenado y activado.",201));
   } catch(error){return fail(res,error,/al menos|historial|Configura/i.test(error.message)?422:503);}
 }
+
+export async function retraining(req,res){try{
+ return res.json(ResponseModel.ok(await provider.getRetrainingState(req.projectId),"Historial de reentrenamiento consultado."));
+}catch(error){return fail(res,error)}}
+
+export async function restore(req,res){try{
+ const modelId=Number(req.params.id),reason=String(req.body?.motivo||'').trim();
+ if(!modelId)return fail(res,new Error('Selecciona una versión válida.'),400);
+ if(reason.length<10)return fail(res,new Error('Explica en al menos 10 caracteres por qué deseas restaurar esta versión.'),400);
+ await provider.restoreModel({projectId:req.projectId,modelId,userId:req.user.id,reason});
+ return res.json(ResponseModel.ok(null,'Versión restaurada. La IA quedó en modo supervisado para validación.'));
+}catch(error){return fail(res,error,/versión|Explica|activa|archivo/i.test(error.message)?400:500)}}
 
 export async function evaluate(req,res) {
   try {

@@ -67,14 +67,21 @@
 \i Functions/fn_obtener_adjunto_informe.sql
 \i Functions/fn_listar_administradores_proyecto.sql
 \i Functions/fn_listar_historial_operativo.sql
+\i Functions/fn_consultar_auditoria_usuario.sql
 \i Functions/fn_listar_comparacion_ciclos.sql
 \i Functions/fn_validar_acceso_proyecto.sql
 \i Functions/fn_es_propietario.sql
 \i Functions/fn_auditar_componentes_nuevos.sql
+\i Functions/fn_puntaje_color_hojas.sql
+\i Functions/fn_obtener_resumen_foliar_ia.sql
 \i Functions/fn_obtener_dataset_ia.sql
+\i Functions/fn_obtener_dataset_ia_corte.sql
 \i Functions/fn_obtener_contextos_ia.sql
 \i Functions/fn_listar_actuadores_ia.sql
 \i Functions/fn_obtener_estado_ia.sql
+\i Functions/fn_obtener_reentrenamiento_ia.sql
+\i Functions/fn_obtener_feedback_ia.sql
+\i Functions/fn_obtener_feedback_ia_corte.sql
 \i Functions/fn_obtener_configuracion_ia.sql
 \i Functions/fn_listar_proyectos_ia_automatica.sql
 \i Stored Procedure/sp_actualizar_usuario.sql
@@ -114,6 +121,7 @@
 \i Stored Procedure/sp_finalizar_ciclo_cultivo.sql
 \i Stored Procedure/sp_iniciar_ciclo_cultivo.sql
 \i Stored Procedure/sp_registrar_modelo_ia.sql
+\i Stored Procedure/sp_restaurar_modelo_ia.sql
 \i Stored Procedure/sp_registrar_decision_ia.sql
 \i Stored Procedure/sp_resolver_decision_ia.sql
 \i Stored Procedure/sp_configurar_ia.sql

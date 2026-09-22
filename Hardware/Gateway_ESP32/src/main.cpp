@@ -6,9 +6,9 @@
 #include <esp_wifi.h>
 #include <Preferences.h>
 
-const char* ssidRouter="Familia Castellanos";
-const char* passwordRouter="TeamoJesus";
-const char* apiBase="http://192.168.0.9:3000/api";
+const char* ssidRouter="HUAWEI nova 9 SE";
+const char* passwordRouter="Jaser1806";
+const char* apiBase="http://192.168.43.43:3000/api";
 const char* iotApiKey="Oasis_Telemetria_SuperSecreta_2026";
 const int nodoConfigurado=1;
 uint8_t macNodo[]={0xE8,0xDB,0x84,0xF4,0x9B,0xD3};

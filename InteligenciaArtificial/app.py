@@ -14,9 +14,9 @@ from sklearn.model_selection import train_test_split
 APP_DIR = Path(__file__).resolve().parent
 MODEL_DIR = APP_DIR / "models"
 MODEL_DIR.mkdir(exist_ok=True)
-FEATURES = ["humedad", "temperatura", "hora", "dias_cultivo", "humedad_minima", "humedad_maxima"]
+FEATURES = ["humedad", "temperatura", "hora", "dias_cultivo", "humedad_minima", "humedad_maxima", "salud_foliar"]
 
-app = FastAPI(title="Frutas del Oasis IA", version="1.0.0")
+app = FastAPI(title="Frutas del Oasis IA", version="1.1.0")
 
 
 class TrainingRow(BaseModel):
@@ -26,6 +26,7 @@ class TrainingRow(BaseModel):
     dias_cultivo: float = 0
     humedad_minima: float
     humedad_maxima: float
+    salud_foliar: float = Field(default=85, ge=0, le=100)
     decision: Literal["REGAR", "NO_REGAR"]
 
 
@@ -41,6 +42,7 @@ class PredictionRow(BaseModel):
     dias_cultivo: float = 0
     humedad_minima: float
     humedad_maxima: float
+    salud_foliar: float = Field(default=85, ge=0, le=100)
 
 
 class PredictRequest(BaseModel):
@@ -48,8 +50,8 @@ class PredictRequest(BaseModel):
     rows: list[PredictionRow]
 
 
-def matrix(rows):
-    return np.asarray([[getattr(row, name) for name in FEATURES] for row in rows], dtype=float)
+def matrix(rows, features=FEATURES):
+    return np.asarray([[getattr(row, name) for name in features] for row in rows], dtype=float)
 
 
 @app.get("/health")
@@ -89,7 +91,8 @@ def predict(request: PredictRequest):
         raise HTTPException(404, "El archivo del modelo no existe.")
     artifact = joblib.load(path)
     model = artifact["model"]
-    probabilities = model.predict_proba(matrix(request.rows))
+    artifact_features = artifact.get("features", FEATURES)
+    probabilities = model.predict_proba(matrix(request.rows, artifact_features))
     return {"predictions": [
         {"decision": "REGAR" if int(np.argmax(item)) == 1 else "NO_REGAR", "confidence": round(float(max(item)), 4)}
         for item in probabilities

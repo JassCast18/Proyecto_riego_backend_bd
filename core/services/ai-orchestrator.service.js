@@ -1,7 +1,7 @@
 import * as provider from '../providers/ai.provider.js';
 import {predictWithModel} from './ai.service.js';
 
-const numericRow=row=>({humedad:Number(row.humedad),temperatura:Number(row.temperatura),hora:Number(row.hora),dias_cultivo:Number(row.dias_cultivo),humedad_minima:Number(row.humedad_minima),humedad_maxima:Number(row.humedad_maxima)});
+const numericRow=row=>({humedad:Number(row.humedad),temperatura:Number(row.temperatura),hora:Number(row.hora),dias_cultivo:Number(row.dias_cultivo),humedad_minima:Number(row.humedad_minima),humedad_maxima:Number(row.humedad_maxima),salud_foliar:Number(row.salud_foliar??85)});
 
 export async function evaluateAiProject(projectId,userId=null){
  const [stored,configuration,contexts,actuators]=await Promise.all([provider.getAiState(projectId),provider.getAiConfiguration(projectId),provider.getCurrentContexts(projectId),provider.listAiActuators(projectId)]);
@@ -10,7 +10,7 @@ export async function evaluateAiProject(projectId,userId=null){
  const inputs=contexts.map(numericRow),result=await predictWithModel(model.ruta_pesos_algoritmo,inputs),decisions=[];
  for(let index=0;index<contexts.length;index++){
   const context=contexts[index],prediction=result.predictions[index],variables=inputs[index];
-  const explanation=prediction.decision==='REGAR'?`La humedad estimada (${variables.humedad.toFixed(1)} %) indica necesidad de riego.`:`La humedad estimada (${variables.humedad.toFixed(1)} %) no requiere riego.`;
+  const explanation=prediction.decision==='REGAR'?`La humedad estimada (${variables.humedad.toFixed(1)} %) y la salud foliar reciente (${variables.salud_foliar.toFixed(1)}/100) indican necesidad de riego.`:`La humedad estimada (${variables.humedad.toFixed(1)} %) y la salud foliar reciente (${variables.salud_foliar.toFixed(1)}/100) no requieren riego.`;
   const saved=await provider.saveDecision({projectId,nodeId:context.nodo_id,modelId:model.id,decision:prediction.decision,confidence:prediction.confidence,variables,explanation});
   let resolution='PENDIENTE';
   if(configuration.modo==='AUTOMATICO'){

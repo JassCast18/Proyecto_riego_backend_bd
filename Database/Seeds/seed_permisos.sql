@@ -15,7 +15,7 @@ VALUES
     ('control_manual', 'Control manual', 'Acciones manuales sobre el riego', 'SlidersHorizontal', '#', 5),
     ('ia', 'IA', 'Reentrenamiento y modelos', 'BrainCircuit', '#', 6),
     ('reportes', 'Reportes', 'Historial y reportes', 'FileBarChart', '#', 7),
-    ('auditoria', 'Auditoría', 'Bitácora de acciones', 'ClipboardList', '#', 8),
+    ('auditoria', 'Auditoría', 'Bitácora de acciones', 'ClipboardList', '/dashboard/auditoria/busqueda', 8),
     ('usuarios', 'Usuarios', 'Gestión de usuarios', 'Users', '/dashboard/usuarios', 9),
     ('datos_maestros', 'Datos maestros', 'Módulo de catálogos maestros', 'Database', '/dashboard/maestros/finca', 10),
     ('soporte', 'Soporte', 'Ayuda y soporte', 'LifeBuoy', '#', 11)
@@ -41,7 +41,12 @@ FROM (VALUES
     ('reportes', 'historial_operativo', 'Historial operativo', 'Decisiones y cambios realizados en el proyecto', '/dashboard/reportes/historial', 2),
     ('reportes', 'comparacion_ciclos', 'Comparación de plantaciones', 'Comparación entre ciclos de cultivo', '/dashboard/reportes/comparacion', 3),
     ('reportes', 'listado_informes', 'Listado de informes', 'Consulta y búsqueda del historial completo de informes', '/dashboard/reportes/listado-informes', 4),
-    ('reportes', 'exportar_reportes', 'Reportes', 'Exportación de datos del proyecto', '/dashboard/reportes/exportar', 5)
+    ('reportes', 'exportar_reportes', 'Reportes', 'Exportación de datos del proyecto', '/dashboard/reportes/exportar', 5),
+    ('auditoria', 'auditoria_busqueda', 'Búsqueda', 'Consulta filtrada de acciones realizadas por usuarios', '/dashboard/auditoria/busqueda', 1),
+    ('auditoria', 'auditoria_historial', 'Histórico de acciones', 'Línea temporal de acciones realizadas por usuarios', '/dashboard/auditoria/historial', 2),
+    ('soporte', 'soporte_ayuda', 'Centro de ayuda', 'Preguntas frecuentes y soluciones', '/dashboard/soporte/ayuda', 1),
+    ('soporte', 'soporte_nuevo', 'Nuevo ticket', 'Registro de solicitudes de soporte', '/dashboard/soporte/nuevo', 2),
+    ('soporte', 'soporte_tickets', 'Mis solicitudes', 'Seguimiento de solicitudes propias', '/dashboard/soporte/mis-tickets', 3)
 ) AS v(codigo_modulo, codigo_submodulo, nombre_submodulo, descripcion, ruta, orden)
 INNER JOIN tb_modulo m
     ON m.codigo_modulo = v.codigo_modulo
@@ -77,7 +82,12 @@ VALUES
     ('historial_operativo.view', 'Ver historial operativo', 'Acceso a decisiones y cambios del proyecto', 'submodulo'),
     ('comparacion_ciclos.view', 'Ver comparación de ciclos', 'Acceso a comparación entre plantaciones', 'submodulo'),
     ('listado_informes.view', 'Ver listado de informes', 'Acceso al historial completo de informes', 'submodulo'),
-    ('exportar_reportes.view', 'Exportar reportes', 'Acceso a filtros y exportación de reportes', 'submodulo')
+    ('exportar_reportes.view', 'Exportar reportes', 'Acceso a filtros y exportación de reportes', 'submodulo'),
+    ('auditoria_busqueda.view', 'Buscar auditoría', 'Acceso a filtros de auditoría', 'submodulo'),
+    ('auditoria_historial.view', 'Ver histórico de auditoría', 'Acceso al histórico de acciones', 'submodulo'),
+    ('soporte_ayuda.view', 'Ver centro de ayuda', 'Consultar preguntas frecuentes', 'submodulo'),
+    ('soporte_nuevo.view', 'Crear tickets', 'Registrar solicitudes de soporte', 'submodulo'),
+    ('soporte_tickets.view', 'Ver tickets propios', 'Consultar solicitudes propias', 'submodulo')
 ON CONFLICT (codigo_permiso) DO UPDATE SET
     nombre_permiso=EXCLUDED.nombre_permiso,descripcion=EXCLUDED.descripcion,
     tipo_permiso=EXCLUDED.tipo_permiso,sn_activo=TRUE;
@@ -150,6 +160,20 @@ SELECT 2,s.id,p.id FROM tb_submodulo s
 JOIN tb_permiso p ON p.codigo_permiso=s.codigo_submodulo||'.view'
 WHERE s.codigo_submodulo IN ('informes','historial_operativo','comparacion_ciclos','listado_informes','exportar_reportes')
 ON CONFLICT (tb_rol_id, tb_submodulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
+
+INSERT INTO tb_permiso_submodulo (tb_rol_id,tb_submodulo_id,tb_permiso_id)
+SELECT 2,s.id,p.id FROM tb_submodulo s
+JOIN tb_permiso p ON p.codigo_permiso=s.codigo_submodulo||'.view'
+WHERE s.codigo_submodulo IN ('auditoria_busqueda','auditoria_historial')
+ON CONFLICT(tb_rol_id,tb_submodulo_id,tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
+
+INSERT INTO tb_permiso_submodulo (tb_rol_id,tb_submodulo_id,tb_permiso_id)
+SELECT r.id,s.id,p.id
+FROM tb_rol r
+JOIN tb_submodulo s ON s.codigo_submodulo IN ('soporte_ayuda','soporte_nuevo','soporte_tickets')
+JOIN tb_permiso p ON p.codigo_permiso=s.codigo_submodulo||'.view'
+WHERE r.id IN (2,3)
+ON CONFLICT(tb_rol_id,tb_submodulo_id,tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 DELETE FROM tb_permiso_modulo pm
 USING tb_modulo m

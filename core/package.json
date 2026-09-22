@@ -5,7 +5,13 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "support:migrate": "node scripts/apply-support-migration.js",
+    "support:check": "node scripts/check-jira-support.js",
+    "support:smoke": "node scripts/check-support-module.js",
+    "support:sync": "node scripts/sync-support-now.js",
+    "ai:retraining:migrate": "node scripts/apply-ai-retraining-view.js",
+    "ai:leaf-health:migrate": "node scripts/apply-ai-leaf-health.js"
   },
   "keywords": [],
   "author": "",

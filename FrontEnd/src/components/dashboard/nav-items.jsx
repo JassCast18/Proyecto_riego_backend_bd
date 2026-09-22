@@ -62,6 +62,10 @@ export const navGroups = [
         icon: BrainCircuit,
         href: "/dashboard/ia",
         permissionKey: "ia.view",
+        children: [
+          { label: "Estado y decisiones", href: "/dashboard/ia", permissionKey: "ia.view" },
+          { label: "Reentrenamiento", href: "/dashboard/ia/reentrenamiento", permissionKey: "ia.view" },
+        ],
       },
     ],
   },
@@ -84,8 +88,12 @@ export const navGroups = [
       {
         label: "Auditoría de acciones",
         icon: ClipboardList,
-        href: "#",
+        href: "/dashboard/auditoria/busqueda",
         permissionKey: "auditoria.view",
+        children: [
+          { label: "Búsqueda", href: "/dashboard/auditoria/busqueda", permissionKey: "auditoria.view" },
+          { label: "Histórico de acciones", href: "/dashboard/auditoria/historial", permissionKey: "auditoria.view" },
+        ],
       },
       {
         label: "Gestión de usuarios",
@@ -166,8 +174,13 @@ export const navGroups = [
       {
         label: "Soporte y FAQ",
         icon: LifeBuoy,
-        href: "#",
+        href: "/dashboard/soporte/ayuda",
         permissionKey: "soporte.view",
+        children: [
+          { label: "Centro de ayuda", href: "/dashboard/soporte/ayuda", permissionKey: "soporte.view" },
+          { label: "Nuevo ticket", href: "/dashboard/soporte/nuevo", permissionKey: "soporte.view" },
+          { label: "Mis solicitudes", href: "/dashboard/soporte/mis-tickets", permissionKey: "soporte.view" },
+        ],
       },
     ],
   },
