@@ -1,0 +1,25 @@
+# Local secrets
+.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# JavaScript
+**/node_modules/
+FrontEnd/dist/
+
+# Python
+**/.venv/
+**/__pycache__/
+**/*.py[cod]
+InteligenciaArtificial/models/
+
+# Runtime data
+core/uploads/
+uploads/
+
+# Local tooling
+.DS_Store
+Thumbs.db
+*.log
+

@@ -1,0 +1,20 @@
+[Unit]
+Description=Nodalvia Node API
+After=network-online.target nodalvia-ai.service
+Wants=network-online.target nodalvia-ai.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/nodalvia/app/core
+EnvironmentFile=/opt/nodalvia/shared/core.env
+ExecStart=/usr/bin/node index.js
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

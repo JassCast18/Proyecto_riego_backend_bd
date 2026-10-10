@@ -1,0 +1,435 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Nodalvia production foundation in us-east-2 (EC2, RDS, API Gateway and deployment storage).
+
+Metadata:
+  AWSToolsMetrics:
+    AWSAgentToolkit: aws-cloudformation@3
+
+Parameters:
+  Environment:
+    Type: String
+    Default: prod
+    AllowedValues: [prod]
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.micro, t3.small]
+  DBInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+  DBAllocatedStorage:
+    Type: Number
+    Default: 20
+    MinValue: 20
+    MaxValue: 100
+  CorsOrigin:
+    Type: String
+    Default: https://nodalvia.com
+  WwwCorsOrigin:
+    Type: String
+    Default: https://www.nodalvia.com
+  AmplifyOrigin:
+    Type: String
+    Default: https://main.db2878uuwazwr.amplifyapp.com
+  OriginHeaderSecret:
+    Type: String
+    NoEcho: true
+    MinLength: 32
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+
+Resources:
+  Vpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.42.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-vpc}
+        - {Key: Project, Value: Nodalvia}
+        - {Key: Environment, Value: !Ref Environment}
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-igw}
+        - {Key: Project, Value: Nodalvia}
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref Vpc
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: us-east-2a
+      CidrBlock: 10.42.0.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-public-a}
+        - {Key: Project, Value: Nodalvia}
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: us-east-2a
+      CidrBlock: 10.42.10.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-private-a}
+        - {Key: Project, Value: Nodalvia}
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref Vpc
+      AvailabilityZone: us-east-2b
+      CidrBlock: 10.42.11.0/24
+      MapPublicIpOnLaunch: false
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-private-b}
+        - {Key: Project, Value: Nodalvia}
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref Vpc
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-public-rt}
+        - {Key: Project, Value: Nodalvia}
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PublicSubnetRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: HTTP origin for the Nodalvia API; application header is also verified by Nginx.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+          Description: API Gateway public HTTP integration
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-app-sg}
+        - {Key: Project, Value: Nodalvia}
+
+  DatabaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: PostgreSQL access from the Nodalvia application only.
+      VpcId: !Ref Vpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref AppSecurityGroup
+          Description: PostgreSQL from application instance
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-db-sg}
+        - {Key: Project, Value: Nodalvia}
+
+  DatabaseSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Private subnets for Nodalvia PostgreSQL.
+      SubnetIds: [!Ref PrivateSubnetA, !Ref PrivateSubnetB]
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-db-subnets}
+        - {Key: Project, Value: Nodalvia}
+
+  DatabaseParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: Nodalvia PostgreSQL 18 parameters with TLS required.
+      Family: postgres18
+      Parameters:
+        rds.force_ssl: "1"
+      Tags:
+        - {Key: Project, Value: Nodalvia}
+
+  Database:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DBInstanceIdentifier: nodalvia-prod-postgres
+      DBName: nodalvia
+      Engine: postgres
+      EngineVersion: "18.3"
+      DBInstanceClass: !Ref DBInstanceClass
+      AllocatedStorage: !Ref DBAllocatedStorage
+      StorageType: gp3
+      StorageEncrypted: true
+      MultiAZ: false
+      PubliclyAccessible: false
+      DBSubnetGroupName: !Ref DatabaseSubnetGroup
+      VPCSecurityGroups: [!Ref DatabaseSecurityGroup]
+      DBParameterGroupName: !Ref DatabaseParameterGroup
+      MasterUsername: nodalvia_owner
+      ManageMasterUserPassword: true
+      # Free-plan projects currently allow the API default of one day.
+      # Raise this to seven days immediately after upgrading the AWS plan.
+      BackupRetentionPeriod: 1
+      PreferredBackupWindow: 07:00-08:00
+      PreferredMaintenanceWindow: sun:08:30-sun:09:30
+      AutoMinorVersionUpgrade: true
+      DeletionProtection: true
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 7
+      EnableCloudwatchLogsExports: [postgresql]
+      CopyTagsToSnapshot: true
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-postgres}
+        - {Key: Project, Value: Nodalvia}
+        - {Key: Environment, Value: !Ref Environment}
+        - {Key: created_by, Value: rds-oss-skill}
+        - {Key: generation_model, Value: gpt-5}
+
+  DeploymentBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: {SSEAlgorithm: AES256}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration: {Status: Enabled}
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-old-deployments
+            Status: Enabled
+            NoncurrentVersionExpiration: {NoncurrentDays: 14}
+            ExpirationInDays: 30
+      Tags:
+        - {Key: Project, Value: Nodalvia}
+        - {Key: Environment, Value: !Ref Environment}
+
+  AppSeedSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: nodalvia/prod/app-seed
+      Description: Seed used to derive independent JWT and IoT API secrets on the application host.
+      GenerateSecretString:
+        SecretStringTemplate: '{"purpose":"nodalvia-prod"}'
+        GenerateStringKey: seed
+        PasswordLength: 64
+        ExcludePunctuation: true
+      Tags:
+        - {Key: Project, Value: Nodalvia}
+        - {Key: Environment, Value: !Ref Environment}
+
+  AppRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: nodalvia-prod-ec2-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ec2.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy
+      Policies:
+        - PolicyName: nodalvia-prod-runtime
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: [s3:GetObject, s3:GetObjectVersion]
+                Resource: !Sub "${DeploymentBucket.Arn}/*"
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt DeploymentBucket.Arn
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource:
+                  - !Ref AppSeedSecret
+                  - !GetAtt Database.MasterUserSecret.SecretArn
+      Tags:
+        - {Key: Project, Value: Nodalvia}
+
+  AppInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref AppRole]
+
+  AppInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: PublicRoute
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: !Ref InstanceType
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds: [!Ref AppSecurityGroup]
+      IamInstanceProfile: !Ref AppInstanceProfile
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+            Encrypted: true
+            DeleteOnTermination: true
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y ca-certificates curl git jq nginx postgresql-client python3-venv unzip
+          curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+          apt-get install -y nodejs
+          curl -fsSL https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -o /tmp/awscliv2.zip
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          /tmp/aws/install
+          mkdir -p /opt/nodalvia/app /opt/nodalvia/shared/uploads /opt/nodalvia/shared/models
+          chown -R ubuntu:ubuntu /opt/nodalvia
+          curl -fsSL https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem -o /etc/ssl/certs/aws-rds-global-bundle.pem
+          cat >/etc/nginx/sites-available/nodalvia <<'NGINX'
+          server {
+              listen 80 default_server;
+              server_name _;
+              client_max_body_size 55m;
+
+              if ($http_x_nodalvia_origin != "__ORIGIN_SECRET__") {
+                  return 403;
+              }
+
+              location / {
+                  proxy_pass http://127.0.0.1:3000;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_read_timeout 180s;
+              }
+          }
+          NGINX
+          sed -i 's|__ORIGIN_SECRET__|${OriginHeaderSecret}|g' /etc/nginx/sites-available/nodalvia
+          rm -f /etc/nginx/sites-enabled/default
+          ln -sf /etc/nginx/sites-available/nodalvia /etc/nginx/sites-enabled/nodalvia
+          nginx -t
+          systemctl enable --now nginx
+          systemctl reload nginx
+          systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-app}
+        - {Key: Project, Value: Nodalvia}
+        - {Key: Environment, Value: !Ref Environment}
+
+  ElasticIp:
+    Type: AWS::EC2::EIP
+    DependsOn: GatewayAttachment
+    Properties:
+      Domain: vpc
+      Tags:
+        - {Key: Name, Value: nodalvia-prod-app-ip}
+        - {Key: Project, Value: Nodalvia}
+
+  ElasticIpAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      AllocationId: !GetAtt ElasticIp.AllocationId
+      InstanceId: !Ref AppInstance
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: nodalvia-prod-api
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins: [!Ref CorsOrigin, !Ref WwwCorsOrigin, !Ref AmplifyOrigin]
+        AllowHeaders: [Authorization, Content-Type, X-Project-Id]
+        AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+        MaxAge: 86400
+      Tags:
+        Project: Nodalvia
+        Environment: !Ref Environment
+
+  HttpIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: HTTP_PROXY
+      IntegrationMethod: ANY
+      IntegrationUri: !Sub "http://${ElasticIp}"
+      PayloadFormatVersion: "1.0"
+      TimeoutInMillis: 30000
+      RequestParameters:
+        overwrite:header.X-Nodalvia-Origin: !Ref OriginHeaderSecret
+
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: $default
+      Target: !Sub "integrations/${HttpIntegration}"
+
+  DefaultStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        DetailedMetricsEnabled: false
+        ThrottlingBurstLimit: 100
+        ThrottlingRateLimit: 50
+      Tags:
+        Project: Nodalvia
+        Environment: !Ref Environment
+
+Outputs:
+  ApiUrl:
+    Description: HTTPS endpoint supplied by API Gateway.
+    Value: !GetAtt HttpApi.ApiEndpoint
+  AppInstanceId:
+    Value: !Ref AppInstance
+  AppPublicIp:
+    Value: !Ref ElasticIp
+  DatabaseEndpoint:
+    Value: !GetAtt Database.Endpoint.Address
+  DatabasePort:
+    Value: !GetAtt Database.Endpoint.Port
+  DatabaseSecretArn:
+    Value: !GetAtt Database.MasterUserSecret.SecretArn
+  AppSeedSecretArn:
+    Value: !Ref AppSeedSecret
+  DeploymentBucketName:
+    Value: !Ref DeploymentBucket
+

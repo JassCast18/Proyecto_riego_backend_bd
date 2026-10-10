@@ -1,0 +1,20 @@
+[Unit]
+Description=Nodalvia AI service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/nodalvia/app/InteligenciaArtificial
+Environment=MODEL_DIR=/opt/nodalvia/shared/models
+ExecStart=/opt/nodalvia/app/InteligenciaArtificial/.venv/bin/uvicorn app:app --host 127.0.0.1 --port 8001
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

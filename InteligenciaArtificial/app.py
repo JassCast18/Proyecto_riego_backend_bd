@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 from typing import Literal
 from uuid import uuid4
@@ -12,8 +13,8 @@ from sklearn.metrics import accuracy_score, classification_report
 from sklearn.model_selection import train_test_split
 
 APP_DIR = Path(__file__).resolve().parent
-MODEL_DIR = APP_DIR / "models"
-MODEL_DIR.mkdir(exist_ok=True)
+MODEL_DIR = Path(os.environ.get("MODEL_DIR", APP_DIR / "models")).resolve()
+MODEL_DIR.mkdir(parents=True, exist_ok=True)
 FEATURES = ["humedad", "temperatura", "hora", "dias_cultivo", "humedad_minima", "humedad_maxima", "salud_foliar"]
 
 app = FastAPI(title="Frutas del Oasis IA", version="1.1.0")

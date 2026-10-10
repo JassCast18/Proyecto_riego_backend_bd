@@ -6,7 +6,7 @@
 #include <esp_wifi.h>
 #include <Preferences.h>
 
-const char* ssidRouter="HUAWEI nova 9 SE";
+const char* ssidRouter="Jaser";
 const char* passwordRouter="Jaser1806";
 const char* apiBase="http://192.168.43.43:3000/api";
 const char* iotApiKey="Oasis_Telemetria_SuperSecreta_2026";

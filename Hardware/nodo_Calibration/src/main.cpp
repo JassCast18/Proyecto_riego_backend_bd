@@ -7,10 +7,10 @@ extern "C" {
 #include <user_interface.h>
 }
 
-const uint8_t PIN_RELE_VALVULA=5; // D1 / GPIO5
+const uint8_t PIN_RELE_VALVULA=4; // D2 / GPIO4
 const uint8_t RELE_ACTIVO=LOW;
 const uint8_t RELE_INACTIVO=HIGH;
-const int pinHumedad=A0;const int pinTemp=4;const uint32_t INTERVALO_NORMAL_MS=30UL*1000UL;
+const int pinHumedad=A0;const int pinTemp=2;const uint32_t INTERVALO_NORMAL_MS=30UL*1000UL;
 uint8_t macGateway[]={0x30,0x76,0xF5,0xA6,0x4D,0xA4};
 OneWire oneWire(pinTemp);DallasTemperature sensoresTemp(&oneWire);
 

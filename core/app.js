@@ -12,14 +12,36 @@ import aiRoutes from "./routes/ai.routes.js";
 import auditRoutes from "./routes/audit.routes.js";
 import supportRoutes from "./routes/support.routes.js";
 import {auditUserMutation} from "./middlewares/user-action-audit.middleware.js";
+import { db } from "./database/connection.database.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 const app = express();
 
-app.use(cors());
+const allowedOrigins = String(process.env.CORS_ORIGINS || process.env.FRONTEND_URL || "http://localhost:5173")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+app.use(cors({
+    origin(origin, callback) {
+        if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin)) return callback(null, true);
+        return callback(new Error("Origen no permitido por CORS."));
+    },
+    allowedHeaders: ["Content-Type", "Authorization", "X-Project-Id"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+}));
 app.use(express.json());
 app.use(auditUserMutation);
+
+app.get("/api/health", async (_req, res) => {
+    try {
+        await db.query("SELECT 1");
+        return res.json({ status: "ok", database: "connected" });
+    } catch {
+        return res.status(503).json({ status: "error", database: "unavailable" });
+    }
+});
 
 app.use("/api/users", userRoutes);
 app.use("/api/telemetria", telemetriaRoutes);
