@@ -3,23 +3,27 @@ import { ArrowRight, MapPin } from "lucide-react";
 
 const HeroSection = () => {
   return (
-    <section className="relative overflow-hidden bg-white">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 py-20 lg:grid-cols-2">
+    <section className="relative isolate flex min-h-[calc(100svh-7rem)] items-end overflow-hidden bg-slate-950 text-white">
+      <img
+        src="/hero-cultivos.png"
+        alt="Cultivos monitoreados por Nodalvia"
+        className="absolute inset-0 -z-20 size-full object-cover"
+      />
+      <div className="absolute inset-0 -z-10 bg-slate-950/70" aria-hidden="true" />
+      <div className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:py-16">
         {/* Contenido */}
-        <div className="flex flex-col gap-6">
-          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-gray-300 bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
+        <div className="flex max-w-3xl flex-col gap-5">
+          <span className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-white/30 bg-black/25 px-3 py-2 text-sm font-medium text-green-100 backdrop-blur-sm sm:px-4">
             <MapPin size={16} />
             Las Cruces, Petén · Guatemala
           </span>
 
-          <h1 className="text-4xl font-bold leading-tight text-gray-900 md:text-5xl lg:text-6xl">
-            Optimización del rendimiento agrícola con inteligencia artificial
+          <h1 className="text-4xl font-bold leading-tight text-white">
+            Nodalvia
           </h1>
 
-          <p className="max-w-xl text-lg leading-relaxed text-gray-600">
-            Un ecosistema de agricultura de precisión que combina sensores IoT,
-            estaciones meteorológicas y modelos predictivos para monitorear y
-            automatizar el desarrollo de tus cultivos en tiempo real.
+          <p className="max-w-2xl text-lg leading-relaxed text-slate-100">
+            Monitoreo adaptativo, sensores IoT e inteligencia artificial para tomar decisiones de riego con datos del cultivo en tiempo real.
           </p>
 
           {/* Botones */}
@@ -34,47 +38,37 @@ const HeroSection = () => {
 
             <a
               href="#solucion"
-              className="inline-flex items-center justify-center rounded-lg border border-green-600 px-6 py-3 font-medium text-green-600 transition duration-300 hover:bg-green-50"
+              className="inline-flex items-center justify-center rounded-lg border border-white/60 bg-black/20 px-6 py-3 font-medium text-white transition duration-200 hover:bg-white/10"
             >
               Conocer la solución
             </a>
           </div>
 
           {/* Estadísticas */}
-          <div className="mt-6 grid grid-cols-3 gap-6 border-t border-gray-200 pt-6">
+          <div className="mt-3 grid grid-cols-1 gap-3 border-t border-white/25 pt-5 min-[380px]:grid-cols-3 sm:gap-6">
             <div>
-              <h3 className="text-3xl font-bold text-green-600">24/7</h3>
-              <p className="mt-1 text-sm text-gray-600">
+              <h3 className="text-2xl font-bold text-green-300">24/7</h3>
+              <p className="mt-1 text-sm text-slate-200">
                 Monitoreo continuo
               </p>
             </div>
 
             <div>
-              <h3 className="text-3xl font-bold text-green-600">IA</h3>
-              <p className="mt-1 text-sm text-gray-600">
+              <h3 className="text-2xl font-bold text-green-300">IA</h3>
+              <p className="mt-1 text-sm text-slate-200">
                 Decisiones predictivas
               </p>
             </div>
 
             <div>
-              <h3 className="text-3xl font-bold text-green-600">IoT</h3>
-              <p className="mt-1 text-sm text-gray-600">
+              <h3 className="text-2xl font-bold text-green-300">IoT</h3>
+              <p className="mt-1 text-sm text-slate-200">
                 Sensores ESP32
               </p>
             </div>
           </div>
         </div>
 
-        {/* Imagen */}
-        <div className="relative">
-          <div className="overflow-hidden rounded-2xl border border-gray-200 shadow-xl">
-            <img
-              src="/hero-cultivos.png"
-              alt="Vista aérea de cultivos verdes monitoreados con sensores IoT"
-              className="h-full w-full object-cover"
-            />
-          </div>
-        </div>
       </div>
     </section>
   );

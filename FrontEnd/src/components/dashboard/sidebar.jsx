@@ -87,7 +87,7 @@ export function Sidebar({ open, onClose }) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-gray-900 text-white transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-50 flex w-[min(18rem,calc(100vw-1rem))] flex-col bg-gray-900 text-white transition-transform duration-300 lg:static lg:w-72 lg:translate-x-0 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -100,7 +100,7 @@ export function Sidebar({ open, onClose }) {
 
             <span className="flex flex-col leading-none">
               <span className="text-sm font-bold">
-                Frutas del Oasis
+                Nodalvia
               </span>
 
               <span className="text-xs text-gray-400">

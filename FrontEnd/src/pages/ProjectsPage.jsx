@@ -215,11 +215,11 @@ export default function ProjectsPage() {
   return (
     <main className="min-h-screen bg-green-700 text-white">
       <header className="flex items-center justify-between px-6 py-5 md:px-12">
-        <div className="flex items-center gap-3 font-bold"><Sprout size={26} /><span>Frutas del Oasis</span></div>
+        <div className="flex min-w-0 items-center gap-3 font-bold"><Sprout size={26} className="shrink-0"/><span className="truncate">Nodalvia</span></div>
         <button type="button" onClick={logout} className="flex items-center gap-2 rounded-lg border border-white/40 px-3 py-2 text-sm hover:bg-white/10"><LogOut size={17} />Salir</button>
       </header>
 
-      <section key={step} className="mx-auto flex min-h-[calc(100vh-84px)] max-w-5xl animate-in fade-in slide-in-from-bottom-3 flex-col justify-center px-6 pb-14 duration-300">
+      <section key={step} className="mx-auto flex min-h-[calc(100vh-84px)] max-w-5xl animate-in fade-in slide-in-from-bottom-3 flex-col justify-center px-4 pb-14 duration-300 sm:px-6">
         <div className="mb-7 flex items-center justify-between text-sm text-white/75"><span>{step < 5 ? `Paso ${step} de 5` : 'Tus proyectos'}</span>{step < 5 && projects.length ? <button onClick={() => setStep(5)}>Cancelar</button> : null}</div>
         {error ? <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{error}</div> : null}
 

@@ -37,7 +37,7 @@ const stack = [
 export const TechSection = () => {
   return (
     <section id="tecnologia" className="border-t border-gray-200 bg-white">
-      <div className="mx-auto max-w-7xl px-6 py-20">
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20">
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           {/* Texto */}
           <div>
@@ -45,7 +45,7 @@ export const TechSection = () => {
               Tecnología
             </span>
 
-            <h2 className="mt-3 text-4xl font-bold text-gray-900">
+            <h2 className="mt-3 text-3xl font-bold text-gray-900 sm:text-4xl">
               Una arquitectura robusta de campo a la nube
             </h2>
 
@@ -69,7 +69,7 @@ export const TechSection = () => {
             {stack.map((item) => (
               <div
                 key={item.title}
-                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
+                className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg sm:p-6"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 text-green-600">
                   <item.icon size={22} />
@@ -94,9 +94,9 @@ export const TechSection = () => {
 export const SiteFooter = () => {
   return (
     <footer className="border-t border-gray-200 bg-gray-900 text-white">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-6 py-10 md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <h3 className="text-lg font-bold">Frutas del Oasis</h3>
+          <h3 className="text-lg font-bold">Nodalvia</h3>
 
           <p className="mt-1 text-sm text-gray-400">
             Optimización del rendimiento agrícola mediante inteligencia
@@ -105,7 +105,7 @@ export const SiteFooter = () => {
         </div>
 
         <p className="text-sm text-gray-400">
-          © {new Date().getFullYear()} Frutas del Oasis · Las Cruces, Petén
+          © {new Date().getFullYear()} Nodalvia · Las Cruces, Petén
         </p>
       </div>
     </footer>

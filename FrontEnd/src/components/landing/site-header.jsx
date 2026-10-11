@@ -1,21 +1,21 @@
 import { Link } from "react-router-dom";
-import { Leaf } from "lucide-react";
+import { Leaf, LogIn } from "lucide-react";
 
 const SiteHeader = () => {
   return (
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/80 backdrop-blur-md shadow-sm">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-3 sm:px-6">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white">
             <Leaf size={20} />
           </span>
 
-          <span className="flex flex-col leading-none">
+          <span className="flex min-w-0 flex-col leading-none">
             <span className="text-base font-bold text-gray-900">
-              Frutas del Oasis
+              Nodalvia
             </span>
-            <span className="text-xs text-gray-500">
+            <span className="hidden text-xs text-gray-500 sm:block">
               Monitoreo Adaptativo
             </span>
           </span>
@@ -51,9 +51,11 @@ const SiteHeader = () => {
 
           <Link
             to="/login"
-            className="rounded-lg bg-green-600 px-5 py-2.5 text-sm font-medium text-white transition duration-300 hover:bg-green-700"
+            className="inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-green-700 px-3 text-sm font-semibold text-white transition duration-200 hover:bg-green-800 sm:px-5"
           >
-            Acceder a la plataforma
+            <LogIn size={17} aria-hidden="true" />
+            <span className="hidden sm:inline">Acceder a la plataforma</span>
+            <span className="sm:hidden">Acceder</span>
           </Link>
         </div>
       </div>

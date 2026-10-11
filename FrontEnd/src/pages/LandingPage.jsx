@@ -5,7 +5,7 @@ import { TechSection, SiteFooter } from "../components/landing/techSection";
 
 export default function LandingPage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen min-w-0 flex-col overflow-x-hidden">
       <SiteHeader />
 
       <main className="flex-1">

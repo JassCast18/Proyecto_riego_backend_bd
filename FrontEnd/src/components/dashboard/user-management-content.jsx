@@ -423,7 +423,7 @@ export function UserManagementContent() {
               <div>
                 <h2 className="text-xl font-bold text-emerald-950">Listado de usuarios</h2>
                 <p className="text-sm text-emerald-900/65">Consulta miembros del proyecto o usuarios globales.</p>
-                <div className="mt-3 inline-flex rounded-xl border border-emerald-200 bg-emerald-50 p-1">
+                <div className="mt-3 grid w-full grid-cols-1 rounded-xl border border-emerald-200 bg-emerald-50 p-1 sm:inline-grid sm:w-auto sm:grid-cols-2">
                   <button type="button" onClick={() => setScope('project')} className={`rounded-lg px-3 py-2 text-xs font-bold ${scope === 'project' ? 'bg-emerald-700 text-white' : 'text-emerald-800'}`}>Usuarios del proyecto</button>
                   <button type="button" onClick={() => setScope('global')} className={`rounded-lg px-3 py-2 text-xs font-bold ${scope === 'global' ? 'bg-emerald-700 text-white' : 'text-emerald-800'}`}>Usuarios globales</button>
                 </div>

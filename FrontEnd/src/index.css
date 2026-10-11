@@ -179,7 +179,9 @@
 .dashboard-page td,
 .dashboard-page th,
 .dashboard-page p,
-.dashboard-page a {
+.dashboard-page a,
+.dashboard-page span,
+.dashboard-page pre {
   overflow-wrap: anywhere;
 }
 
@@ -196,6 +198,29 @@
 
   [role="dialog"] {
     padding: 1rem;
+  }
+
+  .dashboard-page table {
+    min-width: 42rem;
+  }
+
+  .dashboard-page button,
+  .dashboard-page .whitespace-nowrap {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-page .grid-cols-2,
+  .dashboard-page .grid-cols-3,
+  .dashboard-page .grid-cols-4 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-page section,
+  .dashboard-page article,
+  .dashboard-page [role="dialog"] {
+    border-radius: 8px;
   }
 }
 
