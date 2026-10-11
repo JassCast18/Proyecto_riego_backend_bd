@@ -2,9 +2,11 @@ import {Router} from "express";
 import {verifyToken} from "../middlewares/jwt.middleware.js";
 import {verifyProjectAccess} from "../middlewares/project.middleware.js";
 import {verifyApiKey} from "../middlewares/apiKey.middleware.js";
-import {catalog,listTests,getTest,startTest,finishTest,takeCommands,confirmCommand,createActuator,calibrateSensor,completeSensorRepair} from "../controllers/manual-control.controller.js";
+import {catalog,listTests,getTest,startTest,finishTest,takeCommands,takeCommandsBatch,confirmCommand,confirmCommandsBatch,createActuator,calibrateSensor,completeSensorRepair} from "../controllers/manual-control.controller.js";
 
 const router=Router();
+router.get("/iot/comandos",verifyApiKey,takeCommandsBatch);
+router.post("/iot/comandos/confirmaciones",verifyApiKey,confirmCommandsBatch);
 router.get("/iot/nodos/:nodeId/comandos",verifyApiKey,takeCommands);
 router.post("/iot/comandos/:id/confirmar",verifyApiKey,confirmCommand);
 router.get("/catalogo",verifyToken,verifyProjectAccess,catalog);

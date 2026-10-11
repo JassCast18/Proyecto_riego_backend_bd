@@ -23,3 +23,6 @@ uploads/
 Thumbs.db
 *.log
 
+# Firmware secrets
+Hardware/Gateway_ESP32/include/secrets.h
+

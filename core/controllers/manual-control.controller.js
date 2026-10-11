@@ -15,7 +15,19 @@ export async function startTest(req,res){try{
 }catch(e){return fail(res,e);}}
 export async function finishTest(req,res){try{await provider.finishTest({testId:Number(req.params.id),projectId:req.projectId,userId:req.user.id,cancel:Boolean(req.body?.cancelar),result:req.body?.resultado||null,conclusion:req.body?.conclusion||null,disableSensor:Boolean(req.body?.desactivarSensor)});return res.json(ResponseModel.ok(null,req.body?.cancelar?"Prueba detenida.":"Prueba finalizada."));}catch(e){return fail(res,e);}}
 export async function takeCommands(req,res){try{const commands=await provider.takeCommands(Number(req.params.nodeId));const normalized=commands.map(command=>({...command,id:Number(command.id)}));return res.json(ResponseModel.ok({comandos:normalized}));}catch(e){return fail(res,e);}}
+export async function takeCommandsBatch(req,res){try{
+  const nodeIds=[...new Set(String(req.query.nodeIds||'').split(',').map(Number).filter(Number.isInteger))];
+  if(!nodeIds.length||nodeIds.length>8||nodeIds.some(id=>id<=0))return res.status(400).json(ResponseModel.fail('Debe indicar entre 1 y 8 nodos validos.',null,400));
+  const groups=await Promise.all(nodeIds.map(async nodeId=>(await provider.takeCommands(nodeId)).map(command=>({...command,id:Number(command.id),nodeId}))));
+  return res.json(ResponseModel.ok({comandos:groups.flat()}));
+}catch(e){return fail(res,e);}}
 export async function confirmCommand(req,res){try{await provider.confirmCommand(Number(req.params.id),req.body?.exitoso!==false,String(req.body?.mensaje||""));return res.json(ResponseModel.ok());}catch(e){return fail(res,e);}}
+export async function confirmCommandsBatch(req,res){try{
+  const confirmations=Array.isArray(req.body?.confirmaciones)?req.body.confirmaciones:[];
+  if(!confirmations.length||confirmations.length>40)return res.status(400).json(ResponseModel.fail('Debe indicar entre 1 y 40 confirmaciones.',null,400));
+  await Promise.all(confirmations.map(item=>provider.confirmCommand(Number(item.id),item.exitoso!==false,String(item.mensaje||''))));
+  return res.json(ResponseModel.ok());
+}catch(e){return fail(res,e);}}
 export async function calibrateSensor(req,res){try{
   const sensorId=Number(req.params.sensorId);const testId=Number(req.body?.pruebaId);const dryAdc=Number(req.body?.adcSeco);const wetAdc=Number(req.body?.adcHumedo);
   if(!sensorId||!testId||!Number.isFinite(dryAdc)||!Number.isFinite(wetAdc))return res.status(400).json(ResponseModel.fail("Sensor, prueba y lecturas seca/humeda son obligatorios.",null,400));
