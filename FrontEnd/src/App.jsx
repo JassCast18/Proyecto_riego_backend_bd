@@ -2,26 +2,28 @@ import { Routes, Route } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import LandingPage from './pages/LandingPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
-import DashboardPage from './pages/DashboardPage.jsx'
-import UserManagementPage from './pages/UserManagementPage.jsx'
-import DataMastersPage from './pages/DataMastersPage.jsx'
-import HardwareStatusPage from './pages/HardwareStatusPage.jsx'
-import NotificationsPage from './pages/NotificationsPage.jsx'
-import ForgotPasswordPage from './pages/ForgotPasswordPage.jsx'
-import ResetPasswordPage from './pages/ResetPasswordPage.jsx'
-import ProjectsPage from './pages/ProjectsPage.jsx'
-import CropParametersPage from './pages/CropParametersPage.jsx'
-import ReportsPage from './pages/ReportsPage.jsx'
-import ManualControlPage from './pages/ManualControlPage.jsx'
-import AIPage from './pages/AIPage.jsx'
-const AIRetrainingPage=lazy(()=>import('./pages/AIRetrainingPage.jsx'))
-import AuditPage from './pages/AuditPage.jsx'
-import SupportPage from './pages/SupportPage.jsx'
 import { ProtectedRoute } from './middlewares/ProtectedRoute.jsx'
+
+const DashboardPage = lazy(() => import('./pages/DashboardPage.jsx'))
+const UserManagementPage = lazy(() => import('./pages/UserManagementPage.jsx'))
+const DataMastersPage = lazy(() => import('./pages/DataMastersPage.jsx'))
+const HardwareStatusPage = lazy(() => import('./pages/HardwareStatusPage.jsx'))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage.jsx'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage.jsx'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage.jsx'))
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage.jsx'))
+const CropParametersPage = lazy(() => import('./pages/CropParametersPage.jsx'))
+const ReportsPage = lazy(() => import('./pages/ReportsPage.jsx'))
+const ManualControlPage = lazy(() => import('./pages/ManualControlPage.jsx'))
+const AIPage = lazy(() => import('./pages/AIPage.jsx'))
+const AIRetrainingPage = lazy(() => import('./pages/AIRetrainingPage.jsx'))
+const AuditPage = lazy(() => import('./pages/AuditPage.jsx'))
+const SupportPage = lazy(() => import('./pages/SupportPage.jsx'))
 
 export default function App() {
   return (
-    <Routes>
+    <Suspense fallback={<RouteLoading />}>
+      <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/olvide-password" element={<ForgotPasswordPage />} />
@@ -41,7 +43,7 @@ export default function App() {
       />
       <Route
         path="/dashboard/ia/reentrenamiento"
-        element={<ProtectedRoute requireProject requiredPermission="ia.view"><Suspense fallback={<div className="p-8 text-sm text-slate-500">Cargando árbol de decisiones...</div>}><AIRetrainingPage /></Suspense></ProtectedRoute>}
+        element={<ProtectedRoute requireProject requiredPermission="ia.view"><AIRetrainingPage /></ProtectedRoute>}
       />
       <Route
         path="/dashboard/ia"
@@ -95,6 +97,18 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-    </Routes>
+      </Routes>
+    </Suspense>
+  )
+}
+
+function RouteLoading() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-slate-100" role="status" aria-live="polite">
+      <div className="flex items-center gap-3 text-sm font-semibold text-slate-600">
+        <span className="h-5 w-5 animate-spin rounded-full border-2 border-emerald-200 border-t-emerald-700" aria-hidden="true" />
+        Cargando módulo...
+      </div>
+    </div>
   )
 }

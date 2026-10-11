@@ -1,5 +1,6 @@
 import ResponseModel from "../models/response.model.js";
 import * as provider from "../providers/user.provider.js";
+import { validatePasswordPolicy } from "../utils/password-policy.util.js";
 
 function getCurrentUserId(req) {
     return req.user?.id ?? 1;
@@ -68,8 +69,9 @@ export const createUser = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Faltan campos obligatorios.", null, 400));
         }
 
-        if (typeof password !== "string" || password.length < 8 || password.length > 72) {
-            return res.status(400).json(ResponseModel.fail("La contraseña debe tener entre 8 y 72 caracteres.", null, 400));
+        const passwordValidation = validatePasswordPolicy(password);
+        if (!passwordValidation.valid) {
+            return res.status(400).json(ResponseModel.fail(passwordValidation.errors[0], { errores: passwordValidation.errors }, 400));
         }
 
         if ((codigo_pais || telefono) && (!/^\+[1-9]\d{0,3}$/.test(codigo_pais || "") || !/^\d{7,15}$/.test(telefono || ""))) {
@@ -151,8 +153,9 @@ export const updatePassword = async (req, res) => {
             return res.status(400).json(ResponseModel.fail("Faltan campos obligatorios.", null, 400));
         }
 
-        if (typeof password !== "string" || password.length < 8 || password.length > 72) {
-            return res.status(400).json(ResponseModel.fail("La contraseña debe tener entre 8 y 72 caracteres.", null, 400));
+        const passwordValidation = validatePasswordPolicy(password);
+        if (!passwordValidation.valid) {
+            return res.status(400).json(ResponseModel.fail(passwordValidation.errors[0], { errores: passwordValidation.errors }, 400));
         }
 
         await provider.updatePassword({

@@ -3,24 +3,24 @@ import {comparePassword} from "../utils/bcrypt.util.js";
 import {generateToken} from "../utils/jwt.util.js";
 import ResponseModel from "../models/response.model.js";
 import { isEmailServiceConfigured, sendPasswordResetEmail } from "../services/email.service.js";
+import { validatePasswordPolicy } from "../utils/password-policy.util.js";
+
+const INVALID_LOGIN_MESSAGE = "Credenciales inválidas.";
+const DUMMY_PASSWORD_HASH = "$2b$10$8W9qT8NfILqo7H6cZp4YIuqd5QL6Km1pZ6/y98AfKjyI4/gTpsEjq";
 
 export const login=async(req,res)=>{
 
     try{
         const {correo_electronico,password}=req.body;
 
-        if (typeof correo_electronico !== "string" || !correo_electronico.trim() || !password) {
+        if (typeof correo_electronico !== "string" || !correo_electronico.trim() || typeof password !== "string" || !password) {
             return res.status(400).json(ResponseModel.fail("Usuario y contraseña son obligatorios.", null, 400));
         }
 
         const user=await provider.login(correo_electronico);
-        if(!user){
-            return res.status(401).json(ResponseModel.fail("Usuario no existe.", null, 401));
-        }
-
-        const validPassword=await comparePassword(password,user.passwordHash);
-        if(!validPassword){
-            return res.status(401).json(ResponseModel.fail("Credenciales inválidas.", null, 401));
+        const validPassword=await comparePassword(password, user?.passwordHash || DUMMY_PASSWORD_HASH);
+        if(!user || !validPassword){
+            return res.status(401).json(ResponseModel.fail(INVALID_LOGIN_MESSAGE, null, 401));
         }
   
         const token=generateToken(user);
@@ -52,9 +52,10 @@ export const register = async (req, res) => {
             );
         }
 
-        if (typeof password !== "string" || password.length < 8 || password.length > 72) {
+        const passwordValidation = validatePasswordPolicy(password);
+        if (!passwordValidation.valid) {
             return res.status(400).json(
-                ResponseModel.fail("La contraseña debe tener entre 8 y 72 caracteres.", null, 400)
+                ResponseModel.fail(passwordValidation.errors[0], { errores: passwordValidation.errors }, 400)
             );
         }
 
@@ -141,8 +142,10 @@ export const resetPassword = async (req, res) => {
     try {
         const { token, password } = req.body ?? {};
 
-        if (!token || typeof password !== "string" || password.length < 8 || password.length > 72) {
-            return res.status(400).json(ResponseModel.fail("El enlace y una contraseña de entre 8 y 72 caracteres son obligatorios.", null, 400));
+        const passwordValidation = validatePasswordPolicy(password);
+        if (!token || !passwordValidation.valid) {
+            const message = !token ? "El enlace de recuperación es obligatorio." : passwordValidation.errors[0];
+            return res.status(400).json(ResponseModel.fail(message, { errores: passwordValidation.errors }, 400));
         }
 
         await provider.resetPassword({ token, password });

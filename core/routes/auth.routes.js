@@ -13,13 +13,16 @@ import {
 import { listMyPermissions as listMyRolePermissions } from "../controllers/permissions.controller.js";
 import { verifyToken } from "../middlewares/jwt.middleware.js";
 import { requireProjectAdministrator, verifyProjectAccess } from "../middlewares/project.middleware.js";
+import { createRateLimit } from "../middlewares/security.middleware.js";
 
 const router = Router();
+const loginRateLimit = createRateLimit({ scope: "login", limit: 10, windowMs: 15 * 60 * 1000, resetOnSuccess: true });
+const passwordResetRateLimit = createRateLimit({ scope: "password-reset", limit: 5, windowMs: 15 * 60 * 1000 });
 
-router.post("/login",login);
-router.post("/forgot-password", requestPasswordReset);
+router.post("/login", loginRateLimit, login);
+router.post("/forgot-password", passwordResetRateLimit, requestPasswordReset);
 router.get("/reset-password/validate", validatePasswordReset);
-router.post("/reset-password", resetPassword);
+router.post("/reset-password", passwordResetRateLimit, resetPassword);
 router.post("/register", verifyToken, register);
 router.get("/manage", verifyToken, verifyProjectAccess, requireProjectAdministrator, listUsers);
 router.get("/manage/roles", verifyToken, verifyProjectAccess, requireProjectAdministrator, listRoles);

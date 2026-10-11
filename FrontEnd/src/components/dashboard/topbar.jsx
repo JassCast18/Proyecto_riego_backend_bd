@@ -120,7 +120,7 @@ export function Topbar({ onMenuClick }) {
           </button>
 
           {open && (
-            <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+            <div className="dashboard-popover absolute right-0 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
               <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
                 <p className="text-sm font-semibold">
                   Notificaciones

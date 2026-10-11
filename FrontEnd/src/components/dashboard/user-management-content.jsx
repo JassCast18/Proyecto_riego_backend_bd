@@ -13,8 +13,9 @@ import {
 } from '../../auth/users.service'
 import { useAuth } from '@/context/useAuth.js'
 import { useToast } from '@/context/useToast.js'
+import { PasswordRequirements } from '@/components/auth/password-requirements.jsx'
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, validatePassword } from '@/utils/password-policy.js'
 
-const MIN_PASSWORD_LENGTH = 8
 const COUNTRY_OPTIONS = [
   { code: '+502', flag: '🇬🇹', name: 'Guatemala' },
   { code: '+503', flag: '🇸🇻', name: 'El Salvador' },
@@ -163,8 +164,9 @@ export function UserManagementContent() {
       return
     }
 
-    if (form.password.length < MIN_PASSWORD_LENGTH) {
-      toast.warning(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`)
+    const passwordError = validatePassword(form.password)
+    if (passwordError) {
+      toast.warning(passwordError)
       return
     }
 
@@ -250,13 +252,9 @@ export function UserManagementContent() {
 
   const savePassword = async (event) => {
     event.preventDefault()
-    if (!passwordForm.password || passwordForm.password.length < MIN_PASSWORD_LENGTH) {
-      toast.warning(`La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.`)
-      return
-    }
-
-    if (passwordForm.password.length > 72) {
-      toast.warning('La contraseña no puede superar los 72 caracteres.')
+    const passwordError = validatePassword(passwordForm.password)
+    if (passwordError) {
+      toast.warning(passwordError)
       return
     }
 
@@ -394,7 +392,10 @@ export function UserManagementContent() {
               <Field label="Apellidos" name="apellidos" value={form.apellidos} onChange={handleFormChange} required minLength={2} maxLength={100} />
               <Field label="Correo electrónico" name="correo_electronico" type="email" value={form.correo_electronico} onChange={handleFormChange} required maxLength={100} />
               <Field label="Usuario" name="username" value={form.username} onChange={handleFormChange} maxLength={50} />
-              <Field label="Contraseña" name="password" type="password" value={form.password} onChange={handleFormChange} required minLength={MIN_PASSWORD_LENGTH} maxLength={72} />
+              <Field label="Contraseña" name="password" type="password" value={form.password} onChange={handleFormChange} required minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} />
+              <div className="md:col-span-2">
+                <PasswordRequirements password={form.password} />
+              </div>
               <PhoneField codigoPais={form.codigo_pais} telefono={form.telefono} onChange={handleFormChange} />
               <SelectField label="Rol" name="tb_rol_id" value={form.tb_rol_id} onChange={handleFormChange} options={roleOptions} />
 
@@ -562,8 +563,8 @@ export function UserManagementContent() {
               label="Nueva contraseña"
               name="password"
               type="password"
-              minLength={MIN_PASSWORD_LENGTH}
-              maxLength={72}
+              minLength={PASSWORD_MIN_LENGTH}
+              maxLength={PASSWORD_MAX_LENGTH}
               value={passwordForm.password}
               onChange={(event) => setPasswordForm((current) => ({ ...current, password: event.target.value }))}
             />
@@ -571,11 +572,12 @@ export function UserManagementContent() {
               label="Confirmar contraseña"
               name="confirmPassword"
               type="password"
-              minLength={MIN_PASSWORD_LENGTH}
-              maxLength={72}
+              minLength={PASSWORD_MIN_LENGTH}
+              maxLength={PASSWORD_MAX_LENGTH}
               value={passwordForm.confirmPassword}
               onChange={(event) => setPasswordForm((current) => ({ ...current, confirmPassword: event.target.value }))}
             />
+            <PasswordRequirements password={passwordForm.password} />
 
             <div className="flex justify-end gap-3">
               <button type="button" onClick={() => setPasswordOpen(false)} className="rounded-xl border border-emerald-200 bg-white px-4 py-2.5 text-sm font-semibold text-emerald-800">
@@ -675,7 +677,7 @@ function PhoneField({ codigoPais, telefono, onChange }) {
   return (
     <fieldset className="flex flex-col gap-2 text-sm font-medium text-emerald-950">
       <legend className="mb-2">Teléfono</legend>
-      <div className="grid grid-cols-[minmax(145px,0.8fr)_1fr] gap-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(145px,0.8fr)_1fr]">
         <select name="codigo_pais" value={codigoPais} onChange={onChange} aria-label="País" className="min-w-0 rounded-2xl border border-emerald-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200">
           {COUNTRY_OPTIONS.map((country) => (
             <option key={country.code} value={country.code}>{country.flag} {country.name} ({country.code})</option>

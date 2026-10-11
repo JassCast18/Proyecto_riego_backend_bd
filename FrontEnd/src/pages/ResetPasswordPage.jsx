@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { resetPasswordRequest, validateResetTokenRequest } from '../auth/auth.service'
+import { PasswordRequirements } from '@/components/auth/password-requirements.jsx'
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, validatePassword } from '@/utils/password-policy.js'
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -20,7 +22,8 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
-    if (password.length < 8) return setError('La contraseña debe tener al menos 8 caracteres.')
+    const passwordError = validatePassword(password)
+    if (passwordError) return setError(passwordError)
     if (password !== confirmation) return setError('Las contraseñas no coinciden.')
 
     setLoading(true)
@@ -45,6 +48,7 @@ export default function ResetPasswordPage() {
         {validating ? <p className="mt-4 text-sm text-slate-600">Validando enlace...</p> : valid ? (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <PasswordField label="Nueva contraseña" value={password} onChange={setPassword} />
+            <PasswordRequirements password={password} />
             <PasswordField label="Confirmar contraseña" value={confirmation} onChange={setConfirmation} />
             {error ? <p className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
             <button type="submit" disabled={loading} className="w-full rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60">{loading ? 'Guardando...' : 'Guardar contraseña'}</button>
@@ -64,7 +68,7 @@ function PasswordField({ label, value, onChange }) {
   return (
     <label className="block text-sm font-medium text-slate-700">
       {label}
-      <input type="password" autoComplete="new-password" value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" />
+      <input type="password" autoComplete="new-password" minLength={PASSWORD_MIN_LENGTH} maxLength={PASSWORD_MAX_LENGTH} value={value} onChange={(event) => onChange(event.target.value)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100" />
     </label>
   )
 }
