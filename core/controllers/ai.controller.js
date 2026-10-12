@@ -5,6 +5,8 @@ import { evaluateAiProject } from "../services/ai-orchestrator.service.js";
 
 const numericRow = row => ({
   humedad:Number(row.humedad), temperatura:Number(row.temperatura), hora:Number(row.hora),
+  temperatura_ambiente:Number(row.temperatura_ambiente??20), humedad_ambiente:Number(row.humedad_ambiente??60),
+  presion_atmosferica:Number(row.presion_atmosferica??1013.25),
   dias_cultivo:Number(row.dias_cultivo), humedad_minima:Number(row.humedad_minima), humedad_maxima:Number(row.humedad_maxima),
   salud_foliar:Number(row.salud_foliar??85),
 });

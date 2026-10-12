@@ -17,7 +17,7 @@ export async function finishTest(req,res){try{await provider.finishTest({testId:
 export async function takeCommands(req,res){try{const commands=await provider.takeCommands(Number(req.params.nodeId));const normalized=commands.map(command=>({...command,id:Number(command.id)}));return res.json(ResponseModel.ok({comandos:normalized}));}catch(e){return fail(res,e);}}
 export async function takeCommandsBatch(req,res){try{
   const nodeIds=[...new Set(String(req.query.nodeIds||'').split(',').map(Number).filter(Number.isInteger))];
-  if(!nodeIds.length||nodeIds.length>8||nodeIds.some(id=>id<=0))return res.status(400).json(ResponseModel.fail('Debe indicar entre 1 y 8 nodos validos.',null,400));
+  if(!nodeIds.length||nodeIds.length>9||nodeIds.some(id=>id<=0))return res.status(400).json(ResponseModel.fail('Debe indicar entre 1 y 9 nodos validos.',null,400));
   const groups=await Promise.all(nodeIds.map(async nodeId=>(await provider.takeCommands(nodeId)).map(command=>({...command,id:Number(command.id),nodeId}))));
   return res.json(ResponseModel.ok({comandos:groups.flat()}));
 }catch(e){return fail(res,e);}}

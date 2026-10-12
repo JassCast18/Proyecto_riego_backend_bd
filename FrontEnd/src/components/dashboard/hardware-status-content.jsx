@@ -32,14 +32,14 @@ function formatDate(value) {
   })
 }
 
-function formatReading(value) {
+function formatReading(value, unit = '') {
   if (value === null || value === undefined || value === '') return 'Sin dato'
 
   const numberValue = Number(value)
 
   if (Number.isNaN(numberValue)) return String(value)
 
-  return numberValue.toFixed(2)
+  return `${numberValue.toFixed(2)}${unit ? ` ${unit}` : ''}`
 }
 
 export function HardwareStatusContent() {
@@ -363,8 +363,8 @@ export function HardwareStatusContent() {
                         {nodo ? <span className="ml-2 text-xs font-medium text-slate-500">{nodo.tipoNodo}</span> : null}
                       </td>
                       <td className="px-4 py-3 text-slate-700">{telemetria.tbSensorId}</td>
-                      <td className="px-4 py-3 text-slate-700">{telemetria.tipoComponente}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-900">{formatReading(telemetria.valorLectura)}</td>
+                      <td className="px-4 py-3 text-slate-700">{telemetria.nombreSensor || telemetria.tipoComponente}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{formatReading(telemetria.valorLectura, telemetria.unidad)}</td>
                       <td className="px-4 py-3 text-slate-600">{formatDate(telemetria.fechaHora)}</td>
                     </tr>
                   )
@@ -451,12 +451,12 @@ function Row({ label, value }) {
 function ComponentRow({ component }) {
   const reading = component.ultimaLectura === null || component.ultimaLectura === undefined
     ? 'Sin lectura'
-    : formatReading(component.ultimaLectura)
+    : formatReading(component.ultimaLectura, component.unidad)
 
   return (
     <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
-        <span className="min-w-0 break-words font-semibold text-slate-900">{component.tipoComponente}</span>
+        <span className="min-w-0 break-words font-semibold text-slate-900">{component.nombre || component.tipoComponente}</span>
         <span className={`max-w-full break-words rounded-full border px-2 py-0.5 text-center text-[11px] font-bold ${getStatusTone(component.estado)}`}>
           {String(component.estado).replaceAll('_',' ')}
         </span>

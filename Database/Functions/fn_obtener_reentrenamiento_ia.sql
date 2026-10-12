@@ -39,7 +39,7 @@ WITH decisiones AS (
   JOIN tb_finca f ON f.id=se.tb_finca_id
   JOIN tb_proyecto_cultivo pc ON pc.tb_proyecto_id=f.tb_proyecto_id
   WHERE f.tb_proyecto_id=p_proyecto_id
-    AND (sh.tipo_componente ILIKE '%higr%' OR sh.tipo_componente ILIKE '%hum%')
+    AND (sh.tipo_componente ILIKE '%higr%' OR sh.tipo_componente ILIKE '%humedad_suelo%')
     AND pc.humedad_suelo_minima IS NOT NULL
     AND pc.humedad_suelo_maxima IS NOT NULL
 )

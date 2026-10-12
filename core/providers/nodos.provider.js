@@ -4,8 +4,8 @@ function normalizeEvaluation(row = {}) {
     const componentes = Array.isArray(row.p_componentes ?? row.componentes)
         ? (row.p_componentes ?? row.componentes)
         : [];
-    const temperatura = componentes.find((item) => /term/i.test(item.tipoComponente ?? item.tipo_componente ?? ""));
-    const humedad = componentes.find((item) => /(higr|hum)/i.test(item.tipoComponente ?? item.tipo_componente ?? ""));
+    const temperatura = componentes.find((item) => /(ds18|temperatura_suelo)/i.test(item.tipoComponente ?? item.tipo_componente ?? ""));
+    const humedad = componentes.find((item) => /(higr|humedad_suelo)/i.test(item.tipoComponente ?? item.tipo_componente ?? ""));
 
     return {
         estadoGeneral: row.p_estado_general ?? row.estado_general ?? "OK",

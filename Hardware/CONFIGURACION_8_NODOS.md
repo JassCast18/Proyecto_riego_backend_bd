@@ -7,6 +7,31 @@
 - Valida que la MAC y el ID recibido correspondan.
 - Guarda hasta 32 lecturas en memoria y las envia a la API una por una.
 - Durante pruebas o riego, el nodo toma lecturas cada 10 segundos.
+- El gateway mide temperatura ambiental, humedad relativa y presion con el
+  BME280. La API crea su nodo ambiental y sus tres sensores con la primera
+  lectura valida.
+
+## BME280 del gateway
+
+Conectar el BME280 al ESP32 principal por I2C:
+
+| BME280 | ESP32 |
+| --- | --- |
+| VIN o VCC | 3V3 |
+| GND | GND |
+| SDA | GPIO 21 |
+| SCL | GPIO 22 |
+
+El firmware prueba primero la direccion `0x76` y despues `0x77`. No alimentar
+el modulo con 5 V salvo que la placa del modulo indique expresamente que tiene
+regulador y conversion de nivel.
+
+Antes de cargar el firmware, establecer en
+`Gateway_ESP32/include/device_config.h` el ID real del proyecto:
+
+```cpp
+constexpr uint16_t GATEWAY_PROJECT_ID = 1;
+```
 
 ## Registrar un nodo
 

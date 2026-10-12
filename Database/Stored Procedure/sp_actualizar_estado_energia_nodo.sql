@@ -27,7 +27,7 @@ BEGIN
         ) OR EXISTS(
             SELECT 1 FROM tb_sensor s WHERE s.tb_nodo_id=p_id_nodo AND s.sn_activo=TRUE
               AND s.estado_operativo='OPERATIVO'
-              AND (s.tipo_componente ILIKE '%higr%' OR s.tipo_componente ILIKE '%hum%')
+              AND (s.tipo_componente ILIKE '%higr%' OR s.tipo_componente ILIKE '%humedad_suelo%')
               AND (s.adc_seco IS NULL OR s.adc_humedo IS NULL)
         )
     ) THEN

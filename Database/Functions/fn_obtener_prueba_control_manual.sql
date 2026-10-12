@@ -9,6 +9,7 @@ LANGUAGE sql AS $$
    'resultado',p.resultado,'conclusion',p.conclusion,'fechaInicio',p.fecha_inicio,
    'fechaFin',p.fecha_fin,'ultimaComunicacion',p.ultima_comunicacion,
    'componenteNombre',COALESCE(s.nombre,s.tipo_componente,a.nombre),
+   'unidad',s.unidad,
    'pinControl',na.pin_control,'activoEnLow',a.activo_en_low,
    'lecturas',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',l.id,'valor',l.valor_lectura,'fechaHora',l.fecha_hora) ORDER BY l.fecha_hora,l.id) FROM tb_prueba_lectura l WHERE l.tb_prueba_id=p.id),'[]'::JSONB),
    'comandos',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',c.id,'tipo',c.tipo_comando,'estado',c.estado,'mensaje',c.mensaje_confirmacion,'fecha',c.fecha_creacion,'fechaConfirmacion',c.fecha_confirmacion) ORDER BY c.id) FROM tb_comando_iot c WHERE c.tb_prueba_id=p.id),'[]'::JSONB)

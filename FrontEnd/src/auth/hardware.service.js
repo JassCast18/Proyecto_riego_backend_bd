@@ -37,6 +37,8 @@ export async function listTelemetryHardwareRequest({ idNodo = null, page = 1, li
         tbSensorId: item.tbSensorId ?? item.tb_sensor_id ?? null,
         tbNodoId: item.tbNodoId ?? item.tb_nodo_id ?? null,
         tipoComponente: item.tipoComponente ?? item.tipo_componente ?? 'Sin componente',
+        nombreSensor: item.nombreSensor ?? item.nombre_sensor ?? item.tipoComponente ?? item.tipo_componente ?? 'Sin componente',
+        unidad: item.unidad ?? '',
         valorLectura: item.valorLectura ?? item.valor_lectura ?? null,
         fechaHora: item.fechaHora ?? item.fecha_hora ?? null,
       })),

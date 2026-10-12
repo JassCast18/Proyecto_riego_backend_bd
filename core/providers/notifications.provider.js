@@ -82,6 +82,14 @@ function humidityPercentage(rawValue) {
     return Math.max(0, Math.min(100, ((1023 - raw) / 1023) * 100));
 }
 
+function isSoilHumidity(type) {
+    return /(higr|humedad_suelo)/i.test(String(type || ""));
+}
+
+function isSoilTemperature(type) {
+    return /(ds18|temperatura_suelo)/i.test(String(type || ""));
+}
+
 function optionalNumber(value) {
     if (value === null || value === undefined || value === "") return null;
     const number = Number(value);
@@ -104,12 +112,12 @@ function buildCropIncidents(nodes, rules) {
             let unit = "";
             let metric = null;
 
-            if (/term/i.test(type)) {
+            if (isSoilTemperature(type)) {
                 metric = "TEMPERATURA";
                 minimum = optionalNumber(rules.temperatura_minima);
                 maximum = optionalNumber(rules.temperatura_maxima);
                 unit = " °C";
-            } else if (/(higr|hum)/i.test(type)) {
+            } else if (isSoilHumidity(type)) {
                 metric = "HUMEDAD";
                 value = humidityPercentage(value);
                 minimum = optionalNumber(rules.humedad_minima);

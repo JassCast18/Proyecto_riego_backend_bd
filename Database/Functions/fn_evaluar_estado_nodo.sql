@@ -12,6 +12,8 @@ AS $$
         SELECT
             sa.id AS sensor_id,
             sa.tipo_componente,
+            COALESCE(sa.nombre,sa.tipo_componente) AS nombre,
+            sa.unidad,
             sa.estado_operativo,
             sa.observacion_estado,
             actual.valor_lectura AS valor_actual,
@@ -40,11 +42,14 @@ AS $$
                 WHEN estado_operativo='EN_REVISION' THEN 'EN_REVISION'
                 WHEN estado_operativo='REQUIERE_REPARACION' THEN 'REQUIERE_REPARACION'
                 WHEN ultima_conexion IS NULL THEN 'OFFLINE'
-                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 75 THEN 'OFFLINE'
+                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 1800 THEN 'OFFLINE'
+                WHEN tipo_componente='BME280_TEMPERATURA_AMBIENTE' AND valor_actual NOT BETWEEN -40 AND 85 THEN 'ERROR'
+                WHEN tipo_componente='BME280_HUMEDAD_RELATIVA' AND valor_actual NOT BETWEEN 0 AND 100 THEN 'ERROR'
+                WHEN tipo_componente='BME280_PRESION_ATMOSFERICA' AND valor_actual NOT BETWEEN 300 AND 1100 THEN 'ERROR'
                 WHEN tipo_componente ILIKE '%term%' AND valor_actual = -127.00 THEN 'ERROR'
                 WHEN tipo_componente ILIKE '%term%' AND valor_anterior IS NOT NULL
                      AND ABS(valor_actual - valor_anterior) > 5 THEN 'WARNING'
-                WHEN (tipo_componente ILIKE '%higr%' OR tipo_componente ILIKE '%hum%')
+                WHEN (tipo_componente ILIKE '%higr%' OR tipo_componente ILIKE '%humedad_suelo%')
                      AND (valor_actual <= 10 OR valor_actual >= 1023) THEN 'ERROR'
                 ELSE 'OK'
             END AS estado,
@@ -52,14 +57,20 @@ AS $$
                 WHEN estado_operativo='EN_REVISION' THEN COALESCE(observacion_estado,'Sensor apartado para revisión técnica.')
                 WHEN estado_operativo='REQUIERE_REPARACION' THEN COALESCE(observacion_estado,'Sensor apartado hasta completar la reparación.')
                 WHEN ultima_conexion IS NULL THEN 'No hay datos registrados.'
-                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 75
+                WHEN EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion)) > 1800
                     THEN 'Sin comunicacion hace ' || ROUND(EXTRACT(EPOCH FROM (CURRENT_TIMESTAMP - ultima_conexion))) || ' segundos.'
+                WHEN tipo_componente='BME280_TEMPERATURA_AMBIENTE' AND valor_actual NOT BETWEEN -40 AND 85
+                    THEN 'Temperatura ambiental fuera del rango fisico del BME280.'
+                WHEN tipo_componente='BME280_HUMEDAD_RELATIVA' AND valor_actual NOT BETWEEN 0 AND 100
+                    THEN 'Humedad relativa fuera del rango de 0 a 100 %.'
+                WHEN tipo_componente='BME280_PRESION_ATMOSFERICA' AND valor_actual NOT BETWEEN 300 AND 1100
+                    THEN 'Presion atmosferica fuera del rango esperado.'
                 WHEN tipo_componente ILIKE '%term%' AND valor_actual = -127.00
                     THEN 'Cable de datos desconectado (-127).'
                 WHEN tipo_componente ILIKE '%term%' AND valor_anterior IS NOT NULL
                      AND ABS(valor_actual - valor_anterior) > 5
                     THEN 'Anomalia: salto de ' || ABS(valor_actual - valor_anterior) || ' detectado.'
-                WHEN (tipo_componente ILIKE '%higr%' OR tipo_componente ILIKE '%hum%')
+                WHEN (tipo_componente ILIKE '%higr%' OR tipo_componente ILIKE '%humedad_suelo%')
                      AND (valor_actual <= 10 OR valor_actual >= 1023)
                     THEN 'Posible cortocircuito o sensor fuera de tierra.'
                 ELSE 'Operando con normalidad'
@@ -79,6 +90,8 @@ AS $$
                 JSONB_BUILD_OBJECT(
                     'id', sensor_id,
                     'tipoComponente', tipo_componente,
+                    'nombre', nombre,
+                    'unidad', unidad,
                     'estado', estado,
                     'estadoOperativo',estado_operativo,
                     'mensaje', mensaje,

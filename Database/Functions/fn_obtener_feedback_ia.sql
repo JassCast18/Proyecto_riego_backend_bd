@@ -1,10 +1,13 @@
 DROP FUNCTION IF EXISTS fn_obtener_feedback_ia(INT,INT);
 CREATE OR REPLACE FUNCTION fn_obtener_feedback_ia(p_proyecto_id INT,p_limite INT DEFAULT 500)
-RETURNS TABLE(humedad DECIMAL,temperatura DECIMAL,hora INT,dias_cultivo INT,humedad_minima DECIMAL,humedad_maxima DECIMAL,salud_foliar DECIMAL,decision VARCHAR)
+RETURNS TABLE(humedad DECIMAL,temperatura DECIMAL,temperatura_ambiente DECIMAL,humedad_ambiente DECIMAL,presion_atmosferica DECIMAL,hora INT,dias_cultivo INT,humedad_minima DECIMAL,humedad_maxima DECIMAL,salud_foliar DECIMAL,decision VARCHAR)
 LANGUAGE sql AS $$
  SELECT
    NULLIF(d.variables_entrada->>'humedad','')::DECIMAL,
    NULLIF(d.variables_entrada->>'temperatura','')::DECIMAL,
+   COALESCE(NULLIF(d.variables_entrada->>'temperatura_ambiente','')::DECIMAL,20),
+   COALESCE(NULLIF(d.variables_entrada->>'humedad_ambiente','')::DECIMAL,60),
+   COALESCE(NULLIF(d.variables_entrada->>'presion_atmosferica','')::DECIMAL,1013.25),
    NULLIF(d.variables_entrada->>'hora','')::INT,
    NULLIF(d.variables_entrada->>'dias_cultivo','')::INT,
    NULLIF(d.variables_entrada->>'humedad_minima','')::DECIMAL,

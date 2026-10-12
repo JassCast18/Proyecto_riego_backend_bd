@@ -11,7 +11,8 @@
     "support:smoke": "node scripts/check-support-module.js",
     "support:sync": "node scripts/sync-support-now.js",
     "ai:retraining:migrate": "node scripts/apply-ai-retraining-view.js",
-    "ai:leaf-health:migrate": "node scripts/apply-ai-leaf-health.js"
+    "ai:leaf-health:migrate": "node scripts/apply-ai-leaf-health.js",
+    "bme280:migrate": "node scripts/apply-bme280-migration.js"
   },
   "keywords": [],
   "author": "",

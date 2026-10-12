@@ -17,6 +17,28 @@ export const insertarTelemetria = async ({
     return  result;
 };
 
+export const insertarTelemetriaGateway = async ({
+    projectId,
+    mac,
+    temperaturaAmbiente,
+    humedadRelativa,
+    presionAtmosferica,
+    pruebaId = 0,
+}) => {
+    return await DatabaseExecutor.executeProcedureWithResult(
+        "sp_guardar_telemetria_gateway",
+        [
+            projectId,
+            mac,
+            temperaturaAmbiente,
+            humedadRelativa,
+            presionAtmosferica,
+            pruebaId,
+            null,
+        ],
+    );
+};
+
 export const listTelemetriaHardware = async ({
     projectId,
     idNodo = null,

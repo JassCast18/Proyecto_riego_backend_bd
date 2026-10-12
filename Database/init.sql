@@ -91,6 +91,8 @@
 \i 'Stored Procedure/sp_sincronizar_ciclos_riego.sql'
 \i 'Stored Procedure/sp_evaluar_riego_automatico.sql'
 \i 'Stored Procedure/sp_guardar_telemetria_nodo.sql'
+\i 'Stored Procedure/sp_registrar_lectura_prueba_ambiental.sql'
+\i 'Stored Procedure/sp_guardar_telemetria_gateway.sql'
 \i 'Stored Procedure/sp_iniciar_prueba_control_manual.sql'
 \i 'Stored Procedure/sp_registrar_actuador.sql'
 \i 'Stored Procedure/sp_finalizar_prueba_control_manual.sql'

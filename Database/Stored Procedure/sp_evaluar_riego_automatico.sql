@@ -8,7 +8,7 @@ BEGIN
  SELECT f.tb_proyecto_id,s.id,s.adc_seco,s.adc_humedo,pc.humedad_suelo_minima,pc.humedad_suelo_maxima
  INTO v_proyecto,v_sensor,v_seco,v_humedo,v_min,v_max
  FROM tb_nodo_iot n JOIN tb_sector se ON se.id=n.tb_sector_id JOIN tb_finca f ON f.id=se.tb_finca_id
- JOIN tb_sensor s ON s.tb_nodo_id=n.id AND (s.tipo_componente ILIKE '%higr%' OR s.tipo_componente ILIKE '%hum%')
+ JOIN tb_sensor s ON s.tb_nodo_id=n.id AND (s.tipo_componente ILIKE '%higr%' OR s.tipo_componente ILIKE '%humedad_suelo%')
  JOIN tb_proyecto_cultivo pc ON pc.tb_proyecto_id=f.tb_proyecto_id
  WHERE n.id=p_nodo_id AND n.estado_energia='ENCENDIDO' AND s.sn_activo AND s.estado_operativo='OPERATIVO'
  ORDER BY pc.id DESC LIMIT 1;

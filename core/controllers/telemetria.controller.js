@@ -56,6 +56,50 @@ export const insertarTelemetria = async (req, res) => {
     }
 };
 
+export const insertarTelemetriaGateway = async (req, res) => {
+    try {
+        const projectId = Number(req.body?.proyecto_id);
+        const pruebaId = Number(req.body?.prueba_id || 0);
+        const mac = String(req.body?.gateway_mac || "").trim().toUpperCase();
+        const temperaturaAmbiente = Number(req.body?.temperatura_ambiente);
+        const humedadRelativa = Number(req.body?.humedad_relativa);
+        const presionAtmosferica = Number(req.body?.presion_atmosferica);
+
+        if (!Number.isInteger(projectId) || projectId <= 0 || !mac
+            || !Number.isFinite(temperaturaAmbiente)
+            || !Number.isFinite(humedadRelativa)
+            || !Number.isFinite(presionAtmosferica)) {
+            return res.status(400).json(ResponseModel.fail("Faltan parametros validos de telemetria BME280.", null, 400));
+        }
+
+        const result = await provider.insertarTelemetriaGateway({
+            projectId,
+            mac,
+            temperaturaAmbiente,
+            humedadRelativa,
+            presionAtmosferica,
+            pruebaId,
+        });
+        const gatewayNodeId = Number(result?.p_nodo_id);
+        const nodes = await listHardwareNodes(projectId);
+        const node = nodes.find((item) => Number(item.id) === gatewayNodeId);
+        const suspended = node?.estadoEnergia === "APAGADO" && pruebaId <= 0;
+
+        return res.status(201).json(ResponseModel.ok({
+            gatewayNodeId,
+            accion: pruebaId > 0 ? "PRUEBA_REGISTRADA" : suspended ? "SUSPENDER" : "CONTINUAR",
+            estadoEnergia: node?.estadoEnergia ?? "ENCENDIDO",
+        }, pruebaId > 0
+            ? "Lectura BME280 registrada en la prueba activa."
+            : suspended
+                ? "El gateway ambiental esta apagado; la lectura no se guardo."
+                : "Telemetria BME280 guardada correctamente.", 201));
+    } catch (error) {
+        const status = /obligatorio|valida|rango|necesita una finca|prueba ambiental/i.test(error.message) ? 400 : 500;
+        return res.status(status).json(ResponseModel.fail(error.message, null, status));
+    }
+};
+
 export const listTelemetriaHardware = async (req, res) => {
     try {
         const idNodoParam = req.query.id_nodo ?? req.query.idNodo ?? null;
@@ -85,6 +129,8 @@ export const listTelemetriaHardware = async (req, res) => {
             tbSensorId: row.tb_sensor_id,
             tbNodoId: row.tb_nodo_id,
             tipoComponente: row.tipo_componente,
+            nombreSensor: row.nombre_sensor,
+            unidad: row.unidad,
             valorLectura: row.valor_lectura != null ? Number(row.valor_lectura) : null,
             fechaHora: row.fecha_hora,
         }));

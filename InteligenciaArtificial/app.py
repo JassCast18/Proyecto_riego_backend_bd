@@ -15,7 +15,18 @@ from sklearn.model_selection import train_test_split
 APP_DIR = Path(__file__).resolve().parent
 MODEL_DIR = Path(os.environ.get("MODEL_DIR", APP_DIR / "models")).resolve()
 MODEL_DIR.mkdir(parents=True, exist_ok=True)
-FEATURES = ["humedad", "temperatura", "hora", "dias_cultivo", "humedad_minima", "humedad_maxima", "salud_foliar"]
+FEATURES = [
+    "humedad",
+    "temperatura",
+    "temperatura_ambiente",
+    "humedad_ambiente",
+    "presion_atmosferica",
+    "hora",
+    "dias_cultivo",
+    "humedad_minima",
+    "humedad_maxima",
+    "salud_foliar",
+]
 
 app = FastAPI(title="Frutas del Oasis IA", version="1.1.0")
 
@@ -23,6 +34,9 @@ app = FastAPI(title="Frutas del Oasis IA", version="1.1.0")
 class TrainingRow(BaseModel):
     humedad: float
     temperatura: float
+    temperatura_ambiente: float = 20
+    humedad_ambiente: float = Field(default=60, ge=0, le=100)
+    presion_atmosferica: float = Field(default=1013.25, ge=300, le=1100)
     hora: int = Field(ge=0, le=23)
     dias_cultivo: float = 0
     humedad_minima: float
@@ -39,6 +53,9 @@ class TrainRequest(BaseModel):
 class PredictionRow(BaseModel):
     humedad: float
     temperatura: float
+    temperatura_ambiente: float = 20
+    humedad_ambiente: float = Field(default=60, ge=0, le=100)
+    presion_atmosferica: float = Field(default=1013.25, ge=300, le=1100)
     hora: int = Field(ge=0, le=23)
     dias_cultivo: float = 0
     humedad_minima: float

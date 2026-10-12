@@ -5,7 +5,7 @@ import {useToast} from '@/context/useToast.js'
 
 const date=value=>value?new Date(value).toLocaleString('es-GT',{dateStyle:'medium',timeStyle:'short'}):'Sin registro'
 const percent=value=>value===null||value===undefined?'--':`${(Number(value)*100).toFixed(1)} %`
-const featureNames={humedad:'Humedad',temperatura:'Temperatura',hora:'Hora del día',dias_cultivo:'Edad del cultivo',humedad_minima:'Humedad mínima',humedad_maxima:'Humedad máxima',salud_foliar:'Salud foliar'}
+const featureNames={humedad:'Humedad del suelo',temperatura:'Temperatura del suelo',temperatura_ambiente:'Temperatura ambiental',humedad_ambiente:'Humedad ambiental',presion_atmosferica:'Presión atmosférica',hora:'Hora del día',dias_cultivo:'Edad del cultivo',humedad_minima:'Humedad mínima',humedad_maxima:'Humedad máxima',salud_foliar:'Salud foliar'}
 
 export function AIStatusContent(){
  const toast=useToast(),[state,setState]=useState({}),[loading,setLoading]=useState(true),[action,setAction]=useState(''),[trainConfirm,setTrainConfirm]=useState(false),[selected,setSelected]=useState(null),[resolution,setResolution]=useState(''),[actuatorId,setActuatorId]=useState(''),[duration,setDuration]=useState(30),[observation,setObservation]=useState(''),[config,setConfig]=useState({estrategia:'IA',modo:'SUPERVISADO',intervaloMinutos:5,duracionSegundos:30,exactitudMinima:.8,confirmacionesMinimas:5})

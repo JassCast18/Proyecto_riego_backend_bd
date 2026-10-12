@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <Adafruit_BME280.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 #include <Preferences.h>
@@ -7,6 +8,7 @@
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <time.h>
+#include <Wire.h>
 
 #include "amazon_root_ca.h"
 #include "device_config.h"
@@ -31,6 +33,13 @@ struct MensajeComando {
   bool activo_low;
 };
 
+struct LecturaGateway {
+  float temperatura_ambiente;
+  float humedad_relativa;
+  float presion_atmosferica;
+  uint32_t prueba_id;
+};
+
 struct ConfirmacionPendiente {
   uint32_t id;
   bool exitosa;
@@ -41,9 +50,11 @@ struct ComandoPendiente {
   MensajeComando comando;
   uint16_t nodoId;
   uint8_t mac[6];
+  bool esGateway;
 };
 
 QueueHandle_t colaTelemetria = nullptr;
+QueueHandle_t colaTelemetriaGateway = nullptr;
 QueueHandle_t colaConfirmaciones = nullptr;
 ComandoPendiente comandosPendientes[COMMAND_BUFFER_SIZE]{};
 size_t cantidadComandosPendientes = 0;
@@ -56,6 +67,14 @@ unsigned long proximoCiclo = 5000;
 unsigned long ultimaSincronizacion = 0;
 uint32_t ultimoComandoEnviado = 0;
 Preferences preferences;
+Adafruit_BME280 bme;
+bool bmeDisponible = false;
+uint16_t gatewayNodeId = 0;
+bool pruebaBmeActiva = false;
+uint32_t pruebaBmeId = 0;
+uint32_t intervaloBmePrueba = 10000UL;
+unsigned long finPruebaBme = 0;
+unsigned long proximaLecturaBme = 5000UL;
 
 bool vencido(unsigned long ahora, unsigned long objetivo) {
   return static_cast<long>(ahora - objetivo) >= 0;
@@ -90,7 +109,10 @@ bool configuracionValida() {
     Serial.println("[CONFIG] Completa include/secrets.h antes de cargar el gateway");
   }
   if (contarNodosActivos() == 0) {
-    Serial.println("[CONFIG] Debe existir al menos un nodo habilitado");
+    Serial.println("[CONFIG] Sin nodos remotos; solo se publicara el BME280");
+  }
+  if (GATEWAY_PROJECT_ID == 0) {
+    Serial.println("[CONFIG] GATEWAY_PROJECT_ID debe identificar el proyecto activo");
     return false;
   }
   return !secretosIncompletos;
@@ -226,6 +248,93 @@ void vaciarColaTelemetria() {
   }
 }
 
+bool publicarLecturaGateway(const LecturaGateway& lectura) {
+  WiFiClientSecure client;
+  HTTPClient http;
+  if (!iniciarHttp(http, client, String(API_BASE) + "/telemetria/gateway")) {
+    return false;
+  }
+
+  JsonDocument doc;
+  doc["proyecto_id"] = GATEWAY_PROJECT_ID;
+  doc["gateway_mac"] = WiFi.macAddress();
+  doc["temperatura_ambiente"] = lectura.temperatura_ambiente;
+  doc["humedad_relativa"] = lectura.humedad_relativa;
+  doc["presion_atmosferica"] = lectura.presion_atmosferica;
+  doc["prueba_id"] = lectura.prueba_id;
+  String body;
+  serializeJson(doc, body);
+  http.addHeader("Content-Type", "application/json");
+  const int code = http.POST(body);
+  const String responseBody = code > 0 ? http.getString() : "";
+  Serial.printf("[HTTP] Telemetria BME280 -> %d\n", code);
+  http.end();
+
+  if (code < 200 || code >= 300) {
+    Serial.println(responseBody);
+    return false;
+  }
+
+  JsonDocument response;
+  if (!deserializeJson(response, responseBody)) {
+    const uint16_t id = response["data"]["gatewayNodeId"] | 0;
+    if (id > 0 && id != gatewayNodeId) {
+      gatewayNodeId = id;
+      preferences.putUShort("gatewayNode", gatewayNodeId);
+      Serial.printf("[BME280] Nodo virtual asignado: %u\n", gatewayNodeId);
+    }
+  }
+  return true;
+}
+
+void vaciarColaTelemetriaGateway() {
+  LecturaGateway lectura{};
+  while (xQueuePeek(colaTelemetriaGateway, &lectura, 0) == pdTRUE) {
+    if (!publicarLecturaGateway(lectura)) break;
+    xQueueReceive(colaTelemetriaGateway, &lectura, 0);
+  }
+}
+
+bool encolarLecturaBme(uint32_t pruebaId) {
+  if (!bmeDisponible) return false;
+
+  LecturaGateway lectura{};
+  lectura.temperatura_ambiente = bme.readTemperature();
+  lectura.humedad_relativa = bme.readHumidity();
+  lectura.presion_atmosferica = bme.readPressure() / 100.0F;
+  lectura.prueba_id = pruebaId;
+  if (!isfinite(lectura.temperatura_ambiente) ||
+      !isfinite(lectura.humedad_relativa) ||
+      !isfinite(lectura.presion_atmosferica)) {
+    Serial.println("[BME280] Lectura invalida; revisa la conexion I2C");
+    return false;
+  }
+  if (xQueueSend(colaTelemetriaGateway, &lectura, 0) != pdTRUE) {
+    Serial.println("[COLA] Telemetria BME280 llena; lectura descartada");
+    return false;
+  }
+  Serial.printf("[BME280] T=%.2f C, HR=%.2f %%, P=%.2f hPa\n",
+                lectura.temperatura_ambiente, lectura.humedad_relativa,
+                lectura.presion_atmosferica);
+  return true;
+}
+
+void ejecutarMuestreoBme() {
+  if (!bmeDisponible) return;
+  const unsigned long ahora = millis();
+  if (pruebaBmeActiva && vencido(ahora, finPruebaBme)) {
+    pruebaBmeActiva = false;
+    pruebaBmeId = 0;
+    proximaLecturaBme = ahora + TELEMETRY_INTERVAL_MS;
+    Serial.println("[BME280] Muestreo intensivo finalizado");
+  }
+  if (!vencido(ahora, proximaLecturaBme)) return;
+
+  encolarLecturaBme(pruebaBmeActiva ? pruebaBmeId : 0);
+  proximaLecturaBme =
+      ahora + (pruebaBmeActiva ? intervaloBmePrueba : TELEMETRY_INTERVAL_MS);
+}
+
 void encolarConfirmacion(uint32_t id, bool exitosa, const char* mensaje) {
   ConfirmacionPendiente item{};
   item.id = id;
@@ -279,12 +388,15 @@ void publicarConfirmaciones() {
 void cargarComando(JsonObject item) {
   if (cantidadComandosPendientes >= COMMAND_BUFFER_SIZE) return;
   const uint16_t nodeId = item["nodeId"] | 0;
-  const NodeConfig* node = buscarNodoPorId(nodeId);
-  if (!node) return;
+  const bool esGateway = gatewayNodeId > 0 && nodeId == gatewayNodeId;
+  const NodeConfig* node = esGateway ? nullptr : buscarNodoPorId(nodeId);
+  if (!esGateway && !node) return;
 
   ComandoPendiente& pending = comandosPendientes[cantidadComandosPendientes];
   pending.nodoId = nodeId;
-  memcpy(pending.mac, node->mac, 6);
+  pending.esGateway = esGateway;
+  if (node) memcpy(pending.mac, node->mac, 6);
+  else memset(pending.mac, 0, sizeof(pending.mac));
   JsonVariant rawId = item["id"];
   pending.comando.comando_id = rawId.is<const char*>()
                                     ? strtoul(rawId.as<const char*>(), nullptr, 10)
@@ -315,6 +427,11 @@ void consultarComandos() {
     if (ids.length()) ids += ',';
     ids += node.id;
   }
+  if (gatewayNodeId > 0) {
+    if (ids.length()) ids += ',';
+    ids += gatewayNodeId;
+  }
+  if (!ids.length()) return;
 
   WiFiClientSecure client;
   HTTPClient http;
@@ -332,6 +449,31 @@ void consultarComandos() {
   for (JsonObject item : doc["data"]["comandos"].as<JsonArray>()) cargarComando(item);
 }
 
+bool procesarComandoGateway(const MensajeComando& comando) {
+  const unsigned long ahora = millis();
+  if (comando.tipo == 1) {
+    pruebaBmeActiva = true;
+    pruebaBmeId = comando.prueba_id;
+    intervaloBmePrueba =
+        comando.intervalo_ms < 5000U ? 5000U : comando.intervalo_ms;
+    const uint32_t duracion = comando.duracion_ms < 10000U
+                                  ? 10000U
+                                  : (comando.duracion_ms > 600000U
+                                         ? 600000U
+                                         : comando.duracion_ms);
+    finPruebaBme = ahora + duracion;
+    proximaLecturaBme = ahora;
+    return bmeDisponible;
+  }
+  if (comando.tipo == 4) {
+    pruebaBmeActiva = false;
+    pruebaBmeId = 0;
+    proximaLecturaBme = ahora + TELEMETRY_INTERVAL_MS;
+    return true;
+  }
+  return false;
+}
+
 void enviarComandosPendientes() {
   for (size_t i = 0; i < cantidadComandosPendientes; i++) {
     ComandoPendiente& pending = comandosPendientes[i];
@@ -340,18 +482,27 @@ void enviarComandosPendientes() {
       encolarConfirmacion(id, true, "Comando enviado previamente al nodo");
       continue;
     }
-    const esp_err_t result = esp_now_send(
-        pending.mac, reinterpret_cast<uint8_t*>(&pending.comando),
-        sizeof(pending.comando));
-    const bool ok = result == ESP_OK;
+    esp_err_t result = ESP_OK;
+    const bool ok = pending.esGateway
+                        ? procesarComandoGateway(pending.comando)
+                        : ((result = esp_now_send(
+                                pending.mac,
+                                reinterpret_cast<uint8_t*>(&pending.comando),
+                                sizeof(pending.comando))) == ESP_OK);
     if (ok) {
       ultimoComandoEnviado = id;
       preferences.putULong("lastCmd", ultimoComandoEnviado);
     }
-    encolarConfirmacion(id, ok,
-                        ok ? "Comando enviado al nodo" : "Fallo enviando por ESP-NOW");
-    Serial.printf("[ESP-NOW] Comando %lu al nodo %u -> %d\n",
-                  static_cast<unsigned long>(id), pending.nodoId, result);
+    encolarConfirmacion(
+        id, ok,
+        ok ? (pending.esGateway ? "Comando aplicado al BME280"
+                                : "Comando enviado al nodo")
+           : (pending.esGateway ? "BME280 no disponible"
+                                : "Fallo enviando por ESP-NOW"));
+    Serial.printf("[%s] Comando %lu al nodo %u -> %d\n",
+                  pending.esGateway ? "BME280" : "ESP-NOW",
+                  static_cast<unsigned long>(id), pending.nodoId,
+                  ok ? 0 : result);
     delay(80);
   }
   cantidadComandosPendientes = 0;
@@ -364,6 +515,7 @@ void sincronizarNube() {
     return;
   }
   vaciarColaTelemetria();
+  vaciarColaTelemetriaGateway();
   publicarConfirmaciones();
   consultarComandos();
   restaurarEspNow();
@@ -405,14 +557,25 @@ void setup() {
   Serial.begin(115200);
   delay(500);
   colaTelemetria = xQueueCreate(TELEMETRY_QUEUE_SIZE, sizeof(MensajeLectura));
+  colaTelemetriaGateway =
+      xQueueCreate(GATEWAY_TELEMETRY_QUEUE_SIZE, sizeof(LecturaGateway));
   colaConfirmaciones =
       xQueueCreate(CONFIRMATION_QUEUE_SIZE, sizeof(ConfirmacionPendiente));
   preferences.begin("riego", false);
   ultimoComandoEnviado = preferences.getULong("lastCmd", 0);
+  gatewayNodeId = preferences.getUShort("gatewayNode", 0);
+  Wire.begin(BME280_SDA_PIN, BME280_SCL_PIN);
+  bmeDisponible = bme.begin(BME280_PRIMARY_ADDRESS, &Wire);
+  if (!bmeDisponible) {
+    bmeDisponible = bme.begin(BME280_PRIMARY_ADDRESS == 0x76 ? 0x77 : 0x76, &Wire);
+  }
   Serial.println("\n=== GATEWAY NODALVIA: 8 NODOS ===");
   Serial.printf("Nodos activos: %u, intervalo: %lu minutos\n",
                 static_cast<unsigned>(contarNodosActivos()),
                 static_cast<unsigned long>(TELEMETRY_INTERVAL_MS / 60000UL));
+  Serial.printf("BME280: %s, SDA=%u, SCL=%u, nodo virtual=%u\n",
+                bmeDisponible ? "detectado" : "no detectado", BME280_SDA_PIN,
+                BME280_SCL_PIN, gatewayNodeId);
   if (configuracionValida()) iniciarEspNow();
 }
 
@@ -421,6 +584,7 @@ void loop() {
     delay(5000);
     return;
   }
+  ejecutarMuestreoBme();
   ejecutarPlanMuestreo();
   if (!cicloMuestreoActivo &&
       millis() - ultimaSincronizacion >= CLOUD_SYNC_INTERVAL_MS) {

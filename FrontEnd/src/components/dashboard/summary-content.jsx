@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, Cpu, Droplets, RefreshCcw, Sprout, Thermometer, X } from 'lucide-react'
+import { AlertTriangle, CloudSun, Cpu, Droplets, Gauge, RefreshCcw, Sprout, Thermometer, X } from 'lucide-react'
 import { getActiveProject, getCropParametersRequest } from '@/auth/projects.service.js'
 import { listHardwareStateRequest, listTelemetryHardwareRequest } from '@/auth/hardware.service.js'
 import { listNotificationsRequest } from '@/auth/notifications.service.js'
 
-const isHumidity = (item) => /higrom|humedad/i.test(item.tipoComponente || '')
-const isTemperature = (item) => /termometr|temperatura/i.test(item.tipoComponente || '')
+const isSoilHumidity = (item) => /higrom|humedad_suelo/i.test(item.tipoComponente || '')
+const isSoilTemperature = (item) => /ds18|temperatura_suelo/i.test(item.tipoComponente || '')
+const isAmbientTemperature = (item) => item.tipoComponente === 'BME280_TEMPERATURA_AMBIENTE'
+const isAmbientHumidity = (item) => item.tipoComponente === 'BME280_HUMEDAD_RELATIVA'
+const isAtmosphericPressure = (item) => item.tipoComponente === 'BME280_PRESION_ATMOSFERICA'
 const number = (value) => Number.isFinite(Number(value)) ? Number(value) : null
 const average = (values) => values.length ? values.reduce((total, value) => total + value, 0) / values.length : null
 
@@ -61,20 +64,27 @@ export function SummaryContent() {
     const ordered = [...telemetry].sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora))
     const cutoff = Date.now() - 24 * 60 * 60 * 1000
     const recent = ordered.filter((item) => new Date(item.fechaHora).getTime() >= cutoff)
-    const humiditySeries = recent.filter(isHumidity).map((item) => ({ value: number(item.valorLectura), date: item.fechaHora })).filter((item) => item.value !== null)
-    const temperatureSeries = recent.filter(isTemperature).map((item) => ({ value: number(item.valorLectura), date: item.fechaHora })).filter((item) => item.value !== null && item.value > -100)
-    const humidityNow = average(latestPerSensor(telemetry, isHumidity))
-    const temperatureNow = average(latestPerSensor(telemetry, isTemperature).filter((value) => value > -100))
+    const series = (predicate) => recent.filter(predicate).map((item) => ({ value: number(item.valorLectura), date: item.fechaHora })).filter((item) => item.value !== null)
+    const humiditySeries = series(isSoilHumidity)
+    const temperatureSeries = series(isSoilTemperature).filter((item) => item.value > -100)
+    const ambientTemperatureSeries = series(isAmbientTemperature)
+    const ambientHumiditySeries = series(isAmbientHumidity)
+    const pressureSeries = series(isAtmosphericPressure)
+    const humidityNow = average(latestPerSensor(telemetry, isSoilHumidity))
+    const temperatureNow = average(latestPerSensor(telemetry, isSoilTemperature).filter((value) => value > -100))
+    const ambientTemperatureNow = average(latestPerSensor(telemetry, isAmbientTemperature))
+    const ambientHumidityNow = average(latestPerSensor(telemetry, isAmbientHumidity))
+    const pressureNow = average(latestPerSensor(telemetry, isAtmosphericPressure))
     const lastReading = ordered.at(-1)?.fechaHora || null
     const firstReference = crop?.fecha_siembra || crop?.fecha_carga || ordered[0]?.fechaHora || null
     const ageDays = firstReference ? Math.max(0, Math.floor((Date.now() - new Date(firstReference).getTime()) / 86400000)) : null
     const configuredCycle = number(crop?.tiempo_cosecha_dias)
     const progress = ageDays === null || !configuredCycle ? null : Math.min(100, Math.round((ageDays / configuredCycle) * 100))
-    const recentReading = lastReading && Date.now() - new Date(lastReading).getTime() <= 15 * 60 * 1000
+    const recentReading = lastReading && Date.now() - new Date(lastReading).getTime() <= 25 * 60 * 1000
     const hardwareProblem = nodes.some((node) => ['ERROR', 'OFFLINE'].includes(String(node.estadoGeneral).toUpperCase()))
     const plantState = !lastReading ? 'waiting' : hardwareProblem || !recentReading ? 'attention' : 'active'
     const activeNodes = nodes.filter((node) => String(node.estadoEnergia).toUpperCase() !== 'APAGADO' && String(node.estadoGeneral).toUpperCase() === 'OK').length
-    return { humiditySeries, temperatureSeries, humidityNow, temperatureNow, lastReading, ageDays, progress, plantState, activeNodes }
+    return { humiditySeries, temperatureSeries, ambientTemperatureSeries, ambientHumiditySeries, pressureSeries, humidityNow, temperatureNow, ambientTemperatureNow, ambientHumidityNow, pressureNow, lastReading, ageDays, progress, plantState, activeNodes }
   }, [telemetry, nodes, crop])
 
   if (loading) return <div className="rounded-xl border border-slate-200 bg-white p-8 text-slate-500">Preparando datos del proyecto…</div>
@@ -90,6 +100,8 @@ export function SummaryContent() {
       <Metric label="Registros consultados" value={telemetry.length} note="Últimos registros del proyecto" icon={Sprout} />
     </div>
 
+    <section><div className="mb-3"><p className="text-xs font-bold uppercase tracking-widest text-emerald-700">Estación ambiental del gateway</p><h2 className="mt-1 text-xl font-black text-slate-950">Condiciones registradas por el BME280</h2></div><div className="grid gap-4 sm:grid-cols-3"><Metric label="Temperatura ambiental" value={dashboard.ambientTemperatureNow === null ? 'Sin datos' : `${dashboard.ambientTemperatureNow.toFixed(1)} °C`} note="Gateway principal" icon={CloudSun}/><Metric label="Humedad relativa" value={dashboard.ambientHumidityNow === null ? 'Sin datos' : `${dashboard.ambientHumidityNow.toFixed(1)} %`} note="Humedad del aire" icon={Droplets}/><Metric label="Presión atmosférica" value={dashboard.pressureNow === null ? 'Sin datos' : `${dashboard.pressureNow.toFixed(1)} hPa`} note="Presión local" icon={Gauge}/></div></section>
+
     <div className="grid gap-6 xl:grid-cols-[1fr_2fr]">
       <PlantCard crop={crop} dashboard={dashboard} onClick={() => setPlantOpen(true)} />
       <div className="grid gap-4 md:grid-cols-2">
@@ -98,9 +110,11 @@ export function SummaryContent() {
       </div>
     </div>
 
+    <section><div className="mb-3"><h2 className="text-xl font-black text-slate-950">Historial ambiental</h2><p className="text-sm text-slate-500">Lecturas del BME280 conectado al gateway durante las últimas 24 horas.</p></div><div className="grid gap-4 lg:grid-cols-3"><LineChart title="Temperatura ambiental" subtitle="Grados Celsius" data={dashboard.ambientTemperatureSeries} color="#dc2626" suffix=" °C"/><LineChart title="Humedad relativa" subtitle="Porcentaje de humedad del aire" data={dashboard.ambientHumiditySeries} color="#0891b2" suffix=" %"/><LineChart title="Presión atmosférica" subtitle="Hectopascales" data={dashboard.pressureSeries} color="#7c3aed" suffix=" hPa"/></div></section>
+
     <div className="grid gap-6 lg:grid-cols-2">
       <div className="rounded-xl border border-slate-200 bg-white"><div className="flex items-center justify-between border-b px-5 py-4"><div><h2 className="font-bold text-slate-950">Alertas activas</h2><p className="text-sm text-slate-500">Problemas que todavía requieren atención.</p></div><span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">{notifications.length}</span></div><div className="space-y-3 p-5">{notifications.length ? notifications.map((item) => <div key={item.id} className="flex gap-3 rounded-lg border border-slate-200 p-3"><AlertTriangle size={18} className={item.severidad === 'CRITICA' ? 'text-red-600' : 'text-amber-600'} /><div><p className="text-sm font-bold text-slate-900">{item.titulo}</p><p className="text-xs text-slate-500">{item.mensaje}</p></div></div>) : <p className="py-6 text-center text-sm text-slate-500">No hay alertas activas.</p>}</div></div>
-      <div className="rounded-xl border border-slate-200 bg-white"><div className="border-b px-5 py-4"><h2 className="font-bold text-slate-950">Lecturas recientes</h2><p className="text-sm text-slate-500">Últimos datos recibidos de los sensores.</p></div><div className="divide-y divide-slate-100">{telemetry.slice(0, 5).map((item) => <div key={item.id} className="flex items-center gap-4 px-5 py-3"><span className={`h-2.5 w-2.5 rounded-full ${isTemperature(item) ? 'bg-orange-500' : 'bg-sky-600'}`} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-900">{item.tipoComponente} · Nodo #{item.tbNodoId}</p><p className="text-xs text-slate-500">{formatDate(item.fechaHora)}</p></div><strong className="text-sm">{number(item.valorLectura)?.toFixed(2) ?? '—'}{isTemperature(item) ? ' °C' : ''}</strong></div>)}{!telemetry.length ? <p className="p-8 text-center text-sm text-slate-500">Aún no se han recibido lecturas.</p> : null}</div></div>
+      <div className="rounded-xl border border-slate-200 bg-white"><div className="border-b px-5 py-4"><h2 className="font-bold text-slate-950">Lecturas recientes</h2><p className="text-sm text-slate-500">Últimos datos recibidos de los sensores.</p></div><div className="divide-y divide-slate-100">{telemetry.slice(0, 5).map((item) => <div key={item.id} className="flex items-center gap-4 px-5 py-3"><span className={`h-2.5 w-2.5 rounded-full ${isSoilTemperature(item)||isAmbientTemperature(item) ? 'bg-orange-500' : isAtmosphericPressure(item)?'bg-violet-600':'bg-sky-600'}`} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-900">{item.nombreSensor || item.tipoComponente} · Nodo #{item.tbNodoId}</p><p className="text-xs text-slate-500">{formatDate(item.fechaHora)}</p></div><strong className="text-sm">{number(item.valorLectura)?.toFixed(2) ?? '—'}{item.unidad ? ` ${item.unidad}` : ''}</strong></div>)}{!telemetry.length ? <p className="p-8 text-center text-sm text-slate-500">Aún no se han recibido lecturas.</p> : null}</div></div>
     </div>
     {plantOpen ? <PlantDetailModal crop={crop} dashboard={dashboard} onClose={() => setPlantOpen(false)} /> : null}
   </div>

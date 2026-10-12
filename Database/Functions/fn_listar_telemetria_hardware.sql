@@ -12,6 +12,8 @@ RETURNS TABLE(
     tb_sensor_id INT,
     tb_nodo_id INT,
     tipo_componente VARCHAR,
+    nombre_sensor VARCHAR,
+    unidad VARCHAR,
     valor_lectura DECIMAL,
     fecha_hora TIMESTAMP,
     total_registros BIGINT
@@ -20,6 +22,8 @@ LANGUAGE sql
 AS $$
     WITH filtrada AS (
         SELECT t.id, t.tb_sensor_id, sa.tb_nodo_id, sa.tipo_componente,
+               COALESCE(sa.nombre,sa.tipo_componente)::VARCHAR AS nombre_sensor,
+               sa.unidad,
                t.valor_lectura, t.fecha_hora, COUNT(*) OVER() AS total_registros
         FROM tb_telemetria t
         INNER JOIN tb_sensor sa ON sa.id = t.tb_sensor_id
@@ -29,7 +33,7 @@ AS $$
         WHERE f.tb_proyecto_id = p_proyecto_id
           AND (p_id_nodo IS NULL OR sa.tb_nodo_id = p_id_nodo)
     )
-    SELECT id, tb_sensor_id, tb_nodo_id, tipo_componente, valor_lectura,
+    SELECT id, tb_sensor_id, tb_nodo_id, tipo_componente, nombre_sensor, unidad, valor_lectura,
            fecha_hora, total_registros
     FROM filtrada
     ORDER BY fecha_hora DESC, id DESC
