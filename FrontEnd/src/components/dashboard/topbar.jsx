@@ -103,7 +103,7 @@ export function Topbar({ onMenuClick }) {
           <span className="max-w-36 truncate">{activeProject?.nombre || 'Proyecto'}</span>
         </button>
         {/* Notificaciones */}
-        <div className="relative" ref={ref}>
+        <div className="relative hidden sm:block" ref={ref}>
           <button
             onClick={() => {
               setOpen(!open);
