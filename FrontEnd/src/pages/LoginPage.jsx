@@ -29,7 +29,7 @@ export default function LoginPage() {
     setError('')
 
     if (!form.correo_electronico || !form.password) {
-      setError('Completa correo y contrasena.')
+      setError('Completa correo y contraseña.')
       return
     }
 
@@ -69,7 +69,7 @@ export default function LoginPage() {
           </label>
 
           <label className="block">
-            <span className="mb-1 block text-sm font-semibold text-emerald-950">Contrasena</span>
+            <span className="mb-1 block text-sm font-semibold text-emerald-950">Contraseña</span>
             <input
               name="password"
               type="password"

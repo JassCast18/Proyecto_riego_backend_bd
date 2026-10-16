@@ -37,9 +37,14 @@ BEGIN
     FROM tb_nodo_iot n
     JOIN tb_sector s ON s.id=n.tb_sector_id
     JOIN tb_finca f ON f.id=s.tb_finca_id
-    WHERE f.tb_proyecto_id=p_proyecto_id
-      AND (n.direccion_mac=v_mac OR n.tipo_nodo='Gateway ambiental BME280')
-    ORDER BY (n.direccion_mac=v_mac) DESC, n.id
+    -- Una MAC ya registrada conserva su proyecto aunque el firmware todavia
+    -- reporte el identificador anterior. El proyecto recibido solo se usa para
+    -- localizar o crear gateways que aun no han sido vinculados.
+    WHERE n.direccion_mac=v_mac
+       OR (f.tb_proyecto_id=p_proyecto_id AND n.tipo_nodo='Gateway ambiental BME280')
+    ORDER BY (n.direccion_mac=v_mac) DESC,
+             (f.tb_proyecto_id=p_proyecto_id) DESC,
+             n.id
     LIMIT 1;
 
     IF p_nodo_id IS NULL THEN
