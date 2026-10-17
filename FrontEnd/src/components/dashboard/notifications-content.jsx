@@ -8,6 +8,7 @@ import {
 } from '../../auth/notifications.service'
 import { useToast } from '@/context/useToast.js'
 import { useNavigate } from 'react-router-dom'
+import { formatGuatemalaDateTime } from '@/utils/date-time.js'
 
 const FILTERS = [
   { value: 'active', label: 'Activas' },
@@ -17,8 +18,7 @@ const FILTERS = [
 ]
 
 function formatDate(value) {
-  if (!value) return 'Sin fecha'
-  return new Date(value).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' })
+  return formatGuatemalaDateTime(value)
 }
 
 function severityStyle(severity) {

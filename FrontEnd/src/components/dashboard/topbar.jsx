@@ -4,10 +4,11 @@ import { Bell, FolderKanban, LogOut, Menu, Search } from "lucide-react";
 import { useAuth } from "@/context/useAuth.js";
 import { listNotificationsRequest, reviewNotificationRequest } from "@/auth/notifications.service.js";
 import { getActiveProject } from "@/auth/projects.service.js";
+import { formatGuatemalaDateTime } from "@/utils/date-time.js";
 
 function formatNotificationTime(value) {
   if (!value) return "Ahora";
-  return new Date(value).toLocaleString("es-GT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  return formatGuatemalaDateTime(value, { dateStyle: undefined, timeStyle: undefined, day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
 }
 
 export function Topbar({ onMenuClick }) {

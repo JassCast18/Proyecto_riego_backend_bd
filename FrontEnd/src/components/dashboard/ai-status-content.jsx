@@ -2,8 +2,9 @@ import {useCallback,useEffect,useMemo,useState} from 'react'
 import {Activity,BrainCircuit,Check,Database,Leaf,Play,RefreshCcw,ShieldCheck,Sparkles,X} from 'lucide-react'
 import {evaluateAiRequest,getAiStateRequest,resolveAiDecisionRequest,saveAiConfigurationRequest,trainAiRequest} from '@/auth/ai.service.js'
 import {useToast} from '@/context/useToast.js'
+import {formatGuatemalaDateTime} from '@/utils/date-time.js'
 
-const date=value=>value?new Date(value).toLocaleString('es-GT',{dateStyle:'medium',timeStyle:'short'}):'Sin registro'
+const date=value=>value?formatGuatemalaDateTime(value):'Sin registro'
 const percent=value=>value===null||value===undefined?'--':`${(Number(value)*100).toFixed(1)} %`
 const featureNames={humedad:'Humedad del suelo',temperatura:'Temperatura del suelo',temperatura_ambiente:'Temperatura ambiental',humedad_ambiente:'Humedad ambiental',presion_atmosferica:'Presión atmosférica',hora:'Hora del día',dias_cultivo:'Edad del cultivo',humedad_minima:'Humedad mínima',humedad_maxima:'Humedad máxima',salud_foliar:'Salud foliar'}
 

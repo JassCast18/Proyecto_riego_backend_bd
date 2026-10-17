@@ -5,8 +5,9 @@ import {BrainCircuit,CheckCircle2,Database,Droplets,Eye,History,Info as InfoIcon
 import {getAiRetrainingRequest,restoreAiModelRequest,trainAiRequest} from '@/auth/ai.service.js'
 import {useToast} from '@/context/useToast.js'
 import decisionTreeImage from '@/assets/ai-decision-tree-cartoon.png'
+import {formatGuatemalaDateTime,parseApiDate} from '@/utils/date-time.js'
 
-const date=value=>value?new Date(value).toLocaleString('es-GT',{dateStyle:'medium',timeStyle:'short'}):'Sin registro'
+const date=value=>value?formatGuatemalaDateTime(value):'Sin registro'
 const pct=value=>`${Number(value||0).toFixed(1)} %`
 const number=(value,suffix='')=>value===null||value===undefined||value===''?'--':`${Number(value).toFixed(1)}${suffix}`
 const accuracy=value=>{const n=Number(value||0);return Math.max(0,Math.min(100,n<=1?n*100:n))}
@@ -36,7 +37,8 @@ export function AIRetrainingContent(){
  useEffect(()=>{if(action!=='train'){setElapsed(0);return undefined}const started=Date.now(),timer=window.setInterval(()=>setElapsed(Math.floor((Date.now()-started)/1000)),1000);return()=>window.clearInterval(timer)},[action])
  const tree=useMemo(()=>Array.isArray(data.arbol)?data.arbol.slice(-10):[],[data.arbol])
  const selected=tree.find(item=>Number(item.id)===Number(selectedId))||null
- const excludedDecisions=selected?tree.filter(item=>new Date(item.fecha_hora)>new Date(selected.fecha_hora)).length:0
+ const selectedTime=parseApiDate(selected?.fecha_hora)?.getTime()||0
+ const excludedDecisions=selected?tree.filter(item=>(parseApiDate(item.fecha_hora)?.getTime()||0)>selectedTime).length:0
  const trainingTotal=selected?Number(selected.muestras_historicas||0)+Number(selected.muestras_referencia||0)+(Number(selected.correcciones_humanas||0)*5):0
  const nodes=useMemo(()=>tree.map((item,index)=>({id:String(item.id),type:'decision',position:TREE_POSITIONS[index],zIndex:5,data:{id:item.id,decision:item.decision,variables:item.variables_entrada,samples:item.muestras_historicas||0,selected:Number(item.id)===Number(selectedId),currentBase:Boolean(item.es_base_modelo),root:index===0,latest:Boolean(item.es_ultima)||index===tree.length-1,swayDelay:(index%5)*-.45,onDetails:()=>setSelectedId(Number(item.id))}})),[tree,selectedId])
  const edges=useMemo(()=>tree.slice(1).map((item,index)=>{const child=index+1,parent=Math.floor((child-1)/2);return{id:`e-${tree[parent].id}-${item.id}`,source:String(tree[parent].id),target:String(item.id),animated:true,type:'bezier',style:{stroke:'#865027',strokeWidth:3}}}),[tree])

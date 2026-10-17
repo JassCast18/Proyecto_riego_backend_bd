@@ -37,7 +37,11 @@ AS $$
           AND COALESCE(nu.descartada,FALSE)=FALSE
           AND (p_rol_id=1 OR n.tb_rol_id IS NULL OR n.tb_rol_id=p_rol_id)
           AND (
-              (n.severidad='CRITICAL' AND (n.estado='ACTIVA' OR fn_es_propietario(p_usuario_id)))
+              (n.severidad='CRITICAL' AND (
+                  n.estado='ACTIVA'
+                  OR fn_es_propietario(p_usuario_id)
+                  OR n.reconocida_por=p_usuario_id
+              ))
               OR (n.severidad<>'CRITICAL'
                   AND (n.reconocida_por IS NULL OR n.reconocida_por=p_usuario_id)
                   AND (rv.tb_usuario_id IS NULL OR rv.tb_usuario_id=p_usuario_id))
