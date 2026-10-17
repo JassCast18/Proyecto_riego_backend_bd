@@ -11,15 +11,15 @@ BEGIN
   IF EXISTS(SELECT 1 FROM tb_ciclo_riego WHERE tb_nodo_id=p_nodo_id AND estado='ACTIVO') THEN
     RAISE EXCEPTION 'El nodo tiene un riego activo; espera a que finalice antes de iniciar cualquier prueba técnica.';
   END IF;
-  IF NOT EXISTS(SELECT 1 FROM tb_nodo_iot WHERE id=p_nodo_id AND estado_energia='APAGADO') THEN
-    RAISE EXCEPTION 'El nodo debe estar apagado antes de iniciar una prueba tecnica.';
-  END IF;
   IF p_intervalo_segundos NOT BETWEEN 5 AND 60 THEN RAISE EXCEPTION 'El intervalo debe estar entre 5 y 60 segundos.'; END IF;
   IF p_duracion_segundos NOT BETWEEN 10 AND 600 THEN RAISE EXCEPTION 'La duración debe estar entre 10 y 600 segundos.'; END IF;
   IF EXISTS(SELECT 1 FROM tb_prueba_unitaria WHERE tb_nodo_id=p_nodo_id AND estado IN('ESPERANDO','EN_CURSO','DETENIENDO')) THEN
     RAISE EXCEPTION 'El nodo ya tiene una prueba activa.';
   END IF;
   IF v_tipo='SENSOR' THEN
+    IF NOT EXISTS(SELECT 1 FROM tb_nodo_iot WHERE id=p_nodo_id AND estado_energia='APAGADO') THEN
+      RAISE EXCEPTION 'El nodo debe estar apagado antes de iniciar una prueba tecnica del sensor.';
+    END IF;
     IF NOT EXISTS(SELECT 1 FROM tb_sensor s JOIN tb_nodo_iot n ON n.id=s.tb_nodo_id JOIN tb_sector se ON se.id=n.tb_sector_id JOIN tb_finca f ON f.id=se.tb_finca_id WHERE s.id=p_componente_id AND s.tb_nodo_id=p_nodo_id AND f.tb_proyecto_id=p_proyecto_id AND s.sn_activo AND s.estado_operativo='OPERATIVO') THEN RAISE EXCEPTION 'El sensor no está operativo o no pertenece al nodo y proyecto.'; END IF;
   ELSIF v_tipo='ACTUADOR' THEN
     SELECT na.pin_control,a.activo_en_low,a.duracion_maxima_segundos INTO v_pin,v_low,v_max

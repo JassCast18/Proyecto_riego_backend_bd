@@ -7,6 +7,7 @@ LANGUAGE sql AS $$
    'sensorId',p.tb_sensor_id,'actuadorId',p.tb_actuador_id,'objetivo',p.objetivo,
    'intervaloSegundos',p.intervalo_segundos,'duracionSegundos',p.duracion_segundos,
    'resultado',p.resultado,'conclusion',p.conclusion,'fechaInicio',p.fecha_inicio,
+   'fechaCierreProgramado',CASE WHEN p.fecha_inicio IS NULL THEN NULL ELSE p.fecha_inicio+make_interval(secs=>p.duracion_segundos) END,
    'fechaFin',p.fecha_fin,'ultimaComunicacion',p.ultima_comunicacion,
    'componenteNombre',COALESCE(s.nombre,s.tipo_componente,a.nombre),
    'unidad',s.unidad,
