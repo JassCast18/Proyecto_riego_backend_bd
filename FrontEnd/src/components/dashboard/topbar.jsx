@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, FolderKanban, LogOut, Menu, Search } from "lucide-react";
+import { Bell, FolderKanban, LogOut, Menu } from "lucide-react";
 import { useAuth } from "@/context/useAuth.js";
 import { listNotificationsRequest, reviewNotificationRequest } from "@/auth/notifications.service.js";
 import { getActiveProject } from "@/auth/projects.service.js";
@@ -83,20 +83,6 @@ export function Topbar({ onMenuClick }) {
       >
         <Menu size={20} />
       </button>
-
-      {/* Buscador */}
-      <div className="relative hidden max-w-sm flex-1 sm:block">
-        <Search
-          size={16}
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-        />
-
-        <input
-          type="text"
-          placeholder="Buscar en el panel..."
-          className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-sm outline-none transition focus:border-green-500 focus:ring-2 focus:ring-green-200"
-        />
-      </div>
 
       <div className="ml-auto flex items-center gap-3">
         <button type="button" onClick={() => navigate('/proyectos')} title="Cambiar proyecto" className="hidden items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 md:flex">
