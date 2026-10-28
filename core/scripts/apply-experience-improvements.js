@@ -1,6 +1,9 @@
 import 'dotenv/config'
 import { readFile } from 'node:fs/promises'
-import { db } from '../database/connection.database.js'
+import { loadDatabasePasswordFromSecretsManager } from '../services/database-secret.service.js'
+
+await loadDatabasePasswordFromSecretsManager()
+const { db } = await import('../database/connection.database.js')
 
 const files = [
   '../../Database/Tables/tb_ticket_soporte.sql',
