@@ -34,4 +34,7 @@ BEGIN
   INSERT INTO tb_comando_iot(tb_proyecto_id,tb_nodo_id,tb_prueba_id,tipo_comando,payload,fecha_expiracion)
   VALUES(p_proyecto_id,p_nodo_id,p_prueba_id,CASE WHEN v_tipo='SENSOR' THEN 'INICIAR_PRUEBA_SENSOR' ELSE 'ACTIVAR_ACTUADOR' END,
     jsonb_build_object('pruebaId',p_prueba_id,'intervaloSegundos',p_intervalo_segundos,'duracionSegundos',p_duracion_segundos,'componenteId',p_componente_id,'pin',COALESCE(v_pin,5),'activoEnLow',COALESCE(v_low,TRUE)),NOW()+INTERVAL '5 minutes');
+  INSERT INTO tb_notificacion(clave_evento,tb_proyecto_id,tb_usuario_destino_id,tb_nodo_id,categoria,tipo,titulo,mensaje,severidad,estado,descartable)
+  VALUES('PRUEBA_CONTROL_MANUAL:'||p_prueba_id,p_proyecto_id,p_usuario_id,p_nodo_id,'CONTROL_MANUAL','PRUEBA_CONTROL_MANUAL_'||v_tipo||'_'||p_prueba_id,
+    'Prueba técnica pendiente','La prueba #'||p_prueba_id||' quedó abierta. Puedes retomarla desde el historial de pruebas.','INFO','ACTIVA',TRUE);
 END;$$;

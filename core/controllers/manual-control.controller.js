@@ -4,8 +4,8 @@ import * as provider from "../providers/manual-control.provider.js";
 const fail=(res,error)=>res.status(/no existe|no pertenece|debe estar|duración|intervalo|ya tiene|solo el|riego activo|prueba técnica activa/i.test(error.message)?400:500).json(ResponseModel.fail(error.message));
 
 export async function catalog(req,res){try{return res.json(ResponseModel.ok({nodos:await provider.listCatalog(req.projectId)}));}catch(e){return fail(res,e);}}
-export async function listTests(req,res){try{return res.json(ResponseModel.ok({pruebas:await provider.listTests(req.projectId,req.query.tipo||null,req.query.limite)}));}catch(e){return fail(res,e);}}
-export async function getTest(req,res){try{const test=await provider.getTest(Number(req.params.id),req.projectId);if(!test)return res.status(404).json(ResponseModel.fail("La prueba no existe.",null,404));return res.json(ResponseModel.ok({prueba:test}));}catch(e){return fail(res,e);}}
+export async function listTests(req,res){try{return res.json(ResponseModel.ok({pruebas:await provider.listTests(req.projectId,req.user.id,req.query.tipo||null,req.query.limite)}));}catch(e){return fail(res,e);}}
+export async function getTest(req,res){try{const test=await provider.getTest(Number(req.params.id),req.projectId,req.user.id);if(!test)return res.status(404).json(ResponseModel.fail("La prueba no existe.",null,404));return res.json(ResponseModel.ok({prueba:test}));}catch(e){return fail(res,e);}}
 export async function startTest(req,res){try{
   const type=String(req.body?.tipo||"").toUpperCase();const nodeId=Number(req.body?.nodoId);const componentId=Number(req.body?.componenteId);
   const intervalSeconds=Number(req.body?.intervaloSegundos||10);const durationSeconds=Number(req.body?.duracionSegundos||120);

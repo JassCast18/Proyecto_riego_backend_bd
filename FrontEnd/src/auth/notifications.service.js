@@ -4,9 +4,9 @@ function getApiErrorMessage(error, fallbackMessage) {
   return error?.response?.data?.message || error?.response?.data?.errors || error?.message || fallbackMessage
 }
 
-export async function listNotificationsRequest({ status = 'active', reviewer = 'all', page = 1, pageSize = 10 } = {}) {
+export async function listNotificationsRequest({ status = 'active', reviewer = 'all', page = 1, pageSize = 10, search = '', dateFrom = '', dateTo = '' } = {}) {
   try {
-    const response = await api.get('/notificaciones', { params: { status, reviewer, page, pageSize } })
+    const response = await api.get('/notificaciones', { params: { status, reviewer, page, pageSize, search, dateFrom, dateTo } })
     return response.data?.data || { notificaciones: [], revisores: [], resumen: {}, paginacion: {} }
   } catch (error) {
     throw new Error(getApiErrorMessage(error, 'No fue posible consultar las notificaciones.'))

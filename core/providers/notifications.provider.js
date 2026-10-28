@@ -181,10 +181,14 @@ export async function registerAlertEmailDelivery({ notificationId, userId, statu
     await DatabaseExecutor.executeProcedure("sp_registrar_entrega_alerta", [notificationId, userId, status, error]);
 }
 
-export async function listNotifications({ userId, roleId, projectId, status = "active", reviewer = "all", page = 1, pageSize = 10 }) {
+export async function cleanupNotifications(projectId) {
+    await DatabaseExecutor.executeProcedure("sp_depurar_notificaciones", [projectId]);
+}
+
+export async function listNotifications({ userId, roleId, projectId, status = "active", reviewer = "all", page = 1, pageSize = 10, search = "", dateFrom = null, dateTo = null }) {
     const rows = await DatabaseExecutor.executeFunction(
         "fn_listar_notificaciones",
-        [userId, roleId, projectId, status, reviewer, Math.max(Number(page) || 1, 1), Math.min(Math.max(Number(pageSize) || 10, 1), 50)],
+        [userId, roleId, projectId, status, reviewer, Math.max(Number(page) || 1, 1), Math.min(Math.max(Number(pageSize) || 10, 1), 50), search || null, dateFrom || null, dateTo || null],
     );
 
     return rows.map((row) => new Notification(row).toResponse());

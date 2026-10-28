@@ -7,6 +7,13 @@ import {useToast} from '@/context/useToast.js'
 const initial={buscar:'',categoria:'',usuario:'',accion:'',desde:'',hasta:'',pagina:1,tamano:10}
 const date=value=>value?new Date(value).toLocaleString('es-GT',{dateStyle:'medium',timeStyle:'short'}):'Sin registro'
 const csvCell=value=>`"${String(value??'').replaceAll('"','""')}"`
+const friendlyDetail=row=>/^(POST|PUT|PATCH|DELETE)\s+\/api\//i.test(String(row.detalle||''))
+ ? `El usuario completó una operación en ${(row.categoria||'el sistema').toLowerCase().replaceAll('_',' ')}.`
+ : row.detalle
+const friendlyAction=row=>/^(Creación|Actualización|Modificación|Eliminación) realizada en/i.test(String(row.accion_realizada||''))
+ ? `Cambio registrado en ${(row.categoria||'el sistema').toLowerCase().replaceAll('_',' ')}`
+ : row.accion_realizada
+const friendlyRow=row=>({...row,accion_realizada:friendlyAction(row),detalle:friendlyDetail(row)})
 
 export function AuditContent(){
  const history=useLocation().pathname.endsWith('/historial'),toast=useToast(),[filters,setFilters]=useState(initial),[query,setQuery]=useState(initial),[data,setData]=useState({}),[loading,setLoading]=useState(true),[selected,setSelected]=useState(null)
@@ -16,7 +23,7 @@ export function AuditContent(){
  const reset=()=>{setFilters(initial);setQuery(initial)}
  const changePage=page=>{setFilters(current=>({...current,pagina:page}));setQuery(current=>({...current,pagina:page}))}
  const exportCsv=()=>{const rows=data.registros||[];if(!rows.length){toast.warning('No hay registros visibles para exportar.');return}const header=['Fecha','Usuario','Acción','Categoría','Entidad','Detalle','Valor anterior','Valor nuevo'];const body=rows.map(row=>[date(row.fecha_hora),row.usuario,row.accion_realizada,row.categoria,row.entidad?`${row.entidad} #${row.entidad_id||''}`:'',row.detalle,JSON.stringify(row.valores_anteriores||''),JSON.stringify(row.valores_nuevos||'')].map(csvCell).join(','));const blob=new Blob([`\uFEFF${header.map(csvCell).join(',')}\n${body.join('\n')}`],{type:'text/csv;charset=utf-8'});const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download=`auditoria-pagina-${data.paginacion?.pagina||1}.csv`;link.click();URL.revokeObjectURL(link.href)}
- const rows=Array.isArray(data.registros)?data.registros:[],summary=data.resumen||{},options=data.filtros||{},paging=data.paginacion||{pagina:1,paginas:1,total:0}
+ const rows=Array.isArray(data.registros)?data.registros.map(friendlyRow):[],summary=data.resumen||{},options=data.filtros||{},paging=data.paginacion||{pagina:1,paginas:1,total:0}
  return <div className="mx-auto max-w-7xl space-y-5">
   <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-xs font-semibold uppercase text-emerald-700">Auditoría de acciones</p><h1 className="mt-1 text-3xl font-bold text-slate-950">{history?'Histórico de acciones':'Búsqueda de auditoría'}</h1><p className="mt-1 text-sm text-slate-600">{history?'Secuencia cronológica de operaciones realizadas por usuarios del proyecto.':'Localiza cambios por responsable, categoría, acción o periodo.'}</p></div><div className="flex gap-2"><button title="Actualizar" onClick={load} disabled={loading} className="grid size-11 place-items-center border border-slate-300 bg-white"><RefreshCcw className={`size-4 ${loading?'animate-spin':''}`}/></button><button onClick={exportCsv} className="inline-flex h-11 items-center gap-2 border border-slate-300 bg-white px-4 text-sm font-semibold"><Download className="size-4"/>Exportar página</button></div></header>
   <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[['Acciones registradas',summary.total||0,ClipboardList],['Realizadas hoy',summary.hoy||0,CalendarDays],['Usuarios responsables',summary.usuarios||0,UsersRound],['Categorías utilizadas',summary.categorias||0,Filter]].map(([label,value,Icon])=><div key={label} className="border border-slate-200 bg-white p-4"><div className="flex items-center justify-between text-sm text-slate-500"><span>{label}</span><Icon className="size-4"/></div><p className="mt-2 text-2xl font-bold text-slate-950">{value}</p></div>)}</section>

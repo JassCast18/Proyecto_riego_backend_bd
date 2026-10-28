@@ -1,4 +1,6 @@
-CREATE OR REPLACE FUNCTION fn_obtener_prueba_control_manual(p_prueba_id INT,p_proyecto_id INT)
+DROP FUNCTION IF EXISTS fn_obtener_prueba_control_manual(INT,INT);
+DROP FUNCTION IF EXISTS fn_obtener_prueba_control_manual(INT,INT,INT);
+CREATE OR REPLACE FUNCTION fn_obtener_prueba_control_manual(p_prueba_id INT,p_proyecto_id INT,p_usuario_id INT)
 RETURNS TABLE(prueba JSONB)
 LANGUAGE sql AS $$
  SELECT fn_sincronizar_pruebas_actuador(p_proyecto_id,NULL);
@@ -7,6 +9,7 @@ LANGUAGE sql AS $$
    'sensorId',p.tb_sensor_id,'actuadorId',p.tb_actuador_id,'objetivo',p.objetivo,
    'intervaloSegundos',p.intervalo_segundos,'duracionSegundos',p.duracion_segundos,
    'resultado',p.resultado,'conclusion',p.conclusion,'fechaInicio',p.fecha_inicio,
+   'usuarioId',p.tb_usuario_id,'usuario',concat_ws(' ',pe.nombres,pe.apellidos),'puedeModificar',(p.tb_usuario_id=p_usuario_id),
    'fechaCierreProgramado',CASE WHEN p.fecha_inicio IS NULL THEN NULL ELSE p.fecha_inicio+make_interval(secs=>p.duracion_segundos) END,
    'fechaFin',p.fecha_fin,'ultimaComunicacion',p.ultima_comunicacion,
    'componenteNombre',COALESCE(s.nombre,s.tipo_componente,a.nombre),
@@ -15,6 +18,8 @@ LANGUAGE sql AS $$
    'lecturas',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',l.id,'valor',l.valor_lectura,'fechaHora',l.fecha_hora) ORDER BY l.fecha_hora,l.id) FROM tb_prueba_lectura l WHERE l.tb_prueba_id=p.id),'[]'::JSONB),
    'comandos',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',c.id,'tipo',c.tipo_comando,'estado',c.estado,'mensaje',c.mensaje_confirmacion,'fecha',c.fecha_creacion,'fechaConfirmacion',c.fecha_confirmacion) ORDER BY c.id) FROM tb_comando_iot c WHERE c.tb_prueba_id=p.id),'[]'::JSONB)
  ) FROM tb_prueba_unitaria p
+ JOIN tb_usuario u ON u.id=p.tb_usuario_id
+ JOIN tb_persona pe ON pe.id=u.tb_persona_id
  LEFT JOIN tb_sensor s ON s.id=p.tb_sensor_id
  LEFT JOIN tb_actuador a ON a.id=p.tb_actuador_id
  LEFT JOIN LATERAL (

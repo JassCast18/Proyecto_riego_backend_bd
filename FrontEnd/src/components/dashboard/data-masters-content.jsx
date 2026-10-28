@@ -45,6 +45,7 @@ const MASTER_DEFINITIONS = [
   },
   {
     key: 'cliente',
+    hidden: true,
     label: 'Cliente',
     description: 'Personas propietarias de las fincas administradas.',
     permissionKey: 'cliente.view',
@@ -232,7 +233,7 @@ export function DataMastersContent() {
   const permissions = useMemo(() => new Set(user?.permisos || []), [user?.permisos])
 
   const visibleMasters = useMemo(
-    () => MASTER_DEFINITIONS.filter((definition) => hasPermission(permissions, definition.permissionKey)),
+    () => MASTER_DEFINITIONS.filter((definition) => !definition.hidden && hasPermission(permissions, definition.permissionKey)),
     [permissions],
   )
 
@@ -473,7 +474,7 @@ export function DataMastersContent() {
           <p className="text-xs font-bold uppercase tracking-[0.24em] text-slate-600">Datos maestros</p>
           <h1 className="mt-2 text-3xl font-black text-slate-950">Información base del proyecto</h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-700">
-            Administra fincas, sectores, clientes, roles, nodos, sensores y actuadores desde un mismo módulo.
+            Administra la estructura del proyecto, roles, nodos, sensores y actuadores desde un mismo módulo.
           </p>
         </div>
 

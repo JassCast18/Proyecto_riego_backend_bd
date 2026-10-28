@@ -51,6 +51,10 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
       <section className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-8">
+        <div className="mb-5 flex items-center gap-3">
+          <img src="/nodalvia-logo.png" alt="Logo de Nodalvia" className="size-12 object-contain" />
+          <span className="text-lg font-bold text-slate-900">Nodalvia</span>
+        </div>
         <h1 className="text-2xl font-bold text-slate-900">Iniciar sesión</h1>
         <p className="mt-2 text-sm text-slate-600">Ingresa tus credenciales.</p>
 

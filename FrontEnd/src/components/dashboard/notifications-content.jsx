@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bell, CheckCircle2, Clock3, Eye, MailCheck, MailWarning, RefreshCcw, ShieldCheck, Trash2, TriangleAlert } from 'lucide-react'
+import { Bell, CalendarDays, CheckCircle2, ChevronLeft, ChevronRight, Clock3, Eye, MailCheck, MailWarning, RefreshCcw, Search, ShieldCheck, Trash2, TriangleAlert } from 'lucide-react'
 import {
   acknowledgeNotificationRequest,
   dismissNotificationRequest,
@@ -45,6 +45,13 @@ function stateLabel(state) {
   return 'Activa'
 }
 
+function pageWindow(current, total) {
+  let start = Math.max(1, current - 2)
+  const end = Math.min(total, start + 4)
+  start = Math.max(1, end - 4)
+  return Array.from({ length: Math.max(0, end - start + 1) }, (_, index) => start + index)
+}
+
 export function NotificationsContent() {
   const toast = useToast()
   const navigate = useNavigate()
@@ -55,6 +62,10 @@ export function NotificationsContent() {
   const [summary, setSummary] = useState({ active: 0, acknowledged: 0, critical: 0, resolved: 0 })
   const [pagination, setPagination] = useState({ pagina: 1, tamanoPagina: 10, total: 0, totalPaginas: 0 })
   const [page, setPage] = useState(1)
+  const [draftSearch, setDraftSearch] = useState('')
+  const [draftDate, setDraftDate] = useState('')
+  const [search, setSearch] = useState('')
+  const [date, setDate] = useState('')
   const [isAdministrator, setIsAdministrator] = useState(false)
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState(null)
@@ -71,7 +82,7 @@ export function NotificationsContent() {
     if (!background) setLoading(true)
     setError('')
     try {
-      const result = await listNotificationsRequest({ status: filter, reviewer, page, pageSize: 10 })
+      const result = await listNotificationsRequest({ status: filter, reviewer, page, pageSize: 10, search, dateFrom: date, dateTo: date })
       setNotifications(result.notificaciones || [])
       setReviewers(result.revisores || [])
       setSummary(result.resumen || { active: 0, acknowledged: 0, critical: 0, resolved: 0 })
@@ -82,7 +93,14 @@ export function NotificationsContent() {
     } finally {
       if (!background) setLoading(false)
     }
-  }, [filter, page, reviewer])
+  }, [date, filter, page, reviewer, search])
+
+  const applySearch = (event) => {
+    event.preventDefault()
+    setSearch(draftSearch.trim())
+    setDate(draftDate)
+    setPage(1)
+  }
 
   useEffect(() => {
     loadNotifications()
@@ -175,6 +193,18 @@ export function NotificationsContent() {
         ) : null}
       </div>
 
+      <form onSubmit={applySearch} className="mt-4 grid gap-2 rounded-xl border border-slate-200 bg-white p-3 sm:grid-cols-[minmax(0,1fr)_220px_auto]">
+        <label className="relative min-w-0">
+          <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+          <input value={draftSearch} onChange={(event) => setDraftSearch(event.target.value)} placeholder="Buscar por nombre, título o mensaje" className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-emerald-500" />
+        </label>
+        <label className="relative">
+          <CalendarDays className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={17} />
+          <input type="date" value={draftDate} onChange={(event) => setDraftDate(event.target.value)} className="w-full rounded-lg border border-slate-200 py-2.5 pl-10 pr-3 text-sm outline-none focus:border-emerald-500" />
+        </label>
+        <button type="submit" className="rounded-lg bg-slate-950 px-5 py-2.5 text-sm font-bold text-white">Buscar</button>
+      </form>
+
       <div className="mt-6 space-y-3">
         {loading ? (
           <div className="rounded-xl border border-dashed border-slate-300 bg-white/70 p-10 text-center text-slate-500">Evaluando sensores e incidentes...</div>
@@ -229,9 +259,11 @@ export function NotificationsContent() {
       </div>
       {pagination.totalPaginas > 1 ? (
         <nav aria-label="Paginación de notificaciones" className="mt-6 flex flex-wrap items-center justify-center gap-2">
-          {Array.from({ length: pagination.totalPaginas }, (_, index) => index + 1).map((number) => (
+          <button type="button" disabled={page <= 1} onClick={() => setPage((value) => Math.max(1, value - 1))} className="grid h-9 w-9 place-items-center rounded-lg border bg-white disabled:opacity-40" aria-label="Página anterior"><ChevronLeft size={16}/></button>
+          {pageWindow(page, pagination.totalPaginas).map((number) => (
             <button key={number} type="button" onClick={() => setPage(number)} aria-current={page === number ? 'page' : undefined} className={`h-9 min-w-9 rounded-lg px-3 text-sm font-bold ${page === number ? 'bg-slate-950 text-white' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}>{number}</button>
           ))}
+          <button type="button" disabled={page >= pagination.totalPaginas} onClick={() => setPage((value) => Math.min(pagination.totalPaginas, value + 1))} className="grid h-9 w-9 place-items-center rounded-lg border bg-white disabled:opacity-40" aria-label="Página siguiente"><ChevronRight size={16}/></button>
         </nav>
       ) : null}
       <p className="mt-3 text-center text-xs text-slate-500">{pagination.total} notificación{pagination.total === 1 ? '' : 'es'} · 10 por página</p>

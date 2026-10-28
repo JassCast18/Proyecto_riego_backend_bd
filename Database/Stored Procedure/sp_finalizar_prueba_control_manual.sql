@@ -4,12 +4,11 @@ CREATE OR REPLACE PROCEDURE sp_finalizar_prueba_control_manual(
   p_desactivar_sensor BOOLEAN DEFAULT FALSE
 )
 LANGUAGE plpgsql AS $$
-DECLARE v_prueba tb_prueba_unitaria%ROWTYPE;v_admin BOOLEAN;
+DECLARE v_prueba tb_prueba_unitaria%ROWTYPE;
 BEGIN
   SELECT * INTO v_prueba FROM tb_prueba_unitaria WHERE id=p_prueba_id AND tb_proyecto_id=p_proyecto_id FOR UPDATE;
   IF v_prueba.id IS NULL THEN RAISE EXCEPTION 'La prueba no existe.'; END IF;
-  SELECT EXISTS(SELECT 1 FROM tb_usuario_rol WHERE tb_proyecto_id=p_proyecto_id AND tb_usuario_id=p_usuario_id AND tb_rol_id=1 AND sn_activo) INTO v_admin;
-  IF v_prueba.tb_usuario_id<>p_usuario_id AND NOT v_admin THEN RAISE EXCEPTION 'Solo el responsable o un administrador puede finalizar la prueba.'; END IF;
+  IF v_prueba.tb_usuario_id<>p_usuario_id THEN RAISE EXCEPTION 'Solo el usuario que creó la prueba puede modificarla o finalizarla.'; END IF;
   IF v_prueba.estado IN('FINALIZADA','CANCELADA','FALLIDA') THEN RAISE EXCEPTION 'La prueba ya finalizó.'; END IF;
 
   UPDATE tb_prueba_unitaria SET estado=CASE WHEN p_cancelar THEN 'CANCELADA' ELSE 'FINALIZADA' END,

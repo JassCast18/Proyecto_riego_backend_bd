@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ChevronDown, Leaf, X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { navGroups } from "./nav-items";
 import { useAuth } from "@/context/useAuth.js";
 
@@ -95,7 +95,7 @@ export function Sidebar({ open, onClose }) {
         <div className="flex h-16 items-center justify-between border-b border-gray-800 px-5">
           <Link to="/dashboard" className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white">
-              <Leaf size={20} />
+              <img src="/nodalvia-logo.png" alt="" className="size-9 object-contain" />
             </span>
 
             <span className="flex flex-col leading-none">

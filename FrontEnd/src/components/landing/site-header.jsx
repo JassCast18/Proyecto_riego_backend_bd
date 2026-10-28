@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Leaf, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 
 const SiteHeader = () => {
   return (
@@ -8,7 +8,7 @@ const SiteHeader = () => {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-600 text-white">
-            <Leaf size={20} />
+            <img src="/nodalvia-logo.png" alt="" className="size-9 object-contain" />
           </span>
 
           <span className="flex min-w-0 flex-col leading-none">

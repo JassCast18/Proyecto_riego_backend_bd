@@ -1,8 +1,8 @@
 import DatabaseExecutor from "../database/database.executor.js";
 
 export const listCatalog = (projectId) => DatabaseExecutor.executeFunction("fn_listar_catalogo_control_manual",[projectId]);
-export const listTests = (projectId,type=null,limit=30) => DatabaseExecutor.executeFunction("fn_listar_pruebas_control_manual",[projectId,type,limit]);
-export const getTest = async (testId,projectId) => (await DatabaseExecutor.executeFunction("fn_obtener_prueba_control_manual",[testId,projectId]))[0]?.prueba ?? null;
+export const listTests = (projectId,userId,type=null,limit=30) => DatabaseExecutor.executeFunction("fn_listar_pruebas_control_manual",[projectId,userId,type,limit]);
+export const getTest = async (testId,projectId,userId) => (await DatabaseExecutor.executeFunction("fn_obtener_prueba_control_manual",[testId,projectId,userId]))[0]?.prueba ?? null;
 export const startTest = (data) => DatabaseExecutor.executeProcedureWithResult("sp_iniciar_prueba_control_manual",[
   data.projectId,data.userId,data.nodeId,data.type,data.componentId,data.objective,data.intervalSeconds,data.durationSeconds,null,
 ]);

@@ -1,11 +1,13 @@
 DROP FUNCTION IF EXISTS fn_listar_notificaciones(INT,INT,VARCHAR,INT);
 DROP FUNCTION IF EXISTS fn_listar_notificaciones(INT,INT,INT,VARCHAR,INT);
 DROP FUNCTION IF EXISTS fn_listar_notificaciones(INT,INT,INT,VARCHAR,VARCHAR,INT,INT);
+DROP FUNCTION IF EXISTS fn_listar_notificaciones(INT,INT,INT,VARCHAR,VARCHAR,INT,INT,VARCHAR,DATE,DATE);
 
 CREATE OR REPLACE FUNCTION fn_listar_notificaciones(
     p_usuario_id INT,p_rol_id INT,p_proyecto_id INT,
     p_estado VARCHAR DEFAULT 'active',p_revisor VARCHAR DEFAULT 'all',
-    p_pagina INT DEFAULT 1,p_tamano_pagina INT DEFAULT 10
+    p_pagina INT DEFAULT 1,p_tamano_pagina INT DEFAULT 10,
+    p_busqueda VARCHAR DEFAULT NULL,p_desde DATE DEFAULT NULL,p_hasta DATE DEFAULT NULL
 )
 RETURNS TABLE (
     id BIGINT,tb_nodo_id INT,categoria VARCHAR,tipo VARCHAR,titulo VARCHAR,
@@ -35,6 +37,12 @@ AS $$
         WHERE n.tb_proyecto_id=p_proyecto_id AND n.estado<>'PENDIENTE'
           AND (n.tb_usuario_destino_id IS NULL OR n.tb_usuario_destino_id=p_usuario_id)
           AND COALESCE(nu.descartada,FALSE)=FALSE
+          AND (p_desde IS NULL OR n.fecha_actualizacion >= p_desde::TIMESTAMP)
+          AND (p_hasta IS NULL OR n.fecha_actualizacion < (p_hasta + 1)::TIMESTAMP)
+          AND (COALESCE(trim(p_busqueda),'')='' OR concat_ws(' ',n.titulo,n.mensaje,n.categoria,n.tipo) ILIKE '%'||trim(p_busqueda)||'%'
+            OR EXISTS(SELECT 1 FROM tb_usuario bu JOIN tb_persona bp ON bp.id=bu.tb_persona_id
+              WHERE bu.id IN (n.reconocida_por,n.tb_usuario_destino_id)
+                AND concat_ws(' ',bp.nombres,bp.apellidos) ILIKE '%'||trim(p_busqueda)||'%'))
           AND (p_rol_id=1 OR n.tb_rol_id IS NULL OR n.tb_rol_id=p_rol_id)
           AND (
               (n.severidad='CRITICAL' AND (

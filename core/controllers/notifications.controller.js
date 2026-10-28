@@ -7,11 +7,13 @@ import {
     listNotificationReviewers,
     markNotificationReviewed,
     syncHardwareNotifications,
+    cleanupNotifications,
 } from "../providers/notifications.provider.js";
 
 export async function getNotifications(req, res) {
     try {
         await syncHardwareNotifications(req.projectId);
+        await cleanupNotifications(req.projectId);
         const page = Math.max(Number(req.query.page) || 1, 1);
         const pageSize = Math.min(Math.max(Number(req.query.pageSize) || 10, 1), 50);
         const [notifications, summary, reviewers] = await Promise.all([listNotifications({
@@ -20,7 +22,7 @@ export async function getNotifications(req, res) {
             projectId: req.projectId,
             status: req.query.status || "active",
             reviewer: req.query.reviewer || "all",
-            page,pageSize,
+            page,pageSize,search:req.query.search || "",dateFrom:req.query.dateFrom || null,dateTo:req.query.dateTo || null,
         }),getNotificationSummary({userId:req.user.id,roleId:req.projectRoleId,projectId:req.projectId}),
         Number(req.projectRoleId)===1 ? listNotificationReviewers(req.projectId) : Promise.resolve([])]);
         const total = notifications[0]?.totalRegistros ?? 0;
