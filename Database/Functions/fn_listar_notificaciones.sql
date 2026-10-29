@@ -26,6 +26,11 @@ AS $$
         SELECT n.*,COALESCE(nu.revisada,FALSE) AS revisada_usuario,
                rv.tb_usuario_id AS revisada_por_id,rv.fecha_revision AS fecha_revision_general
         FROM tb_notificacion n
+        JOIN tb_usuario usuario_bandeja ON usuario_bandeja.id=p_usuario_id
+        JOIN tb_usuario_rol acceso_bandeja
+          ON acceso_bandeja.tb_usuario_id=p_usuario_id
+         AND acceso_bandeja.tb_proyecto_id=p_proyecto_id
+         AND acceso_bandeja.sn_activo=TRUE
         LEFT JOIN tb_notificacion_usuario nu
           ON nu.tb_notificacion_id=n.id AND nu.tb_usuario_id=p_usuario_id
         LEFT JOIN LATERAL (
@@ -35,6 +40,8 @@ AS $$
             ORDER BY x.fecha_revision ASC,x.tb_usuario_id ASC LIMIT 1
         ) rv ON TRUE
         WHERE n.tb_proyecto_id=p_proyecto_id AND n.estado<>'PENDIENTE'
+          -- La bandeja comienza cuando el usuario existe y obtiene acceso al proyecto.
+          AND n.fecha_creacion >= GREATEST(usuario_bandeja.fecha_registra,acceso_bandeja.fecha_registra)
           AND (n.tb_usuario_destino_id IS NULL OR n.tb_usuario_destino_id=p_usuario_id)
           AND COALESCE(nu.descartada,FALSE)=FALSE
           AND (p_desde IS NULL OR n.fecha_actualizacion >= p_desde::TIMESTAMP)
