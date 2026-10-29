@@ -8,7 +8,9 @@ export const createFieldReport = async (payload) => DatabaseExecutor.executeProc
 ]);
 
 export const listFieldReports = async (projectId,userId) => DatabaseExecutor.executeFunction("fn_listar_informes_campo",[projectId,userId]);
-export const listOperationalHistory = async (projectId,userId) => DatabaseExecutor.executeFunction("fn_listar_historial_operativo",[projectId,userId]);
+export const listOperationalHistory = async (projectId,userId,filters={}) => DatabaseExecutor.executeFunction("fn_listar_historial_operativo",[
+    projectId,userId,filters.category||null,filters.dateFrom||null,filters.dateTo||null,filters.page||1,filters.pageSize||10,
+]);
 export const listCycleComparison = async (projectId,userId) => DatabaseExecutor.executeFunction("fn_listar_comparacion_ciclos",[projectId,userId]);
 export const saveReportAttachments = async (reportId,projectId,attachments) => DatabaseExecutor.executeProcedure("sp_registrar_adjuntos_informe",[reportId,projectId,JSON.stringify(attachments)]);
 export const getReportAttachment = async (attachmentId,projectId,userId) => (await DatabaseExecutor.executeFunction("fn_obtener_adjunto_informe",[attachmentId,projectId,userId]))[0]||null;

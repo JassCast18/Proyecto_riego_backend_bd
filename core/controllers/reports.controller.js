@@ -56,7 +56,18 @@ export async function createFieldReport(req,res) {
 }
 
 export async function listFieldReports(req,res) { try { const rows=await provider.listFieldReports(req.projectId,req.user.id); return res.json(ResponseModel.ok({informes:rows},"Informes consultados correctamente.")); } catch(error){return fail(res,error);} }
-export async function listOperationalHistory(req,res) { try { const rows=await provider.listOperationalHistory(req.projectId,req.user.id); return res.json(ResponseModel.ok({historial:rows},"Historial consultado correctamente.")); } catch(error){return fail(res,error);} }
+export async function listOperationalHistory(req,res) {
+    try {
+        const page=Math.max(1,Number(req.query.page)||1);
+        const pageSize=Math.min(50,Math.max(5,Number(req.query.pageSize)||10));
+        const rows=await provider.listOperationalHistory(req.projectId,req.user.id,{
+            category:String(req.query.category||"").trim(),dateFrom:req.query.dateFrom||null,
+            dateTo:req.query.dateTo||null,page,pageSize,
+        });
+        const total=Number(rows[0]?.total_registros||0);
+        return res.json(ResponseModel.ok({historial:rows,paginacion:{pagina:page,tamano:pageSize,total,totalPaginas:Math.max(1,Math.ceil(total/pageSize))}},"Historial consultado correctamente."));
+    } catch(error){return fail(res,error);}
+}
 export async function listCycleComparison(req,res) { try { const rows=await provider.listCycleComparison(req.projectId,req.user.id); return res.json(ResponseModel.ok({ciclos:rows},"Ciclos consultados correctamente.")); } catch(error){return fail(res,error);} }
 
 export async function viewReportAttachment(req,res) {

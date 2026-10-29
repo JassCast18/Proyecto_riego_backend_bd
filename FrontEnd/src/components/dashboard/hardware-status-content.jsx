@@ -32,14 +32,15 @@ function formatDate(value) {
   })
 }
 
-function formatReading(value, unit = '') {
+function formatReading(value, unit = '', componentType = '') {
   if (value === null || value === undefined || value === '') return 'Sin dato'
 
   const numberValue = Number(value)
 
   if (Number.isNaN(numberValue)) return String(value)
 
-  return `${numberValue.toFixed(2)}${unit ? ` ${unit}` : ''}`
+  const displayUnit = /higrom|humedad_suelo/i.test(componentType) && numberValue > 100 ? 'ADC' : unit
+  return `${numberValue.toFixed(2)}${displayUnit ? ` ${displayUnit}` : ''}`
 }
 
 export function HardwareStatusContent() {
@@ -364,7 +365,7 @@ export function HardwareStatusContent() {
                       </td>
                       <td className="px-4 py-3 text-slate-700">{telemetria.tbSensorId}</td>
                       <td className="px-4 py-3 text-slate-700">{telemetria.nombreSensor || telemetria.tipoComponente}</td>
-                      <td className="px-4 py-3 font-semibold text-slate-900">{formatReading(telemetria.valorLectura, telemetria.unidad)}</td>
+                      <td className="px-4 py-3 font-semibold text-slate-900">{formatReading(telemetria.valorLectura, telemetria.unidad, telemetria.tipoComponente || telemetria.nombreSensor)}</td>
                       <td className="px-4 py-3 text-slate-600">{formatDate(telemetria.fechaHora)}</td>
                     </tr>
                   )
@@ -451,7 +452,7 @@ function Row({ label, value }) {
 function ComponentRow({ component }) {
   const reading = component.ultimaLectura === null || component.ultimaLectura === undefined
     ? 'Sin lectura'
-    : formatReading(component.ultimaLectura, component.unidad)
+    : formatReading(component.ultimaLectura, component.unidad, component.tipoComponente || component.nombre)
 
   return (
     <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">

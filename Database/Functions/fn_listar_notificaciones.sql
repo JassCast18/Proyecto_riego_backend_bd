@@ -41,7 +41,13 @@ AS $$
         ) rv ON TRUE
         WHERE n.tb_proyecto_id=p_proyecto_id AND n.estado<>'PENDIENTE'
           -- La bandeja comienza cuando el usuario existe y obtiene acceso al proyecto.
-          AND n.fecha_creacion >= GREATEST(usuario_bandeja.fecha_registra,acceso_bandeja.fecha_registra)
+          AND (
+            n.fecha_creacion >= GREATEST(usuario_bandeja.fecha_registra,acceso_bandeja.fecha_registra)
+            OR (
+              n.estado IN ('ACTIVA','RECONOCIDA')
+              AND COALESCE(n.fecha_ultima_deteccion,n.fecha_actualizacion) >= GREATEST(usuario_bandeja.fecha_registra,acceso_bandeja.fecha_registra)
+            )
+          )
           AND (n.tb_usuario_destino_id IS NULL OR n.tb_usuario_destino_id=p_usuario_id)
           AND COALESCE(nu.descartada,FALSE)=FALSE
           AND (p_desde IS NULL OR n.fecha_actualizacion >= p_desde::TIMESTAMP)

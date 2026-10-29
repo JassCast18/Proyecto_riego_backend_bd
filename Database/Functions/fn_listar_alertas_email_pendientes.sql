@@ -20,7 +20,10 @@ AS $$
     LEFT JOIN tb_notificacion_entrega e
       ON e.tb_notificacion_id=n.id AND e.tb_usuario_id=u.id AND e.canal='EMAIL'
     WHERE n.tb_proyecto_id=p_proyecto_id AND n.estado='ACTIVA'
-      AND n.fecha_creacion >= GREATEST(u.fecha_registra,ur.fecha_registra)
+      AND (
+        n.fecha_creacion >= GREATEST(u.fecha_registra,ur.fecha_registra)
+        OR COALESCE(n.fecha_ultima_deteccion,n.fecha_actualizacion) >= GREATEST(u.fecha_registra,ur.fecha_registra)
+      )
       AND n.severidad IN ('WARNING','CRITICAL')
       AND (e.id IS NULL OR (e.estado='FALLIDO' AND e.intentos<3
            AND e.fecha_ultimo_intento<=NOW()-INTERVAL '5 minutes'));

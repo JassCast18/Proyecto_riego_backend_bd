@@ -9,6 +9,7 @@ const files = [
   '../../Database/Functions/fn_listar_notificaciones.sql',
   '../../Database/Functions/fn_resumen_notificaciones.sql',
   '../../Database/Functions/fn_listar_alertas_email_pendientes.sql',
+  '../../Database/Functions/fn_listar_historial_operativo.sql',
 ]
 
 try {
@@ -17,7 +18,7 @@ try {
     await db.query(await readFile(new URL(file, import.meta.url), 'utf8'))
   }
   await db.query('COMMIT')
-  console.log('Visibilidad individual de notificaciones instalada correctamente.')
+  console.log('Visibilidad de notificaciones e historial filtrable instalados correctamente.')
 } catch (error) {
   await db.query('ROLLBACK')
   throw error

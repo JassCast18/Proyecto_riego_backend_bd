@@ -7,6 +7,11 @@ import { useToast } from '@/context/useToast.js'
 const labels = { cultivo_id: 'Cultivo', variedad: 'Variedad', fecha_siembra: 'Fecha de siembra', tiempo_cosecha_dias: 'Cosecha estimada', humedad_minima: 'Humedad mínima', humedad_maxima: 'Humedad máxima', temperatura_minima: 'Temperatura mínima', temperatura_maxima: 'Temperatura máxima' }
 const show = (value, suffix = '') => value === null || value === undefined || value === '' ? 'Pendiente' : `${value}${suffix}`
 const date = (value) => value ? new Date(value).toLocaleString('es-GT', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
+const dateOnly = (value) => {
+  if (!value) return 'Pendiente'
+  const parsed = new Date(`${String(value).slice(0, 10)}T00:00:00Z`)
+  return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleDateString('es-GT', { dateStyle: 'medium', timeZone: 'UTC' })
+}
 
 export function CropParametersContent() {
   const navigate = useNavigate()
@@ -48,7 +53,7 @@ export function CropParametersContent() {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <Parameter icon={Sprout} label="Cultivo" value={show(parameters?.cultivo)} source="Carga inicial" />
       <Parameter icon={Sprout} label="Variedad" value={show(parameters?.variedad)} source={parameters?.variedad ? 'Usuario / EcoCrop' : 'Pendiente de aprendizaje'} />
-      <Parameter icon={CalendarDays} label="Fecha de siembra" value={parameters?.fecha_siembra || 'Pendiente'} source={parameters?.fecha_siembra ? 'Usuario' : 'Sin referencia temporal'} />
+      <Parameter icon={CalendarDays} label="Fecha de siembra" value={dateOnly(parameters?.fecha_siembra)} source={parameters?.fecha_siembra ? 'Usuario' : 'Sin referencia temporal'} />
       <Parameter icon={Activity} label="Cosecha estimada" value={show(parameters?.tiempo_cosecha_dias, ' días')} source="Referencia inicial" />
       <Parameter label="Humedad mínima" value={show(parameters?.humedad_minima, ' %')} source={parameters?.humedad_minima == null ? 'Pendiente de calibración' : 'Carga inicial'} />
       <Parameter label="Humedad máxima" value={show(parameters?.humedad_maxima, ' %')} source={parameters?.humedad_maxima == null ? 'Pendiente de calibración' : 'Carga inicial'} />

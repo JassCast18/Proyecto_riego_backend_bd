@@ -266,7 +266,7 @@ export function NotificationsContent() {
           <button type="button" disabled={page >= pagination.totalPaginas} onClick={() => setPage((value) => Math.min(pagination.totalPaginas, value + 1))} className="grid h-9 w-9 place-items-center rounded-lg border bg-white disabled:opacity-40" aria-label="Página siguiente"><ChevronRight size={16}/></button>
         </nav>
       ) : null}
-      <p className="mt-3 text-center text-xs text-slate-500">{pagination.total} notificación{pagination.total === 1 ? '' : 'es'} · 10 por página</p>
+      <p className="mt-3 text-center text-xs text-slate-500">{pagination.total} {pagination.total === 1 ? 'notificación' : 'notificaciones'} · 10 por página</p>
     </section>
   )
 }
