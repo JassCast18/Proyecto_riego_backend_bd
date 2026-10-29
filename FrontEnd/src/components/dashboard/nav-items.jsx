@@ -135,11 +135,6 @@ export const navGroups = [
             permissionKey: "sector.view",
           },
           {
-            label: "Cliente",
-            href: "/dashboard/maestros/cliente",
-            permissionKey: "cliente.view",
-          },
-          {
             label: "Roles",
             href: "/dashboard/maestros/roles",
             permissionKey: "roles.view",
