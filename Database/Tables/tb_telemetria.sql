@@ -23,3 +23,6 @@ BEGIN
         );
     END IF;
 END $$;
+
+CREATE INDEX IF NOT EXISTS ix_telemetria_sensor_fecha
+ON tb_telemetria(tb_sensor_id,fecha_hora DESC);
