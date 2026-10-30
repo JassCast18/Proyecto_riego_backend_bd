@@ -107,21 +107,22 @@ export async function selectActiveProject(project) {
   try {
     const response = await api.get('/users/manage/permissions')
     const permissions = response.data?.data?.permisos || []
-    const storedUser = JSON.parse(localStorage.getItem('authUser') || 'null')
+    const storedUser = JSON.parse(sessionStorage.getItem('authUser') || 'null')
     if (storedUser) {
-      localStorage.setItem('authUser', JSON.stringify({
+      const nextUser = {
         ...storedUser,
         tbRolId: project.rol_id,
         rol: project.rol,
         permisos: permissions,
-      }))
+      }
+      sessionStorage.setItem('authUser', JSON.stringify(nextUser))
+      window.dispatchEvent(new CustomEvent('auth:session-changed', { detail: { user: nextUser } }))
     }
   } catch (error) {
     localStorage.removeItem('activeProject')
     throw new Error(message(error, 'No fue posible activar el proyecto.'))
   }
   window.dispatchEvent(new Event('project:changed'))
-  window.dispatchEvent(new Event('auth:session-changed'))
 }
 
 export function getActiveProject() {

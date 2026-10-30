@@ -10,6 +10,15 @@ export function AuthProvider({children}){
  const [user,setUser]=useState(storedUser)
  const [loading,setLoading]=useState(true)
 
+ useEffect(()=>{
+  const syncSession=(event)=>{
+   const next=event.detail?.user||storedUser()
+   setUser(next)
+  }
+  window.addEventListener('auth:session-changed',syncSession)
+  return()=>window.removeEventListener('auth:session-changed',syncSession)
+ },[])
+
  useEffect(()=>{let active=true;(async()=>{
   const current=await sessionRequest()
   if(!active)return
