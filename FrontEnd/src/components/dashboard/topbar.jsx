@@ -20,7 +20,7 @@ export function Topbar({ onMenuClick }) {
   const activeProject = getActiveProject();
 
   const displayName = user?.nombreCompleto || user?.correoElectronico || "Rudy Castellanos";
-  const displayRole = user?.rol || "Supervisor";
+  const displayRole = activeProject?.rol || user?.rol || "Usuario";
   const initials = displayName
     .split(" ")
     .filter(Boolean)

@@ -5,6 +5,11 @@ import {AuthContext} from './auth-context.js'
 const USER_KEY='authUser'
 const TOKEN_KEY='authToken'
 const storedUser=()=>{try{return JSON.parse(sessionStorage.getItem(USER_KEY))}catch{return null}}
+const storedProject=()=>{try{return JSON.parse(localStorage.getItem('activeProject'))}catch{return null}}
+const withProjectRole=(user)=>{
+ const project=storedProject()
+ return user&&project?{...user,tbRolId:project.rol_id,rol:project.rol}:user
+}
 
 export function AuthProvider({children}){
  const [user,setUser]=useState(storedUser)
@@ -23,6 +28,7 @@ export function AuthProvider({children}){
   const current=await sessionRequest()
   if(!active)return
   if(current){
+   Object.assign(current,withProjectRole(current))
    try{current.permisos=await listPermissionsRequest()}catch{current.permisos=current.permisos||[]}
    sessionStorage.setItem(USER_KEY,JSON.stringify(current));setUser(current)
   }else{sessionStorage.removeItem(USER_KEY);sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem('authToken');localStorage.removeItem('authUser');setUser(null)}
@@ -31,7 +37,7 @@ export function AuthProvider({children}){
 
  const value=useMemo(()=>({
   token:null,user,loading,isAuthenticated:Boolean(user),
-  login:async credentials=>{const result=await loginRequest(credentials);if(result.token)sessionStorage.setItem(TOKEN_KEY,result.token);const next=result.user||await sessionRequest();if(next){try{next.permisos=await listPermissionsRequest()}catch{next.permisos=[]};sessionStorage.setItem(USER_KEY,JSON.stringify(next))}setUser(next);return result},
+  login:async credentials=>{const result=await loginRequest(credentials);if(result.token)sessionStorage.setItem(TOKEN_KEY,result.token);const next=withProjectRole(result.user||await sessionRequest());if(next){try{next.permisos=await listPermissionsRequest()}catch{next.permisos=[]};sessionStorage.setItem(USER_KEY,JSON.stringify(next))}setUser(next);return result},
   register:registerRequest,
   logout:async()=>{await logoutRequest();sessionStorage.removeItem(USER_KEY);sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem('activeProject');setUser(null)},
  }),[user,loading])

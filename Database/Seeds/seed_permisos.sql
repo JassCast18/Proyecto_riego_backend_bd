@@ -132,7 +132,7 @@ INSERT INTO tb_permiso_modulo (tb_rol_id, tb_modulo_id, tb_permiso_id)
 SELECT 2, m.id, p.id
 FROM tb_modulo m
 INNER JOIN tb_permiso p ON p.codigo_permiso = m.codigo_modulo || '.view'
-WHERE m.codigo_modulo IN ('dashboard', 'alertas', 'cultivo', 'hardware', 'control_manual', 'reportes', 'auditoria', 'soporte')
+WHERE m.codigo_modulo IN ('dashboard', 'alertas', 'cultivo', 'hardware', 'reportes', 'auditoria', 'soporte')
 ON CONFLICT (tb_rol_id, tb_modulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_submodulo (tb_rol_id, tb_submodulo_id, tb_permiso_id)
@@ -159,12 +159,6 @@ INSERT INTO tb_permiso_submodulo (tb_rol_id,tb_submodulo_id,tb_permiso_id)
 SELECT 2,s.id,p.id FROM tb_submodulo s
 JOIN tb_permiso p ON p.codigo_permiso=s.codigo_submodulo||'.view'
 WHERE s.codigo_submodulo IN ('informes','historial_operativo','comparacion_ciclos','listado_informes','exportar_reportes')
-ON CONFLICT (tb_rol_id, tb_submodulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
-
-INSERT INTO tb_permiso_submodulo (tb_rol_id,tb_submodulo_id,tb_permiso_id)
-SELECT 2,s.id,p.id FROM tb_submodulo s
-JOIN tb_permiso p ON p.codigo_permiso=s.codigo_submodulo||'.view'
-WHERE s.codigo_submodulo='pruebas_unitarias'
 ON CONFLICT (tb_rol_id, tb_submodulo_id, tb_permiso_id) DO UPDATE SET sn_activo=TRUE;
 
 INSERT INTO tb_permiso_submodulo (tb_rol_id,tb_submodulo_id,tb_permiso_id)
