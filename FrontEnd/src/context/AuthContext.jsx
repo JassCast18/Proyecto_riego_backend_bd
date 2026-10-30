@@ -3,6 +3,7 @@ import {listPermissionsRequest,loginRequest,logoutRequest,registerRequest,sessio
 import {AuthContext} from './auth-context.js'
 
 const USER_KEY='authUser'
+const TOKEN_KEY='authToken'
 const storedUser=()=>{try{return JSON.parse(sessionStorage.getItem(USER_KEY))}catch{return null}}
 
 export function AuthProvider({children}){
@@ -15,15 +16,15 @@ export function AuthProvider({children}){
   if(current){
    try{current.permisos=await listPermissionsRequest()}catch{current.permisos=current.permisos||[]}
    sessionStorage.setItem(USER_KEY,JSON.stringify(current));setUser(current)
-  }else{sessionStorage.removeItem(USER_KEY);localStorage.removeItem('authToken');localStorage.removeItem('authUser');setUser(null)}
+  }else{sessionStorage.removeItem(USER_KEY);sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem('authToken');localStorage.removeItem('authUser');setUser(null)}
   setLoading(false)
  })();return()=>{active=false}},[])
 
  const value=useMemo(()=>({
   token:null,user,loading,isAuthenticated:Boolean(user),
-  login:async credentials=>{const result=await loginRequest(credentials);const next=result.user||await sessionRequest();if(next){try{next.permisos=await listPermissionsRequest()}catch{next.permisos=[]};sessionStorage.setItem(USER_KEY,JSON.stringify(next))}setUser(next);return result},
+  login:async credentials=>{const result=await loginRequest(credentials);if(result.token)sessionStorage.setItem(TOKEN_KEY,result.token);const next=result.user||await sessionRequest();if(next){try{next.permisos=await listPermissionsRequest()}catch{next.permisos=[]};sessionStorage.setItem(USER_KEY,JSON.stringify(next))}setUser(next);return result},
   register:registerRequest,
-  logout:async()=>{await logoutRequest();sessionStorage.removeItem(USER_KEY);localStorage.removeItem('activeProject');setUser(null)},
+  logout:async()=>{await logoutRequest();sessionStorage.removeItem(USER_KEY);sessionStorage.removeItem(TOKEN_KEY);localStorage.removeItem('activeProject');setUser(null)},
  }),[user,loading])
  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

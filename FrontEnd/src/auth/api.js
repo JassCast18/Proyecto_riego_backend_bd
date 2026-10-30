@@ -9,10 +9,14 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
+  const token=sessionStorage.getItem('authToken')
+
   // El navegador debe generar el boundary de multipart cuando se envían archivos.
   if (config.data instanceof FormData) {
     delete config.headers['Content-Type']
   }
+
+  if(token)config.headers.Authorization=`Bearer ${token}`
 
   try {
     const project = JSON.parse(localStorage.getItem('activeProject'))
@@ -30,6 +34,8 @@ api.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem('authToken')
       localStorage.removeItem('authUser')
+      sessionStorage.removeItem('authToken')
+      sessionStorage.removeItem('authUser')
       localStorage.removeItem('activeProject')
       window.dispatchEvent(new Event('auth:session-changed'))
     }

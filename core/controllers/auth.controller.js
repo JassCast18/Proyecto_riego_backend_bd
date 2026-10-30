@@ -29,7 +29,7 @@ export const login=async(req,res)=>{
         res.cookie('nodalvia_session',token,cookieOptions);
         delete user.passwordHash; // Eliminar el hash de la contraseña antes de enviar la respuesta
 
-        return res.status(200).json(ResponseModel.ok({ usuario: user.toResponse() }, "Inicio de sesión exitoso."));
+        return res.status(200).json(ResponseModel.ok({ usuario: user.toResponse(), token }, "Inicio de sesión exitoso."));
     }catch(error){
         return res.status(500).json(ResponseModel.fail(error.message));
     }
