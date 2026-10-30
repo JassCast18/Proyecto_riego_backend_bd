@@ -374,6 +374,7 @@ Resources:
       ProtocolType: HTTP
       CorsConfiguration:
         AllowOrigins: [!Ref CorsOrigin, !Ref WwwCorsOrigin, !Ref AmplifyOrigin]
+        AllowCredentials: true
         AllowHeaders: [Authorization, Content-Type, X-Project-Id]
         AllowMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
         MaxAge: 86400

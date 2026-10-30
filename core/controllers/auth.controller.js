@@ -7,7 +7,8 @@ import { validatePasswordPolicy } from "../utils/password-policy.util.js";
 
 const INVALID_LOGIN_MESSAGE = "Credenciales inválidas.";
 const DUMMY_PASSWORD_HASH = "$2b$10$8W9qT8NfILqo7H6cZp4YIuqd5QL6Km1pZ6/y98AfKjyI4/gTpsEjq";
-const cookieOptions={httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:60*60*1000};
+const production=process.env.NODE_ENV==='production';
+const cookieOptions={httpOnly:true,secure:production,sameSite:production?'none':'lax',path:'/',maxAge:60*60*1000};
 
 export const login=async(req,res)=>{
 
@@ -45,7 +46,7 @@ export const session=async(req,res)=>{
 }
 
 export const logout=(_req,res)=>{
- res.clearCookie('nodalvia_session',{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/'});
+ res.clearCookie('nodalvia_session',{httpOnly:true,secure:production,sameSite:production?'none':'lax',path:'/'});
  return res.json(ResponseModel.ok(null,'Sesión cerrada.'));
 }
 
