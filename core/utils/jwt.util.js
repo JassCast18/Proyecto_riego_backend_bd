@@ -15,7 +15,9 @@ export const generateToken=(usuario)=>{
         process.env.JWT_SECRET,
 
         {
-            expiresIn
+            expiresIn,
+            issuer: process.env.JWT_ISSUER || 'nodalvia-api',
+            audience: process.env.JWT_AUDIENCE || 'nodalvia-web'
         }
 
     );
@@ -26,7 +28,8 @@ export const decodeToken=(token)=>{
 
     return jwt.verify(
         token,
-        process.env.JWT_SECRET
+        process.env.JWT_SECRET,
+        {issuer:process.env.JWT_ISSUER||'nodalvia-api',audience:process.env.JWT_AUDIENCE||'nodalvia-web'}
     );
 
 };

@@ -7,6 +7,7 @@ import { validatePasswordPolicy } from "../utils/password-policy.util.js";
 
 const INVALID_LOGIN_MESSAGE = "Credenciales inválidas.";
 const DUMMY_PASSWORD_HASH = "$2b$10$8W9qT8NfILqo7H6cZp4YIuqd5QL6Km1pZ6/y98AfKjyI4/gTpsEjq";
+const cookieOptions={httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:60*60*1000};
 
 export const login=async(req,res)=>{
 
@@ -24,13 +25,28 @@ export const login=async(req,res)=>{
         }
   
         const token=generateToken(user);
+        res.cookie('nodalvia_session',token,cookieOptions);
         delete user.passwordHash; // Eliminar el hash de la contraseña antes de enviar la respuesta
 
-        return res.status(200).json(ResponseModel.ok({ usuario: user.toResponse(), token }, "Inicio de sesión exitoso."));
+        return res.status(200).json(ResponseModel.ok({ usuario: user.toResponse() }, "Inicio de sesión exitoso."));
     }catch(error){
         return res.status(500).json(ResponseModel.fail(error.message));
     }
 
+}
+
+export const session=async(req,res)=>{
+ try{
+  const user=await provider.login(req.user.usuario);
+  if(!user)return res.status(401).json(ResponseModel.fail('La sesión ya no es válida.',null,401));
+  delete user.passwordHash;
+  return res.json(ResponseModel.ok({usuario:user.toResponse()},'Sesión activa.'));
+ }catch(error){return res.status(500).json(ResponseModel.fail(error.message))}
+}
+
+export const logout=(_req,res)=>{
+ res.clearCookie('nodalvia_session',{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/'});
+ return res.json(ResponseModel.ok(null,'Sesión cerrada.'));
 }
 
 export const register = async (req, res) => {

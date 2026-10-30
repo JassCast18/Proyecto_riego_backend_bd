@@ -1,6 +1,6 @@
 CREATE OR REPLACE PROCEDURE sp_resolver_decision_ia(IN p_decision_id BIGINT,IN p_proyecto_id INT,IN p_usuario_id INT,IN p_accion VARCHAR,IN p_actuador_id INT,IN p_duracion_segundos INT,IN p_observacion VARCHAR)
 LANGUAGE plpgsql AS $$
-DECLARE v_decision tb_decision_ia%ROWTYPE;v_pin INT;v_low BOOLEAN;v_max INT;v_sensor INT;v_humedad DECIMAL;v_ciclo_id BIGINT;
+DECLARE v_decision tb_decision_ia%ROWTYPE;v_pin INT;v_low BOOLEAN;v_max INT;v_sensor INT;v_humedad DECIMAL;v_ciclo_id BIGINT;v_ultima_lectura TIMESTAMP;v_max_minutos INT;
 BEGIN
  PERFORM pg_advisory_xact_lock(4100,COALESCE((SELECT tb_nodo_id FROM tb_decision_ia WHERE id=p_decision_id),0));
  SELECT * INTO v_decision FROM tb_decision_ia WHERE id=p_decision_id AND tb_proyecto_id=p_proyecto_id FOR UPDATE;
@@ -10,6 +10,7 @@ BEGIN
    IF length(trim(COALESCE(p_observacion,'')))<5 THEN RAISE EXCEPTION 'Explica por qué rechazas la recomendación.'; END IF;
    IF v_decision.decision='REGAR' THEN
      UPDATE tb_decision_ia SET estado='RECHAZADA',tb_usuario_resuelve_id=p_usuario_id,observacion_resolucion=trim(p_observacion),fecha_resolucion=NOW() WHERE id=p_decision_id;
+     UPDATE tb_notificacion SET estado='RESUELTA',fecha_resolucion=NOW(),fecha_actualizacion=NOW() WHERE clave_evento='IA:DECISION:'||p_decision_id;
      INSERT INTO tb_bitacora_auditoria(accion_realizada,tb_proyecto_id,categoria,origen,entidad,entidad_id,detalle,tb_usuario_id)
      VALUES('Recomendación de IA rechazada',p_proyecto_id,'IA','USUARIO','tb_decision_ia',p_decision_id,trim(p_observacion),p_usuario_id);
      UPDATE tb_version_modelo_ia m SET estado='VALIDADO' WHERE m.id=v_decision.tb_version_modelo_id AND
@@ -23,6 +24,7 @@ BEGIN
    UPDATE tb_decision_ia SET estado='ACEPTADA',ejecutada=FALSE,tb_usuario_resuelve_id=p_usuario_id,
      observacion_resolucion=NULLIF(trim(COALESCE(p_observacion,'')),''),fecha_resolucion=NOW()
    WHERE id=p_decision_id;
+   UPDATE tb_notificacion SET estado='RESUELTA',fecha_resolucion=NOW(),fecha_actualizacion=NOW() WHERE clave_evento='IA:DECISION:'||p_decision_id;
    INSERT INTO tb_bitacora_auditoria(accion_realizada,tb_proyecto_id,categoria,origen,entidad,entidad_id,detalle,tb_usuario_id)
    VALUES('Recomendación de no regar aceptada',p_proyecto_id,'IA',CASE WHEN p_usuario_id IS NULL THEN 'SISTEMA' ELSE 'USUARIO' END,
      'tb_decision_ia',p_decision_id,'Se confirmó la recomendación de no activar el riego.',p_usuario_id);
@@ -41,6 +43,11 @@ BEGIN
  IF EXISTS(SELECT 1 FROM tb_prueba_unitaria WHERE tb_nodo_id=v_decision.tb_nodo_id AND estado IN('ESPERANDO','EN_CURSO','DETENIENDO')) THEN RAISE EXCEPTION 'El nodo tiene una prueba técnica activa.'; END IF;
  SELECT id INTO v_sensor FROM tb_sensor WHERE tb_nodo_id=v_decision.tb_nodo_id AND sn_activo AND estado_operativo='OPERATIVO' AND (tipo_componente ILIKE '%higr%' OR tipo_componente ILIKE '%hum%') ORDER BY id LIMIT 1;
  IF v_sensor IS NULL THEN RAISE EXCEPTION 'El nodo no tiene un sensor de humedad operativo.'; END IF;
+ SELECT telemetria_maxima_minutos INTO v_max_minutos FROM tb_configuracion_ia WHERE tb_proyecto_id=p_proyecto_id;
+ SELECT MAX(fecha_hora) INTO v_ultima_lectura FROM tb_telemetria WHERE tb_sensor_id=v_sensor;
+ IF v_ultima_lectura IS NULL OR v_ultima_lectura<CURRENT_TIMESTAMP-make_interval(mins=>COALESCE(v_max_minutos,30)) THEN
+   RAISE EXCEPTION 'La telemetría del nodo está vencida. Recibe una lectura reciente antes de iniciar el riego.';
+ END IF;
  v_humedad:=NULLIF(v_decision.variables_entrada->>'humedad','')::DECIMAL;
  INSERT INTO tb_ciclo_riego(tb_proyecto_id,tb_nodo_id,tb_sensor_id,tb_actuador_id,humedad_inicio,tb_decision_ia_id)
  VALUES(p_proyecto_id,v_decision.tb_nodo_id,v_sensor,p_actuador_id,v_humedad,p_decision_id) RETURNING id INTO v_ciclo_id;
@@ -50,16 +57,32 @@ BEGIN
  UPDATE tb_decision_ia SET estado=CASE WHEN upper(p_accion)='RECHAZAR' THEN 'RECHAZADA' ELSE 'ACEPTADA' END,
    ejecutada=TRUE,tb_usuario_resuelve_id=p_usuario_id,tb_actuador_id=p_actuador_id,duracion_segundos=p_duracion_segundos,
    observacion_resolucion=NULLIF(trim(COALESCE(p_observacion,'')),''),fecha_resolucion=NOW() WHERE id=p_decision_id;
+ UPDATE tb_notificacion SET estado='RESUELTA',fecha_resolucion=NOW(),fecha_actualizacion=NOW() WHERE clave_evento='IA:DECISION:'||p_decision_id;
  INSERT INTO tb_bitacora_auditoria(accion_realizada,tb_proyecto_id,categoria,origen,entidad,entidad_id,detalle,valores_nuevos,tb_usuario_id)
  VALUES(CASE WHEN upper(p_accion)='RECHAZAR' THEN 'Recomendación de no regar rechazada' ELSE 'Riego recomendado por IA aceptado' END,
-   p_proyecto_id,'IA','USUARIO','tb_decision_ia',p_decision_id,
-   CASE WHEN upper(p_accion)='RECHAZAR' THEN 'El usuario rechazó no regar e inició el riego.' ELSE 'El usuario confirmó el riego recomendado.' END,
+   p_proyecto_id,'IA',CASE WHEN p_usuario_id IS NULL THEN 'SISTEMA' ELSE 'USUARIO' END,'tb_decision_ia',p_decision_id,
+   CASE WHEN upper(p_accion)='RECHAZAR' THEN CASE WHEN p_usuario_id IS NULL THEN 'La automatización rechazó no regar e inició el riego.' ELSE 'El usuario rechazó no regar e inició el riego.' END ELSE CASE WHEN p_usuario_id IS NULL THEN 'La IA automática confirmó el riego recomendado.' ELSE 'El usuario confirmó el riego recomendado.' END END,
    jsonb_build_object('actuador_id',p_actuador_id,'duracion_segundos',p_duracion_segundos,'ciclo_riego_id',v_ciclo_id),p_usuario_id);
  INSERT INTO tb_notificacion(clave_evento,tb_proyecto_id,tb_nodo_id,categoria,tipo,titulo,mensaje,severidad,estado,descartable)
  VALUES('IA:RIEGO:ACEPTADO:'||p_decision_id,p_proyecto_id,v_decision.tb_nodo_id,'IA','IA_RIEGO_ACEPTADO','Riego confirmado',
    CASE WHEN upper(p_accion)='RECHAZAR' THEN 'Se rechazó la recomendación de no regar. El gateway recibirá la orden de riego.' ELSE 'La recomendación fue aceptada. El gateway recibirá la orden de riego.' END,
-   'INFO','ACTIVA',TRUE);
+   'INFO',CASE WHEN p_usuario_id IS NULL THEN 'RESUELTA' ELSE 'ACTIVA' END,TRUE);
  UPDATE tb_version_modelo_ia m SET estado='VALIDADO' WHERE m.id=v_decision.tb_version_modelo_id AND
    (SELECT count(*) FROM tb_decision_ia d WHERE d.tb_version_modelo_id=m.id AND d.estado IN('ACEPTADA','RECHAZADA','COMPLETADA')) >=
    (SELECT confirmaciones_minimas FROM tb_configuracion_ia WHERE tb_proyecto_id=p_proyecto_id);
 END; $$;
+
+-- Corrige el ciclo de vida previo: una recomendación ya resuelta no debe seguir
+-- contando como incidente activo. Las informativas antiguas quedan en historial.
+UPDATE tb_notificacion n
+SET estado='RESUELTA',fecha_resolucion=COALESCE(n.fecha_resolucion,NOW()),fecha_actualizacion=NOW()
+FROM tb_decision_ia d
+WHERE n.clave_evento='IA:DECISION:'||d.id
+  AND d.estado<>'PENDIENTE'
+  AND n.estado IN('PENDIENTE','ACTIVA','RECONOCIDA');
+
+UPDATE tb_notificacion
+SET estado='RESUELTA',fecha_resolucion=COALESCE(fecha_resolucion,NOW()),fecha_actualizacion=NOW()
+WHERE categoria='IA' AND severidad='INFO' AND descartable
+  AND estado IN('PENDIENTE','ACTIVA','RECONOCIDA')
+  AND fecha_actualizacion<CURRENT_TIMESTAMP-INTERVAL '24 hours';

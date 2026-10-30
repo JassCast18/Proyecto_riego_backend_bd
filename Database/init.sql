@@ -33,6 +33,7 @@
 \i Tables/tb_prueba_unitaria.sql
 \i Tables/tb_calibracion_sensor.sql
 \i Tables/tb_version_modelo_ia.sql
+\i Tables/tb_limite_solicitud.sql
 \i Tables/tb_configuracion_ia.sql
 \i Functions/fn_listar_usuarios.sql
 \i Functions/fn_listar_roles.sql

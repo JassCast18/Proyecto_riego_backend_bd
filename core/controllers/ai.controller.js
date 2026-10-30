@@ -44,7 +44,7 @@ export async function train(req,res) {
     const weightedFeedback=feedback.flatMap(row=>Array.from({length:5},()=>({...row})));
     const rows=[...historic,...referenceRows(historic),...weightedFeedback];
     const model=await trainRandomForest(req.projectId,rows);
-    const saved=await provider.saveModel({projectId:req.projectId,userId:req.user.id,modelPath:model.model_path,version:model.version,algorithm:model.algorithm,samples:model.samples,accuracy:model.accuracy,precision:model.precision,recall:model.recall,featureImportance:model.feature_importance,decisionId});
+    const saved=await provider.saveModel({projectId:req.projectId,userId:req.user.id,modelPath:model.model_path,version:model.version,algorithm:model.algorithm,samples:model.samples,accuracy:model.accuracy,precision:model.precision,recall:model.recall,f1:model.f1,balancedAccuracy:model.balanced_accuracy,metrics:model.metrics,featureImportance:model.feature_importance,decisionId});
     return res.status(201).json(ResponseModel.ok({modeloId:Number(saved?.p_modelo_id),...model,muestrasHistoricas:historic.length,correccionesHumanas:feedback.length,muestrasReferencia:rows.length-historic.length-weightedFeedback.length,decisionCorteId:decisionId},"Modelo Random Forest entrenado y activado.",201));
   } catch(error){return fail(res,error,/al menos|historial|Configura/i.test(error.message)?422:503);}
 }
@@ -69,10 +69,10 @@ export async function evaluate(req,res) {
 }
 
 export async function configure(req,res){try{
- const strategy=String(req.body?.estrategia||'').toUpperCase(),mode=String(req.body?.modo||'').toUpperCase();const intervalMinutes=Number(req.body?.intervaloMinutos),durationSeconds=Number(req.body?.duracionSegundos),minimumAccuracy=Number(req.body?.exactitudMinima),minimumConfirmations=Number(req.body?.confirmacionesMinimas);
+ const strategy=String(req.body?.estrategia||'').toUpperCase(),mode=String(req.body?.modo||'').toUpperCase();const intervalMinutes=Number(req.body?.intervaloMinutos),durationSeconds=Number(req.body?.duracionSegundos),minimumAccuracy=Number(req.body?.exactitudMinima),minimumConfirmations=Number(req.body?.confirmacionesMinimas),minimumConfidence=Number(req.body?.confianzaMinima),maximumTelemetryMinutes=Number(req.body?.telemetriaMaximaMinutos);
  if(!['UMBRAL','IA'].includes(strategy))return fail(res,new Error('Selecciona un motor de decisión válido.'),400);
  if(!['SUPERVISADO','AUTOMATICO'].includes(mode))return fail(res,new Error('Selecciona un modo válido.'),400);
- await provider.saveAiConfiguration({projectId:req.projectId,userId:req.user.id,strategy,mode,intervalMinutes,durationSeconds,minimumAccuracy,minimumConfirmations});
+ await provider.saveAiConfiguration({projectId:req.projectId,userId:req.user.id,strategy,mode,intervalMinutes,durationSeconds,minimumAccuracy,minimumConfirmations,minimumConfidence,maximumTelemetryMinutes});
  return res.json(ResponseModel.ok(null,`Motor ${strategy==='IA'?'de inteligencia artificial':'por umbrales'} configurado correctamente.`));
 }catch(error){return fail(res,error,/condiciones|configuración|Modo/i.test(error.message)?422:500)}}
 
@@ -84,5 +84,5 @@ export async function resolve(req,res) {
     if(action==="RECHAZAR"&&observation.length<5) return fail(res,new Error("Explica por qué rechazas la recomendación."),400);
     await provider.resolveDecision({decisionId:Number(req.params.id),projectId:req.projectId,userId:req.user.id,action,actuatorId,durationSeconds,observation});
     return res.json(ResponseModel.ok(null,"Decisión registrada correctamente."));
-  } catch(error){return fail(res,error,/no existe|resuelta|duración|actuador|sensor|riego activo|Explica|Acción|Solo/i.test(error.message)?400:500);}
+  } catch(error){return fail(res,error,/no existe|resuelta|duración|actuador|sensor|riego activo|telemetría|Explica|Acción|Solo/i.test(error.message)?400:500);}
 }

@@ -32,6 +32,9 @@ ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS total_muestras INT NOT
 ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS exactitud DECIMAL(7,5);
 ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS precision_modelo DECIMAL(7,5);
 ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS sensibilidad DECIMAL(7,5);
+ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS f1_modelo DECIMAL(7,5);
+ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS exactitud_balanceada DECIMAL(7,5);
+ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS metricas_evaluacion JSONB NOT NULL DEFAULT '{}'::JSONB;
 ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS importancia_variables JSONB NOT NULL DEFAULT '{}'::JSONB;
 ALTER TABLE tb_version_modelo_ia ADD COLUMN IF NOT EXISTS fecha_entrenamiento TIMESTAMP NOT NULL DEFAULT NOW();
 ALTER TABLE tb_version_modelo_ia ALTER COLUMN ruta_pesos_algoritmo DROP NOT NULL;

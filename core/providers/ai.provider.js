@@ -9,10 +9,11 @@ export const getCurrentContexts = (projectId) => DatabaseExecutor.executeFunctio
 export const listAiActuators = (projectId) => DatabaseExecutor.executeFunction("fn_listar_actuadores_ia", [projectId]);
 export const getAiConfiguration = async (projectId) => (await DatabaseExecutor.executeFunction("fn_obtener_configuracion_ia", [projectId]))[0]?.fn_obtener_configuracion_ia || {};
 export const listAutomaticAiProjects = () => DatabaseExecutor.executeFunction("fn_listar_proyectos_ia_automatica", []);
-export const saveAiConfiguration = (data) => DatabaseExecutor.executeProcedure("sp_configurar_ia", [data.projectId,data.userId,data.strategy,data.mode,data.intervalMinutes,data.durationSeconds,data.minimumAccuracy,data.minimumConfirmations]);
+export const saveAiConfiguration = (data) => DatabaseExecutor.executeProcedure("sp_configurar_ia", [data.projectId,data.userId,data.strategy,data.mode,data.intervalMinutes,data.durationSeconds,data.minimumAccuracy,data.minimumConfirmations,data.minimumConfidence,data.maximumTelemetryMinutes]);
 export const saveModel = (data) => DatabaseExecutor.executeProcedureWithResult("sp_registrar_modelo_ia", [
   data.projectId, data.userId, data.modelPath, data.version, data.algorithm, data.samples,
-  data.accuracy, data.precision, data.recall, JSON.stringify(data.featureImportance), data.decisionId||null, null,
+  data.accuracy, data.precision, data.recall, data.f1, data.balancedAccuracy,
+  JSON.stringify(data.metrics||{}), JSON.stringify(data.featureImportance), data.decisionId||null, null,
 ]);
 export const saveDecision = (data) => DatabaseExecutor.executeProcedureWithResult("sp_registrar_decision_ia", [
   data.projectId, data.nodeId, data.modelId, data.decision, data.confidence,

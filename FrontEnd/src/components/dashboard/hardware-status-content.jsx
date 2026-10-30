@@ -32,6 +32,17 @@ function formatDate(value) {
   })
 }
 
+function relativeAge(value){
+ const time=new Date(value).getTime()
+ if(!value||Number.isNaN(time))return 'Sin datos'
+ const minutes=Math.max(0,Math.floor((Date.now()-time)/60000))
+ if(minutes<2)return 'Hace un momento'
+ if(minutes<60)return `Hace ${minutes} min`
+ const hours=Math.floor(minutes/60)
+ if(hours<48)return `Hace ${hours} h`
+ return `Hace ${Math.floor(hours/24)} días`
+}
+
 function formatReading(value, unit = '', componentType = '') {
   if (value === null || value === undefined || value === '') return 'Sin dato'
 
@@ -234,7 +245,7 @@ export function HardwareStatusContent() {
             return (
               <article
                 key={node.id}
-                className={`rounded-xl border bg-white p-5 shadow-sm transition ${isSelected ? 'border-cyan-500 ring-1 ring-cyan-500' : 'border-slate-200'}`}
+                className={`rounded-xl border p-5 shadow-sm transition ${apagado?'border-slate-300 bg-slate-100 opacity-80':String(node.estadoGeneral).toUpperCase()==='ERROR'?'border-red-300 bg-red-50/40':String(node.estadoGeneral).toUpperCase()==='OFFLINE'?'border-amber-300 bg-amber-50/40':'bg-white'} ${isSelected ? 'ring-2 ring-cyan-500' : ''}`}
               >
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>
@@ -244,19 +255,19 @@ export function HardwareStatusContent() {
                   </div>
 
                   <span className={`max-w-36 break-words rounded-full border px-3 py-1 text-center text-xs font-semibold ${getStatusTone(node.estadoGeneral)}`}>
-                    {node.estadoGeneral}
+                    {apagado?'APAGADO':node.estadoGeneral}
                   </span>
                 </div>
 
                 <div className="space-y-3 text-sm text-slate-700">
                   <Row label="Energía" value={node.estadoEnergia || 'ENCENDIDO'} />
                   {(node.componentes || []).map((component) => (
-                    <ComponentRow key={component.id} component={component} />
+                    <ComponentRow key={component.id} component={component} poweredOff={apagado} />
                   ))}
                   {(node.componentes || []).length === 0 ? (
                     <Row label="Sensores" value="No hay sensores asociados" />
                   ) : null}
-                  <Row label="Última conexión" value={formatDate(node.ultimaConexion)} />
+                  <Row label="Última conexión" value={`${relativeAge(node.ultimaConexion)} · ${formatDate(node.ultimaConexion)}`} />
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-2">
@@ -449,7 +460,7 @@ function Row({ label, value }) {
   )
 }
 
-function ComponentRow({ component }) {
+function ComponentRow({ component, poweredOff=false }) {
   const reading = component.ultimaLectura === null || component.ultimaLectura === undefined
     ? 'Sin lectura'
     : formatReading(component.ultimaLectura, component.unidad, component.tipoComponente || component.nombre)
@@ -458,12 +469,12 @@ function ComponentRow({ component }) {
     <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
       <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
         <span className="min-w-0 break-words font-semibold text-slate-900">{component.nombre || component.tipoComponente}</span>
-        <span className={`max-w-full break-words rounded-full border px-2 py-0.5 text-center text-[11px] font-bold ${getStatusTone(component.estado)}`}>
-          {String(component.estado).replaceAll('_',' ')}
+        <span className={`max-w-full break-words rounded-full border px-2 py-0.5 text-center text-[11px] font-bold ${getStatusTone(poweredOff?'OFFLINE':component.estado)}`}>
+          {poweredOff?'SUSPENDIDO':String(component.estado).replaceAll('_',' ')}
         </span>
       </div>
       <p className="mt-1 text-xs text-slate-600">Lectura: {reading}</p>
-      <p className="mt-1 text-xs text-slate-500">{component.mensaje}</p>
+      <p className="mt-1 text-xs text-slate-500">{poweredOff?'Sin monitoreo porque el nodo fue apagado intencionalmente.':component.mensaje}</p>
     </div>
   )
 }

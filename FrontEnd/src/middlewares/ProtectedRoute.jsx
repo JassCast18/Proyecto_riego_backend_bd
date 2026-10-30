@@ -3,7 +3,9 @@ import { useAuth } from '../context/useAuth.js'
 import { getActiveProject } from '../auth/projects.service.js'
 
 export function ProtectedRoute({ children, requireProject = false, requiredPermission = null }) {
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, loading, user } = useAuth()
+
+  if (loading) return <div className="grid min-h-screen place-items-center bg-slate-50 text-sm font-semibold text-slate-600">Validando sesión segura…</div>
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />

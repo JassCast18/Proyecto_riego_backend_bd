@@ -3,9 +3,10 @@ import {verifyToken} from '../middlewares/jwt.middleware.js'
 import {verifyProjectAccess} from '../middlewares/project.middleware.js'
 import {comment,create,detail,downloadAttachment,faq,list} from '../controllers/support.controller.js'
 import {handleSupportUpload} from '../middlewares/support-upload.middleware.js'
+import {requirePermission} from '../middlewares/permission.middleware.js'
 
 const router=Router()
-router.use(verifyToken,verifyProjectAccess)
+router.use(verifyToken,verifyProjectAccess,requirePermission('soporte.view'))
 router.get('/faq',faq)
 router.get('/tickets',list)
 router.post('/tickets',create)

@@ -30,3 +30,9 @@ export function requireProjectAdministrator(req, res, next) {
     }
     return next();
 }
+
+export function requireMatchingProject(req,res,next){
+ const routeProjectId=Number(req.params.id)
+ if(routeProjectId!==Number(req.projectId))return res.status(403).json(ResponseModel.fail('El proyecto de la ruta no coincide con el proyecto autorizado.',null,403))
+ return next()
+}

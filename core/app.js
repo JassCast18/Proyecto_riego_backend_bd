@@ -26,6 +26,7 @@ const allowedOrigins = String(process.env.CORS_ORIGINS || process.env.FRONTEND_U
     .filter(Boolean);
 
 app.use(cors({
+    credentials: true,
     origin(origin, callback) {
         if (!origin || allowedOrigins.includes("*") || allowedOrigins.includes(origin)) return callback(null, true);
         return callback(new Error("Origen no permitido por CORS."));

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, register, requestPasswordReset, resetPassword, validatePasswordReset } from "../controllers/auth.controller.js";
+import { login, logout, register, requestPasswordReset, resetPassword, session, validatePasswordReset } from "../controllers/auth.controller.js";
 import {
 	createUser,
 	listRoles,
@@ -20,6 +20,8 @@ const loginRateLimit = createRateLimit({ scope: "login", limit: 10, windowMs: 15
 const passwordResetRateLimit = createRateLimit({ scope: "password-reset", limit: 5, windowMs: 15 * 60 * 1000 });
 
 router.post("/login", loginRateLimit, login);
+router.get("/session",verifyToken,session);
+router.post("/logout",logout);
 router.post("/forgot-password", passwordResetRateLimit, requestPasswordReset);
 router.get("/reset-password/validate", validatePasswordReset);
 router.post("/reset-password", passwordResetRateLimit, resetPassword);

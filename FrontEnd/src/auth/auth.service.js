@@ -25,6 +25,15 @@ export async function loginRequest(credentials) {
   }
 }
 
+export async function sessionRequest(){
+  try{return (await api.get('/users/session')).data?.data?.usuario||null}
+  catch{return null}
+}
+
+export async function logoutRequest(){
+  try{await api.post('/users/logout')}catch{/* La sesión local se limpia aunque el servidor no responda. */}
+}
+
 export async function registerRequest(payload) {
   try {
     const response = await api.post('/users/register', payload)
