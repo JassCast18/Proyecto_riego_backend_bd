@@ -84,10 +84,16 @@ export function SummaryContent() {
     const configuredCycle = number(crop?.tiempo_cosecha_dias)
     const progress = ageDays === null || !configuredCycle ? null : Math.min(100, Math.round((ageDays / configuredCycle) * 100))
     const recentReading = lastReading && Date.now() - new Date(lastReading).getTime() <= 25 * 60 * 1000
-    const hardwareProblem = nodes.some((node) => ['ERROR', 'OFFLINE'].includes(String(node.estadoGeneral).toUpperCase()))
+    const hardwareProblem = nodes.some((node) => String(node.estadoEnergia).toUpperCase() !== 'APAGADO' && ['ERROR', 'OFFLINE'].includes(String(node.estadoGeneral).toUpperCase()))
     const plantState = !lastReading ? 'waiting' : hardwareProblem || !recentReading ? 'attention' : 'active'
     const activeNodes = nodes.filter((node) => String(node.estadoEnergia).toUpperCase() !== 'APAGADO' && String(node.estadoGeneral).toUpperCase() === 'OK').length
-    return { humiditySeries, temperatureSeries, ambientTemperatureSeries, ambientHumiditySeries, pressureSeries, humidityNow, temperatureNow, ambientTemperatureNow, ambientHumidityNow, pressureNow, lastReading, ageDays, progress, plantState, activeNodes }
+    const poweredOffNodes = nodes.filter((node) => String(node.estadoEnergia).toUpperCase() === 'APAGADO').length
+    const waitingNodes = nodes.filter((node) => String(node.estadoEnergia).toUpperCase() !== 'APAGADO' && String(node.estadoGeneral).toUpperCase() === 'ESPERANDO').length
+    const attentionNodes = nodes.length - activeNodes - poweredOffNodes - waitingNodes
+    const hardwareNote = !nodes.length
+      ? 'Sin nodos registrados'
+      : [poweredOffNodes ? `${poweredOffNodes} apagado${poweredOffNodes === 1 ? '' : 's'}` : '', waitingNodes ? `${waitingNodes} en espera` : '', attentionNodes ? `${attentionNodes} requieren atención` : ''].filter(Boolean).join(' · ') || 'Todos operando con normalidad'
+    return { humiditySeries, temperatureSeries, ambientTemperatureSeries, ambientHumiditySeries, pressureSeries, humidityNow, temperatureNow, ambientTemperatureNow, ambientHumidityNow, pressureNow, lastReading, ageDays, progress, plantState, activeNodes, hardwareNote }
   }, [telemetry, nodes, crop])
 
   if (loading) return <div className="rounded-xl border border-slate-200 bg-white p-8 text-slate-500">Preparando datos del proyecto…</div>
@@ -99,7 +105,7 @@ export function SummaryContent() {
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <Metric label="Humedad del suelo" value={dashboard.humidityNow === null ? 'Sin datos' : dashboard.humidityNow.toFixed(0)} note="Lectura ADC sin calibrar" icon={Droplets} />
       <Metric label="Temperatura del suelo" value={dashboard.temperatureNow === null ? 'Sin datos' : `${dashboard.temperatureNow.toFixed(1)} °C`} note={relativeTime(dashboard.lastReading)} icon={Thermometer} />
-      <Metric label="Nodos operando" value={`${dashboard.activeNodes} / ${nodes.length}`} note={nodes.length ? `${nodes.length - dashboard.activeNodes} requieren revisión` : 'Sin nodos registrados'} icon={Cpu} />
+      <Metric label="Nodos operando" value={`${dashboard.activeNodes} / ${nodes.length}`} note={dashboard.hardwareNote} icon={Cpu} />
       <Metric label="Registros consultados" value={telemetry.length} note="Últimos registros del proyecto" icon={Sprout} />
     </div>
 

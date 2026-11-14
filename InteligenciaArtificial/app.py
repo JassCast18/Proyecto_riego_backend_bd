@@ -72,6 +72,17 @@ def matrix(rows, features=FEATURES):
     return np.asarray([[getattr(row, name) for name in features] for row in rows], dtype=float)
 
 
+def wilson_lower_bound(successes: int, total: int, z: float = 1.96) -> float:
+    """Limite inferior del 95 % para no presentar una exactitud perfecta como certeza absoluta."""
+    if total <= 0:
+        return 0.0
+    proportion = successes / total
+    denominator = 1 + (z * z / total)
+    centre = proportion + (z * z / (2 * total))
+    margin = z * np.sqrt((proportion * (1 - proportion) + z * z / (4 * total)) / total)
+    return float((centre - margin) / denominator)
+
+
 @app.get("/health")
 def health():
     models = list(MODEL_DIR.glob("*.joblib"))
@@ -85,10 +96,23 @@ def train(request: TrainRequest):
     labels = np.asarray([1 if row.decision == "REGAR" else 0 for row in request.rows])
     if len(np.unique(labels)) < 2:
         raise HTTPException(422, "El historial debe contener ejemplos de REGAR y NO_REGAR.")
-    x_train, x_test, y_train, y_test = train_test_split(matrix(request.rows), labels, test_size=0.25, random_state=42, stratify=labels)
+    all_features = matrix(request.rows)
+    test_size = max(1, int(round(len(request.rows) * 0.25)))
+    x_test, y_test = all_features[:test_size], labels[:test_size]
+    x_train, y_train = all_features[test_size:], labels[test_size:]
+    validation_method = "holdout_temporal_25pct_reciente"
+    if len(np.unique(y_train)) < 2 or len(np.unique(y_test)) < 2:
+        x_train, x_test, y_train, y_test = train_test_split(
+            all_features, labels, test_size=0.25, random_state=42, stratify=labels
+        )
+        validation_method = "holdout_estratificado_25pct_respaldo"
+    validation_model = RandomForestClassifier(n_estimators=200, max_depth=10, min_samples_leaf=2, class_weight="balanced", random_state=42, n_jobs=-1)
+    validation_model.fit(x_train, y_train)
+    predicted = validation_model.predict(x_test)
+    raw_accuracy = float(accuracy_score(y_test, predicted))
+    conservative_accuracy = wilson_lower_bound(int(np.sum(predicted == y_test)), len(y_test))
     model = RandomForestClassifier(n_estimators=200, max_depth=10, min_samples_leaf=2, class_weight="balanced", random_state=42, n_jobs=-1)
-    model.fit(x_train, y_train)
-    predicted = model.predict(x_test)
+    model.fit(all_features, labels)
     version = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S") + "-" + uuid4().hex[:6]
     path = MODEL_DIR / f"project-{request.project_id}-{version}.joblib"
     joblib.dump({"model": model, "features": FEATURES, "version": version}, path)
@@ -123,9 +147,11 @@ def train(request: TrainRequest):
             "f1_macro_std": round(float(np.std(scores["test_f1_macro"])), 4),
         }
     metrics = {
-        "validation": "holdout_estratificado_25pct",
+        "validation": validation_method,
         "train_samples": int(len(y_train)),
         "test_samples": int(len(y_test)),
+        "raw_accuracy": round(raw_accuracy, 4),
+        "conservative_accuracy_95": round(conservative_accuracy, 4),
         "class_distribution": class_counts,
         "balanced_accuracy": round(float(balanced_accuracy_score(y_test, predicted)), 4),
         "f1_regar": round(float(report.get("1", {}).get("f1-score", 0)), 4),
@@ -139,7 +165,7 @@ def train(request: TrainRequest):
     }
     return {
         "version": version, "model_path": str(path), "algorithm": "RandomForestClassifier",
-        "samples": len(request.rows), "accuracy": round(float(accuracy_score(y_test, predicted)), 4),
+        "samples": len(request.rows), "accuracy": round(conservative_accuracy, 4),
         "precision": round(float(report.get("1", {}).get("precision", 0)), 4),
         "recall": round(float(report.get("1", {}).get("recall", 0)), 4),
         "f1": metrics["f1_regar"], "balanced_accuracy": metrics["balanced_accuracy"],

@@ -29,5 +29,5 @@ LANGUAGE sql AS $$
  )foliar ON TRUE
  WHERE f.tb_proyecto_id=p_proyecto_id AND (sh.tipo_componente ILIKE '%higr%' OR sh.tipo_componente ILIKE '%humedad_suelo%')
    AND pc.humedad_suelo_minima IS NOT NULL AND pc.humedad_suelo_maxima IS NOT NULL
- ORDER BY th.fecha_hora DESC LIMIT LEAST(GREATEST(p_limite,20),10000);
+ ORDER BY th.fecha_hora DESC LIMIT LEAST(GREATEST(p_limite,20),50000);
 $$;

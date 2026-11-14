@@ -13,9 +13,21 @@ LANGUAGE sql AS $$
    'fechaCierreProgramado',CASE WHEN p.fecha_inicio IS NULL THEN NULL ELSE p.fecha_inicio+make_interval(secs=>p.duracion_segundos) END,
    'fechaFin',p.fecha_fin,'ultimaComunicacion',p.ultima_comunicacion,
    'componenteNombre',COALESCE(s.nombre,s.tipo_componente,a.nombre),
-   'unidad',s.unidad,
+   'unidad',CASE WHEN s.tipo_componente ILIKE '%higr%' OR s.tipo_componente ILIKE '%humedad_suelo%' THEN '%' ELSE s.unidad END,
    'pinControl',na.pin_control,'activoEnLow',a.activo_en_low,
-   'lecturas',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',l.id,'valor',l.valor_lectura,'fechaHora',l.fecha_hora) ORDER BY l.fecha_hora,l.id) FROM tb_prueba_lectura l WHERE l.tb_prueba_id=p.id),'[]'::JSONB),
+   'lecturas',COALESCE((SELECT jsonb_agg(jsonb_build_object(
+      'id',l.id,
+      'valor',CASE
+        WHEN (s.tipo_componente ILIKE '%higr%' OR s.tipo_componente ILIKE '%humedad_suelo%') AND l.valor_lectura>100
+          THEN LEAST(100,GREATEST(0,CASE
+            WHEN s.adc_seco IS NOT NULL AND s.adc_humedo IS NOT NULL AND s.adc_seco<>s.adc_humedo
+              THEN (s.adc_seco-l.valor_lectura)*100/(s.adc_seco-s.adc_humedo)
+            ELSE (1023-l.valor_lectura)*100/1023
+          END))
+        ELSE l.valor_lectura
+      END,
+      'fechaHora',l.fecha_hora
+    ) ORDER BY l.fecha_hora,l.id) FROM tb_prueba_lectura l WHERE l.tb_prueba_id=p.id),'[]'::JSONB),
    'comandos',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',c.id,'tipo',c.tipo_comando,'estado',c.estado,'mensaje',c.mensaje_confirmacion,'fecha',c.fecha_creacion,'fechaConfirmacion',c.fecha_confirmacion) ORDER BY c.id) FROM tb_comando_iot c WHERE c.tb_prueba_id=p.id),'[]'::JSONB)
  ) FROM tb_prueba_unitaria p
  JOIN tb_usuario u ON u.id=p.tb_usuario_id

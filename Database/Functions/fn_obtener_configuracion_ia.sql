@@ -1,11 +1,11 @@
 CREATE OR REPLACE FUNCTION fn_obtener_configuracion_ia(p_proyecto_id INT) RETURNS JSONB LANGUAGE plpgsql AS $$
-DECLARE c tb_configuracion_ia%ROWTYPE;v_modelo tb_version_modelo_ia%ROWTYPE;v_feedback INT;v_dataset INT;v_contextos INT;v_actuadores INT;v_ultima_telemetria TIMESTAMP;v_antiguedad_minutos DECIMAL;
+DECLARE c tb_configuracion_ia%ROWTYPE;v_modelo tb_version_modelo_ia%ROWTYPE;v_feedback INT;v_dataset BIGINT;v_contextos INT;v_actuadores INT;v_ultima_telemetria TIMESTAMP;v_antiguedad_minutos DECIMAL;
 BEGIN
  INSERT INTO tb_configuracion_ia(tb_proyecto_id) VALUES(p_proyecto_id) ON CONFLICT DO NOTHING;
  SELECT * INTO c FROM tb_configuracion_ia WHERE tb_proyecto_id=p_proyecto_id;
  SELECT * INTO v_modelo FROM tb_version_modelo_ia WHERE tb_proyecto_id=p_proyecto_id AND sn_activo ORDER BY fecha_entrenamiento DESC LIMIT 1;
  SELECT count(*) INTO v_feedback FROM tb_decision_ia WHERE tb_proyecto_id=p_proyecto_id AND tb_version_modelo_id=v_modelo.id AND estado IN('ACEPTADA','RECHAZADA','COMPLETADA');
- SELECT LEAST(count(*),10000) INTO v_dataset
+ SELECT count(*) INTO v_dataset
  FROM tb_telemetria t JOIN tb_sensor s ON s.id=t.tb_sensor_id
  JOIN tb_nodo_iot n ON n.id=s.tb_nodo_id JOIN tb_sector se ON se.id=n.tb_sector_id JOIN tb_finca f ON f.id=se.tb_finca_id
  JOIN tb_proyecto_cultivo pc ON pc.tb_proyecto_id=f.tb_proyecto_id

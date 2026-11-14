@@ -11,6 +11,8 @@ function getStatusTone(status) {
   if (normalized === 'WARNING') return 'bg-amber-100 text-amber-800 border-amber-200'
   if (normalized === 'ERROR') return 'bg-red-100 text-red-800 border-red-200'
   if (normalized === 'OFFLINE') return 'bg-slate-200 text-slate-700 border-slate-300'
+  if (normalized === 'ESPERANDO') return 'bg-sky-100 text-sky-800 border-sky-200'
+  if (normalized === 'SUSPENDIDO') return 'bg-slate-200 text-slate-700 border-slate-300'
   if (normalized === 'EN_REVISION') return 'bg-sky-100 text-sky-800 border-sky-200'
   if (normalized === 'REQUIERE_REPARACION') return 'bg-amber-100 text-amber-900 border-amber-300'
 
@@ -137,7 +139,7 @@ export function HardwareStatusContent() {
     const total = nodes.length
     const encendidos = nodes.filter((node) => String(node.estadoEnergia).toUpperCase() !== 'APAGADO').length
     const apagados = total - encendidos
-    const activos = nodes.filter((node) => String(node.estadoGeneral).toUpperCase() === 'OK').length
+    const activos = nodes.filter((node) => String(node.estadoEnergia).toUpperCase() !== 'APAGADO' && String(node.estadoGeneral).toUpperCase() === 'OK').length
 
     return { total, encendidos, apagados, activos }
   }, [nodes])
@@ -245,7 +247,7 @@ export function HardwareStatusContent() {
             return (
               <article
                 key={node.id}
-                className={`rounded-xl border p-5 shadow-sm transition ${apagado?'border-slate-300 bg-slate-100 opacity-80':String(node.estadoGeneral).toUpperCase()==='ERROR'?'border-red-300 bg-red-50/40':String(node.estadoGeneral).toUpperCase()==='OFFLINE'?'border-amber-300 bg-amber-50/40':'bg-white'} ${isSelected ? 'ring-2 ring-cyan-500' : ''}`}
+                className={`rounded-xl border p-5 shadow-sm transition ${apagado?'border-slate-300 bg-slate-100 opacity-80':String(node.estadoGeneral).toUpperCase()==='ERROR'?'border-red-300 bg-red-50/40':String(node.estadoGeneral).toUpperCase()==='OFFLINE'?'border-amber-300 bg-amber-50/40':String(node.estadoGeneral).toUpperCase()==='ESPERANDO'?'border-sky-300 bg-sky-50/50':'bg-white'} ${isSelected ? 'ring-2 ring-cyan-500' : ''}`}
               >
                 <div className="mb-4 flex items-start justify-between gap-3">
                   <div>

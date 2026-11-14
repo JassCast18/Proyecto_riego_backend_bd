@@ -12,15 +12,6 @@ const numericRow = row => ({
 });
 const fail=(res,error,status=500)=>res.status(status).json(ResponseModel.fail(error.message,null,status));
 
-function referenceRows(rows) {
-  if (!rows.length) return [];
-  const base=rows[0], result=[];
-  for(let humidity=0;humidity<=100;humidity+=2) {
-    result.push({...numericRow(base),humedad:humidity,decision:humidity<Number(base.humedad_minima)?"REGAR":"NO_REGAR"});
-  }
-  return result;
-}
-
 export async function state(req,res) {
   try {
     const [stored,health,actuators,configuration,leafHealth]=await Promise.all([provider.getAiState(req.projectId),checkAiHealth().catch(error=>({status:"offline",detail:error.message})),provider.listAiActuators(req.projectId),provider.getAiConfiguration(req.projectId),provider.getLeafHealthSummary(req.projectId)]);
@@ -37,15 +28,14 @@ export async function train(req,res) {
       if(!cutoff)return fail(res,new Error("La decisión seleccionada no pertenece al recorrido disponible."),400);
       if(cutoff.es_ultima)return fail(res,new Error("La decisión más reciente ya representa el conjunto actual y no puede usarse como punto de retroceso."),422);
     }
-    const [historicRows,feedbackRows]=await Promise.all([provider.getTrainingDataset(req.projectId,5000,decisionId),provider.getTrainingFeedback(req.projectId,500,decisionId)]);
+    const [historicRows,feedbackRows]=await Promise.all([provider.getTrainingDataset(req.projectId,20000,decisionId),provider.getTrainingFeedback(req.projectId,500,decisionId)]);
     const historic=historicRows.map(row=>({...numericRow(row),decision:row.decision}));
     const feedback=feedbackRows.map(row=>({...numericRow(row),decision:row.decision}));
     if(!historic.length) return fail(res,new Error("Configura el cultivo y recibe al menos una lectura de humedad antes de entrenar."),422);
-    const weightedFeedback=feedback.flatMap(row=>Array.from({length:5},()=>({...row})));
-    const rows=[...historic,...referenceRows(historic),...weightedFeedback];
+    const rows=[...historic,...feedback];
     const model=await trainRandomForest(req.projectId,rows);
     const saved=await provider.saveModel({projectId:req.projectId,userId:req.user.id,modelPath:model.model_path,version:model.version,algorithm:model.algorithm,samples:model.samples,accuracy:model.accuracy,precision:model.precision,recall:model.recall,f1:model.f1,balancedAccuracy:model.balanced_accuracy,metrics:model.metrics,featureImportance:model.feature_importance,decisionId});
-    return res.status(201).json(ResponseModel.ok({modeloId:Number(saved?.p_modelo_id),...model,muestrasHistoricas:historic.length,correccionesHumanas:feedback.length,muestrasReferencia:rows.length-historic.length-weightedFeedback.length,decisionCorteId:decisionId},"Modelo Random Forest entrenado y activado.",201));
+    return res.status(201).json(ResponseModel.ok({modeloId:Number(saved?.p_modelo_id),...model,muestrasHistoricas:historic.length,correccionesHumanas:feedback.length,decisionCorteId:decisionId},"Modelo Random Forest entrenado y activado.",201));
   } catch(error){return fail(res,error,/al menos|historial|Configura/i.test(error.message)?422:503);}
 }
 
