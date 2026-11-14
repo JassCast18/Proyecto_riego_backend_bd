@@ -16,8 +16,12 @@ BEGIN
  END IF;
  UPDATE tb_decision_ia SET estado='CANCELADA',observacion_resolucion='Reemplazada por una evaluación más reciente',fecha_resolucion=NOW()
  WHERE tb_proyecto_id=p_proyecto_id AND tb_nodo_id=p_nodo_id AND estado='PENDIENTE';
- INSERT INTO tb_decision_ia(tb_proyecto_id,tb_nodo_id,tb_version_modelo_id,decision,confianza,variables_entrada,explicacion,estado)
- VALUES(p_proyecto_id,p_nodo_id,p_modelo_id,p_decision,p_confianza,p_variables,p_explicacion,'PENDIENTE') RETURNING id INTO p_decision_id;
+ INSERT INTO tb_decision_ia(tb_proyecto_id,tb_nodo_id,tb_version_modelo_id,decision,confianza,modo,variables_entrada,explicacion,estado)
+ VALUES(
+   p_proyecto_id,p_nodo_id,p_modelo_id,p_decision,p_confianza,
+   COALESCE((SELECT CASE WHEN modo='AUTOMATICO' THEN 'AUTOMATICO' ELSE 'OBSERVACION' END FROM tb_configuracion_ia WHERE tb_proyecto_id=p_proyecto_id),'OBSERVACION'),
+   p_variables,p_explicacion,'PENDIENTE'
+ ) RETURNING id INTO p_decision_id;
  INSERT INTO tb_notificacion(clave_evento,tb_proyecto_id,tb_nodo_id,categoria,tipo,titulo,mensaje,severidad,estado,descartable)
  VALUES('IA:DECISION:'||p_decision_id,p_proyecto_id,p_nodo_id,'IA','IA_RECOMENDACION',
    CASE WHEN p_decision='REGAR' THEN 'La IA recomienda regar' ELSE 'La IA recomienda no regar' END,
