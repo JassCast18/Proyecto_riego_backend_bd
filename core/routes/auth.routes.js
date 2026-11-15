@@ -16,7 +16,7 @@ import { requireProjectAdministrator, verifyProjectAccess } from "../middlewares
 import { createRateLimit } from "../middlewares/security.middleware.js";
 
 const router = Router();
-const loginRateLimit = createRateLimit({ scope: "login", limit: 10, windowMs: 15 * 60 * 1000, resetOnSuccess: true });
+const loginRateLimit = createRateLimit({ scope: "login", limit: 5, windowMs: 15 * 60 * 1000, resetOnSuccess: true });
 const passwordResetRateLimit = createRateLimit({ scope: "password-reset", limit: 5, windowMs: 15 * 60 * 1000 });
 
 router.post("/login", loginRateLimit, login);
