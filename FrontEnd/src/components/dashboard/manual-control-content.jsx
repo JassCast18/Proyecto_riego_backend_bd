@@ -14,7 +14,7 @@ const timestamp=value=>{
  return Number.isFinite(parsed)?parsed:null
 }
 const format=value=>{const parsed=timestamp(value);return parsed===null?'—':new Date(parsed).toLocaleString('es-GT',{dateStyle:'short',timeStyle:'medium'})}
-const unitName=unit=>unit==='%'?'Porcentaje de humedad (%)':unit==='°C'||unit==='C'?'Grados Celsius (°C)':unit?`Unidad: ${unit}`:'Sin unidad definida'
+const unitName=unit=>unit==='ADC'?'Lectura analógica (ADC)':unit==='%'?'Porcentaje de humedad (%)':unit==='°C'||unit==='C'?'Grados Celsius (°C)':unit?`Unidad: ${unit}`:'Sin unidad definida'
 
 export function ManualControlContent(){
  const location=useLocation();const navigate=useNavigate();const[searchParams,setSearchParams]=useSearchParams();const toast=useToast();const valves=location.pathname.endsWith('/valvulas');const type=valves?'ACTUADOR':'SENSOR'
